@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ByOrbit R&amp;D Studio 개인용</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%238a5a34%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22700%22%3EB%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
+  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
+  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
+  --mark:#fff1b8; --shadow:0 1px 2px rgba(15,25,40,.06),0 4px 14px rgba(15,25,40,.07);
+  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715;
+  --mark:#4a3d0f; --shadow:0 1px 2px rgba(0,0,0,.45),0 6px 18px rgba(0,0,0,.35); color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono)}
+.topbar{display:flex;align-items:center;gap:18px;padding:0 16px;height:54px;flex:none;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.brand .mk{width:28px;height:28px;border-radius:8px;background:var(--earth);display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+.brand b{font-size:15px}.brand small{display:block;color:var(--muted);font-size:11px;line-height:1.1}
+nav{display:flex;gap:2px;overflow-x:auto}
+nav a{padding:7px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap;cursor:pointer}
+nav a:hover{background:var(--surface-2);color:var(--ink)}
+nav a[aria-current=page]{background:var(--accent-soft);color:var(--accent)}
+nav .count{font-family:var(--mono);font-size:11px;margin-left:5px;padding:0 6px;border-radius:9px;background:var(--warn-soft);color:var(--warn)}
+.tr{margin-left:auto;display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:12px;color:var(--muted)}
+.tr select{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 8px;font-weight:600;color:var(--ink)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
+main{flex:1;min-height:0;overflow-y:auto}
+.view{display:none}.view.active{display:block}
+.wrap{max-width:1200px;margin:0 auto;padding:20px 24px 56px;display:grid;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.card h2{margin:0 0 4px;font-size:15px}.card p.sub{margin:0 0 10px;color:var(--muted);font-size:12.5px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
+.btn:hover{background:var(--surface-2)}.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ok{color:var(--ok);border-color:var(--ok)}.btn.bad{color:var(--bad)}.btn.sm{height:26px;padding:0 9px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.inp{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 9px;font-size:13px}
+textarea.inp{height:auto;min-height:84px;padding:8px 10px;width:100%;resize:vertical}
+.drop{border:2px dashed var(--line);border-radius:12px;background:var(--surface);padding:20px 22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop h2{margin:0;font-size:16px}.drop p{margin:2px 0 0;color:var(--muted);font-size:12.5px;max-width:70ch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{font-size:11.5px;font-weight:600;color:var(--muted);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tr.click{cursor:pointer}tr.click:hover td{background:var(--surface-2)}
+.num{text-align:right;font-family:var(--mono)}
+.stg{font-size:10.5px;padding:1px 6px;border-radius:5px;background:var(--surface-2);color:var(--muted);white-space:nowrap;margin-right:2px}
+.stg.done{background:var(--ok-soft);color:var(--ok)}.stg.warn{background:var(--warn-soft);color:var(--warn)}.stg.err{background:var(--bad-soft);color:var(--bad)}
+.cf{display:inline-flex;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
+.cf.s{border-color:var(--bad);color:var(--bad)}.cf.i{border-color:var(--warn);color:var(--warn)}
+.pill{display:inline-flex;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.pill.seed{background:var(--accent-soft);color:var(--accent)}.pill.mine{background:var(--earth-soft);color:var(--earth)}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.note{font-size:12px;color:var(--warn);margin-top:3px}
+.muted{color:var(--muted)}.small{font-size:12px}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chip{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2)}
+.chip.k{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.hit{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);cursor:pointer}
+.hit:hover{border-color:var(--accent)}
+.hit .meta{font-size:11.5px;color:var(--muted);display:flex;gap:8px;margin-bottom:3px}
+mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
+.ann{border-bottom:2px solid var(--accent);background:var(--accent-soft);border-radius:3px;cursor:help}
+.ann.VALUE{border-color:var(--warn);background:var(--warn-soft)}.ann.pending{border-bottom-style:dashed}
+.chunktext{white-space:pre-wrap;font-size:13.5px;line-height:1.8;background:var(--surface-2);border-radius:8px;padding:12px 14px;max-height:56vh;overflow:auto}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;align-items:start}
+.tree{font-size:13px}.tree ul{list-style:none;margin:0;padding-left:16px}.tree>ul{padding-left:0}
+.tree li{padding:1px 0}.tree .sec{font-weight:700}
+.tree button{border:0;background:none;padding:1px 4px;border-radius:4px;cursor:pointer;text-align:left}
+.tree button:hover{background:var(--surface-2)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:0;width:min(860px,94vw);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(10,15,25,.45)}
+.dhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.dhead h3{margin:0;font-size:15px;flex:1}.dbody{padding:14px 16px;max-height:76vh;overflow:auto}
+.answer{white-space:pre-wrap;background:var(--surface-2);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.75}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:13px}.kv b{font-weight:600;color:var(--muted)}
+.radio{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;margin-bottom:6px}
+.radio:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.radio small{display:block;color:var(--muted)}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:9px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;max-width:420px}
+.toast.on{opacity:.95}
+.empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;word-break:break-all}
+@media (max-width:860px){.split,.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="mk">B</div><div><b>ByOrbit R&amp;D Studio</b><small>개인용 · 이 PC에서 실행 중</small></div></div>
+  <nav id="nav">
+    <a data-v="library" aria-current="page">자료함</a>
+    <a data-v="search">검색</a>
+    <a data-v="review">라벨 검토<span class="count" id="pendingCount" hidden>0</span></a>
+    <a data-v="meas">측정값</a>
+    <a data-v="onto">개념</a>
+    <a data-v="ask">AI에 묻기</a>
+    <a data-v="settings">설정</a>
+  </nav>
+  <div class="tr">
+    <label>프로젝트 <select id="proj"></select></label>
+    <span title="Claude Code"><span class="dot" id="engDot"></span> Claude Code</span>
+  </div>
+</header>
+<main>
+<!-- 자료함 -->
+<section class="view active" id="v-library"><div class="wrap">
+  <div class="drop" id="drop">
+    <div><h2>자료를 여기에 끌어다 놓으세요</h2>
+      <p>PDF · HWPX · XLSX(CoA 자동 인식) · TXT. 파일은 이 PC의 데이터 폴더 안 <code>library</code>로 복사되고 원본은 그대로 둡니다.
+      받은편지함 폴더(<code id="inboxPath">inbox</code>)에 넣어도 자동으로 처리됩니다.</p></div>
+    <div class="row" style="margin-left:auto">
+      <select class="inp" id="upConf" title="보안 등급"><option>일반</option><option selected>내부</option><option>기밀</option></select>
+      <label class="btn primary">파일 선택<input type="file" id="fileIn" multiple hidden accept=".pdf,.hwpx,.xlsx,.xlsm,.txt,.md,.csv"></label>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row"><h2 class="grow">자료 목록 <span class="muted small" id="docSum"></span></h2>
+      <label class="small muted"><input type="checkbox" id="allProj"> 모든 프로젝트</label>
+      <button class="btn sm" id="scanInbox">받은편지함 다시 확인</button>
+      <button class="btn sm" id="refreshDocs">새로고침</button></div>
+    <table><thead><tr><th>파일</th><th>종류</th><th>등급</th><th>처리 단계</th><th class="num">청크</th><th class="num">라벨</th><th class="num">측정값</th><th></th></tr></thead>
+    <tbody id="docRows"></tbody></table>
+  </div>
+</div></section>
+
+<!-- 검색 -->
+<section class="view" id="v-search"><div class="wrap">
+  <div class="card">
+    <div class="row"><input class="inp grow" id="q" placeholder="예: 사과 포마스 식이섬유 · 굴 패각 소성 · TPC" autocomplete="off">
+      <label class="small muted"><input type="checkbox" id="qAll"> 모든 프로젝트</label>
+      <button class="btn primary" id="qBtn">검색</button></div>
+    <div class="chips" id="qExp" style="margin-top:8px"></div>
+  </div>
+  <div class="split">
+    <div id="qRes" style="display:grid;gap:8px"><div class="empty">검색어를 넣으면 동의어까지 넓혀서 찾습니다.</div></div>
+    <div class="card" id="chunkCard" hidden>
+      <div class="row"><h2 class="grow" id="chTitle"></h2><span class="small muted" id="chMeta"></span></div>
+      <div class="chunktext" id="chText" style="margin-top:8px"></div>
+      <p class="small muted" style="margin:8px 0 0">밑줄: 붙은 라벨(실선 확정 · 점선 검토 대기 · 주황 수치)</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 라벨 검토 -->
+<section class="view" id="v-review"><div class="wrap">
+  <div class="card">
+    <div class="row"><h2 class="grow">라벨 검토</h2>
+      <select class="inp" id="rvStatus"><option value="pending">검토 대기</option><option value="auto">자동 확정</option><option value="accepted">승인함</option><option value="rejected">거절함</option></select></div>
+    <p class="sub">AI가 제안한 라벨 중 수치와 신뢰도 0.9 미만은 여기서 사람이 확인합니다. 승인한 수치는 측정값 표로 올라갑니다.</p>
+    <table><thead><tr><th>문맥</th><th>라벨</th><th>개념·값</th><th class="num">신뢰도</th><th>출처</th><th></th></tr></thead><tbody id="rvRows"></tbody></table>
+  </div>
+</div></section>
+
+<!-- 측정값 -->
+<section class="view" id="v-meas"><div class="wrap">
+  <div class="card">
+    <div class="row"><h2 class="grow">측정값</h2>
+      <input class="inp" id="mBp" placeholder="부산물 (예: 사과박)"><input class="inp" id="mTg" placeholder="항목 (예: 식이섬유)">
+      <label class="small muted"><input type="checkbox" id="mAll" checked> 모든 프로젝트</label>
+      <button class="btn" id="mBtn">조회</button><button class="btn" id="mCsv">CSV 저장</button></div>
+    <p class="sub">CoA에서 읽은 값과 승인한 추출값입니다. 이 화면은 내 PC 전용이라 로트·공급처가 보이지만, AI에 넘길 때는 가려집니다.</p>
+    <table><thead><tr><th>부산물</th><th>항목</th><th class="num">값</th><th>단위</th><th>기준</th><th>전처리</th><th>시험법</th><th>시료</th><th>입력</th><th>출처</th></tr></thead><tbody id="mRows"></tbody></table>
+  </div>
+</div></section>
+
+<!-- 개념 -->
+<section class="view" id="v-onto"><div class="wrap">
+  <div class="grid2">
+    <div class="card"><h2>부산물 분류</h2><p class="sub">표준 시드: 농업·임업·수산(+축산 자리). 이름을 누르면 오른쪽에서 동의어를 봅니다.</p><div class="tree" id="tree"></div></div>
+    <div class="card">
+      <div class="row"><h2 class="grow">개념·동의어</h2>
+        <select class="inp" id="cScheme"><option value="">전체 체계</option></select>
+        <select class="inp" id="cOrigin"><option value="">시드+내 확장</option><option value="seed">표준 시드</option><option value="mine">내 확장</option></select></div>
+      <div class="row" style="margin:8px 0"><input class="inp grow" id="cQ" placeholder="표기로 찾기 (예: 포마스, FD)"><button class="btn" id="cAdd">+ 개념 추가</button></div>
+      <div style="max-height:62vh;overflow:auto"><table><thead><tr><th>표준명</th><th>체계</th><th>동의어</th><th class="num">사용</th><th></th></tr></thead><tbody id="cRows"></tbody></table></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- AI에 묻기 -->
+<section class="view" id="v-ask"><div class="wrap">
+  <div class="card">
+    <h2>AI에 묻기 <span class="pill">Claude Code</span></h2>
+    <p class="sub">이 PC에 설치된 Claude Code가 자료 서버(byorbit-rd) 도구로 자료를 찾아 출처와 함께 답합니다. 질문과 찾은 본문 일부는 Anthropic으로 전송됩니다(CoA 식별 정보는 가림).</p>
+    <textarea class="inp" id="askQ" placeholder="예: 동결건조와 열풍건조 사과박의 식이섬유·폴리페놀 차이를 근거와 함께 정리해줘"></textarea>
+    <div class="row" style="margin-top:8px">
+      <select class="inp" id="askRole"><option value="librarian">자료 사서</option><option value="composition_analyst">성분 분석가</option><option value="report_writer">리포트 작성자(초안 저장)</option></select>
+      <span class="grow"></span><span class="small muted" id="askState"></span><button class="btn primary" id="askBtn">묻기</button></div>
+  </div>
+  <div class="card" id="askOut" hidden><h2>답변</h2><div class="answer" id="askAns"></div><p class="small muted" id="askMeta" style="margin:8px 0 0"></p></div>
+  <div class="card"><h2>리포트 초안</h2><p class="sub">리포트 작성자가 저장한 초안. 파일은 데이터 폴더 <code>reports</code>에도 있습니다.</p>
+    <table><thead><tr><th>제목</th><th class="num">근거</th><th>상태</th><th>만든 때</th></tr></thead><tbody id="rpRows"></tbody></table></div>
+</div></section>
+
+<!-- 설정 -->
+<section class="view" id="v-settings"><div class="wrap">
+  <div class="grid2">
+    <div class="card">
+      <h2>AI 엔진</h2><p class="sub">기본 엔진은 Claude Code입니다. Codex는 2단계에서 연결합니다.</p>
+      <div class="kv" id="engInfo"><b>상태</b><span>확인 중…</span></div>
+      <div class="row" style="margin-top:10px"><button class="btn" id="engCheck">설치 확인</button><button class="btn primary" id="engSmoke">연결 점검 (실제 호출)</button></div>
+      <p class="small muted" id="smokeOut" style="margin:8px 0 0"></p>
+    </div>
+    <div class="card">
+      <h2>CoA 전송 규칙</h2><p class="sub">AI 엔진에 CoA(기밀) 자료를 어떻게 넘길지 정합니다.</p>
+      <label class="radio"><input type="radio" name="coa" value="mask"><span><b>필요한 값만, 식별 정보는 가림</b><small>측정값은 넘기되 로트번호·공급처·시료번호는 [가림]으로 바꿉니다.</small></span></label>
+      <label class="radio"><input type="radio" name="coa" value="block"><span><b>보내지 않기</b><small>CoA 본문과 측정값을 AI에 전혀 넘기지 않습니다. 논문·보고서만 씁니다.</small></span></label>
+    </div>
+    <div class="card">
+      <h2>기본값</h2>
+      <div class="kv" style="align-items:center">
+        <b>기본 프로젝트</b><select class="inp" id="setProj"></select>
+        <b>받은편지함 감시</b><label><input type="checkbox" id="setWatch"> 켜기 (재시작 후 적용)</label>
+        <b>AI 제한 시간</b><span><input class="inp" id="setTimeout" type="number" min="60" step="30" style="width:90px"> 초</span>
+      </div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="setSave">저장</button><button class="btn" id="newProj">+ 새 프로젝트</button></div>
+    </div>
+    <div class="card">
+      <h2>데이터 폴더</h2><p class="sub">모든 자료와 DB는 이 PC의 이 폴더에만 있습니다. 백업은 폴더째 복사하면 됩니다.</p>
+      <div class="kv" id="paths"></div>
+    </div>
+  </div>
+</div></section>
+</main>
+
+<dialog id="dlg"><div class="dhead"><h3 id="dlgT"></h3><button class="btn sm" onclick="dlg.close()">닫기</button></div><div class="dbody" id="dlgB"></div></dialog>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dlg = $('#dlg');
+let S = {settings:{}, project:''};
+
+async function api(path, opt={}) {
+  const r = await fetch(path, opt.body && !(opt.body instanceof FormData)
+    ? {...opt, headers:{'Content-Type':'application/json'}, body:JSON.stringify(opt.body)} : opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3200)}
+async function waitJob(job, onTick){
+  while(job.status==='running'){await new Promise(r=>setTimeout(r,1500));job=await api('/api/jobs/'+job.job_id);onTick&&onTick(job)}
+  return job;
+}
+
+// ---------- 화면 전환
+$$('#nav a').forEach(a => a.onclick = () => show(a.dataset.v));
+function show(v){
+  $$('#nav a').forEach(a => a.dataset.v===v ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'));
+  $$('.view').forEach(s => s.classList.toggle('active', s.id==='v-'+v));
+  ({library:loadDocs, review:loadReview, meas:loadMeas, onto:loadOnto, ask:loadReports, settings:loadSettings})[v]?.();
+  location.hash = v;
+}
+
+// ---------- 시작
+async function boot(){
+  const h = await api('/api/health');
+  S.settings = h.settings; S.home = h.data_home;
+  $('#inboxPath').textContent = h.data_home.replace(/[\\/]$/,'') + (h.data_home.includes('\\')?'\\':'/') + 'inbox';
+  setPending(h.counts.pending);
+  $('#engDot').className = 'dot ' + (h.claude.path ? 'ok' : 'bad');
+  await loadProjects();
+  show((location.hash||'#library').slice(1));
+}
+function setPending(n){const c=$('#pendingCount');c.hidden=!n;c.textContent=n}
+async function loadProjects(){
+  const ps = await api('/api/projects');
+  S.project = S.project || S.settings.default_project;
+  const opts = ps.map(p => `<option ${p.name===S.project?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('#proj').innerHTML = opts; $('#setProj').innerHTML = ps.map(p=>`<option ${p.name===S.settings.default_project?'selected':''}>${esc(p.name)}</option>`).join('');
+}
+$('#proj').onchange = e => { S.project = e.target.value; show(location.hash.slice(1)||'library') };
+
+// ---------- 자료함
+const STG = [['parse','파싱'],['normalize','정규화'],['chunk','청킹'],['label','라벨'],['load','적재']];
+const TYPE = {paper:'논문', report:'보고서', coa:'CoA', file:'파일'};
+async function loadDocs(){
+  const docs = await api('/api/documents' + ($('#allProj').checked ? '' : '?project='+encodeURIComponent(S.project)));
+  $('#docSum').textContent = `· ${docs.length}건`;
+  $('#docRows').innerHTML = docs.length ? docs.map(d => `<tr>
+    <td><b>${esc(d.file_name)}</b>${d.note?`<div class="note">${esc(d.note)}</div>`:''}<div class="small muted">${esc(d.projects||'')}</div></td>
+    <td>${TYPE[d.source_type]||d.source_type}</td>
+    <td><span class="cf ${d.confidentiality==='기밀'?'s':d.confidentiality==='내부'?'i':''}">${d.confidentiality}</span></td>
+    <td>${STG.map(([k,n])=>{const v=d.parse_status[k];const c=v==='done'||v==='llm'?'done':v==='dict'?'warn':v==='error'?'err':'';
+       return `<span class="stg ${c}" title="${k}: ${v||'대기'}">${n}${v==='dict'?'(사전)':v==='llm'?'(AI)':''}</span>`}).join('')}</td>
+    <td class="num">${d.chunks}</td><td class="num">${d.annotations}</td><td class="num">${d.measurements||''}</td>
+    <td class="row" style="flex-wrap:nowrap"><button class="btn sm" onclick="viewDoc('${d.doc_id}','${esc(d.file_name)}')">보기</button>
+      <button class="btn sm" title="Claude Code로 라벨 제안(베타)" onclick="labelDoc('${d.doc_id}')">AI 라벨</button>
+      <button class="btn sm bad" onclick="delDoc('${d.doc_id}','${esc(d.file_name)}')">삭제</button></td></tr>`).join('')
+    : `<tr><td colspan="8"><div class="empty">아직 자료가 없습니다. 위에 파일을 끌어다 놓거나, 설정에서 예시 자료를 넣어 보세요.</div></td></tr>`;
+}
+$('#refreshDocs').onclick = loadDocs; $('#allProj').onchange = loadDocs;
+$('#scanInbox').onclick = async () => { const r = await api('/api/inbox/scan',{method:'POST'}); toast(`받은편지함 ${r.results.length}건 처리`); loadDocs() };
+async function upload(files){
+  if(!files.length) return;
+  const fd = new FormData(); [...files].forEach(f=>fd.append('files',f)); fd.append('project',S.project); fd.append('confidentiality',$('#upConf').value);
+  toast(`${files.length}개 처리 중…`);
+  try{
+    const r = await api('/api/upload',{method:'POST', body:fd});
+    const msg = r.results.map(x => x.error ? `✗ ${x.file_name}: ${x.error}` : x.duplicate_of ? `- ${x.file_name}: 이미 있음` : `✓ ${x.file_name} (청크 ${x.chunks}${x.measurements?`, 측정값 ${x.measurements}`:''})`).join('\n');
+    toast(msg.split('\n')[0] + (r.results.length>1?` 외 ${r.results.length-1}건`:'')); console.log(msg);
+  }catch(e){toast('실패: '+e.message)}
+  loadDocs(); refreshPending();
+}
+$('#fileIn').onchange = e => { upload(e.target.files); e.target.value='' };
+const drop = $('#drop');
+['dragenter','dragover'].forEach(t => drop.addEventListener(t, e => {e.preventDefault(); drop.classList.add('over')}));
+['dragleave','drop'].forEach(t => drop.addEventListener(t, e => {e.preventDefault(); drop.classList.remove('over')}));
+drop.addEventListener('drop', e => upload(e.dataTransfer.files));
+async function viewDoc(id, name){
+  const cs = await api(`/api/documents/${id}/chunks`);
+  $('#dlgT').textContent = name;
+  $('#dlgB').innerHTML = `<p class="small muted" style="margin-top:0">청크 ${cs.length}개 · <a href="/api/documents/${id}/file" target="_blank">원본 파일 열기</a></p>` +
+    cs.map(c => `<div style="margin-bottom:10px"><div class="small muted">#${c.ord+1} · ${c.chunk_type==='table'?'표':'본문'}${c.page?` · p.${c.page}`:''} · 라벨 ${c.annotations}
+      <button class="btn sm" onclick="openChunk('${c.chunk_id}')">라벨 보기</button></div><div class="chunktext" style="max-height:220px">${esc(c.text)}</div></div>`).join('');
+  dlg.showModal();
+}
+async function delDoc(id, name){
+  if(!confirm(`'${name}'을(를) 지울까요?\n자료함의 복사본과 청크·라벨·측정값이 함께 지워집니다. (원래 넣었던 원본 파일은 그대로)`)) return;
+  await api('/api/documents/'+id+'?remove_file=true',{method:'DELETE'}); toast('지웠습니다'); loadDocs();
+}
+async function labelDoc(id){
+  if(!confirm('Claude Code가 이 자료의 청크(최대 20개)를 읽고 라벨을 제안합니다.\n본문이 Anthropic으로 전송됩니다. 계속할까요?')) return;
+  toast('AI 라벨링 시작 — 몇 분 걸릴 수 있습니다');
+  const job = await waitJob(await api('/api/label',{method:'POST', body:{doc_id:id}}));
+  const r = job.result||{};
+  toast(job.status==='done' && r.ok ? 'AI 라벨링 완료: '+(r.result||'').slice(0,80) : '실패: '+(job.error||r.error||'').slice(0,120));
+  loadDocs(); refreshPending();
+}
+async function refreshPending(){ try{ setPending((await api('/api/health')).counts.pending) }catch{} }
+
+// ---------- 검색
+async function doSearch(){
+  const q = $('#q').value.trim(); if(!q) return;
+  const r = await api('/api/search?q='+encodeURIComponent(q)+($('#qAll').checked?'':'&project='+encodeURIComponent(S.project)));
+  $('#qExp').innerHTML = r.expanded.map(g => `<span class="chip k">${esc(g[0])}</span>` + g.slice(1).map(s=>`<span class="chip">${esc(s)}</span>`).join('')).join('<span class="muted small">그리고</span>');
+  const terms = r.expanded.flat().sort((a,b)=>b.length-a.length);
+  $('#qRes').innerHTML = r.results.length ? r.results.map(h => `<div class="hit" onclick="openChunk('${h.chunk_id}')">
+    <div class="meta"><b>${esc(h.file_name)}</b>${h.page?`<span>p.${h.page}</span>`:''}<span>${h.chunk_type==='table'?'표':'본문'}</span>
+    <span class="cf ${h.confidentiality==='기밀'?'s':''}">${h.confidentiality}</span><span class="grow"></span><span class="mono">점수 ${h.score}</span></div>
+    <div>${highlight(h.snippet, terms)}</div></div>`).join('') : '<div class="empty">찾은 자료가 없습니다. 모든 프로젝트로 넓혀 보세요.</div>';
+}
+function highlight(text, terms){
+  let out = esc(text);
+  terms.filter(t=>t.length>=2).forEach(t => { const re = new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'); out = out.replace(re, m=>`<mark>${m}</mark>`) });
+  return out;
+}
+$('#qBtn').onclick = doSearch; $('#q').onkeydown = e => e.key==='Enter' && doSearch();
+async function openChunk(id){
+  const c = await api('/api/chunks/'+id);
+  if(dlg.open) dlg.close();
+  show('search');
+  $('#chunkCard').hidden = false;
+  $('#chTitle').textContent = c.file_name; $('#chMeta').textContent = `${c.heading||''}${c.page?' · p.'+c.page:''} · 라벨 ${c.annotations.length}`;
+  const anns = c.annotations.filter(a=>a.status!=='rejected' && a.span_start!=null).sort((a,b)=>a.span_start-b.span_start);
+  let html='', pos=0;
+  for(const a of anns){ if(a.span_start<pos) continue;
+    html += esc(c.text.slice(pos,a.span_start)) + `<span class="ann ${a.label_type} ${a.status}" title="${esc(a.label_type)} → ${esc(a.concept||a.normalized_value||'')} (${a.method}, ${a.status}, ${a.confidence??''})">${esc(c.text.slice(a.span_start,a.span_end))}</span>`;
+    pos = a.span_end; }
+  $('#chText').innerHTML = html + esc(c.text.slice(pos));
+}
+
+// ---------- 라벨 검토
+async function loadReview(){
+  const st = $('#rvStatus').value;
+  const rows = await api(`/api/annotations?status=${st}&project=${encodeURIComponent(S.project)}`);
+  $('#rvRows').innerHTML = rows.length ? rows.map(a => {let v=''; try{const o=JSON.parse(a.normalized_value||'null'); if(o) v=`${o.target||''} ${o.value} ${o.unit||''} ${o.basis?'('+o.basis+')':''}`}catch{}
+    return `<tr id="rv-${a.ann_id}"><td class="small">…${esc(a.context.before)}<mark>${esc(a.context.hit)}</mark>${esc(a.context.after)}…</td>
+    <td><span class="pill ${a.label_type==='VALUE'?'warn':''}">${a.label_type}</span><div class="small muted">${a.method}${a.engine?' · '+a.engine:''}</div></td>
+    <td>${esc(a.concept||'')}${v?`<div class="mono small">${esc(v)}</div>`:''}</td><td class="num">${a.confidence??''}</td>
+    <td class="small"><a href="#" onclick="openChunk('${a.chunk_id}');return false">${esc(a.file_name)}</a></td>
+    <td class="row" style="flex-wrap:nowrap">${st==='pending'||st==='auto'?`<button class="btn sm ok" onclick="rv('${a.ann_id}','accepted')">승인</button><button class="btn sm bad" onclick="rv('${a.ann_id}','rejected')">거절</button>`:''}</td></tr>`}).join('')
+    : '<tr><td colspan="6"><div class="empty">검토할 라벨이 없습니다. 자료함에서 “AI 라벨”을 실행하면 수치 라벨이 여기로 옵니다.</div></td></tr>';
+}
+$('#rvStatus').onchange = loadReview;
+async function rv(id, status){
+  const r = await api('/api/annotations/'+id,{method:'POST', body:{status}});
+  $('#rv-'+id)?.remove(); refreshPending();
+  toast(status==='accepted' ? (r.measurement_id?'승인 — 측정값 표에 올렸습니다':'승인했습니다') : '거절했습니다');
+}
+
+// ---------- 측정값
+let MROWS=[];
+async function loadMeas(){
+  const p = new URLSearchParams({byproduct:$('#mBp').value, target:$('#mTg').value, project:$('#mAll').checked?'':S.project});
+  MROWS = await api('/api/measurements?'+p);
+  const ENT = {coa:'CoA', extracted:'추출(승인)', manual:'직접'};
+  $('#mRows').innerHTML = MROWS.length ? MROWS.map(m => `<tr><td>${esc(m.byproduct||'—')}</td><td>${esc(m.target_text)}${m.target&&m.target!==m.target_text?`<div class="small muted">${esc(m.target)}</div>`:''}</td>
+    <td class="num">${esc(m.value ?? m.value_text)}</td><td>${esc(m.unit_text||'')}</td><td>${esc(m.basis||'')}</td><td>${esc(m.pretreatment||'')}</td>
+    <td class="small">${esc(m.method_text||'')}</td><td class="small">${esc(m.sample||'')}${m.lot_no?`<div class="muted">${esc(m.lot_no)} · ${esc(m.supplier||'')}</div>`:''}</td>
+    <td><span class="pill ${m.entry==='coa'?'bad':'ok'}">${ENT[m.entry]||m.entry}</span></td><td class="small">${esc(m.file_name||'')}</td></tr>`).join('')
+    : '<tr><td colspan="10"><div class="empty">측정값이 없습니다. CoA 엑셀을 넣거나, 라벨 검토에서 수치를 승인하세요.</div></td></tr>';
+}
+$('#mBtn').onclick = loadMeas; $('#mAll').onchange = loadMeas;
+$('#mCsv').onclick = () => {
+  const cols = ['byproduct','target_text','value','value_text','unit_text','basis','pretreatment','method_text','sample','lot_no','supplier','entry','file_name'];
+  const csv = '\ufeff' + [cols.join(',')].concat(MROWS.map(r => cols.map(c => `"${String(r[c]??'').replace(/"/g,'""')}"`).join(','))).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = '측정값.csv'; a.click();
+};
+
+// ---------- 개념
+async function loadOnto(){
+  const tree = await api('/api/concepts/tree');
+  const li = n => `<li><button class="${n.children.length&&!n.children[0].children.length?'':''}" onclick="cFind('${esc(n.label)}')">${esc(n.label)}</button>${n.children.length?`<ul>${n.children.map(li).join('')}</ul>`:''}</li>`;
+  $('#tree').innerHTML = '<ul>' + tree.map(s => `<li class="sec">${esc(s.label)}<ul style="font-weight:400">${s.children.map(li).join('')||'<li class="muted small">(비어 있음)</li>'}</ul></li>`).join('') + '</ul>';
+  if(!$('#cScheme').options.length || $('#cScheme').options.length===1){
+    ['부산물','분류','원물','공정','성분','물성','단위','시험법','용도'].forEach(s=>$('#cScheme').insertAdjacentHTML('beforeend',`<option>${s}</option>`));
+  }
+  loadConcepts();
+}
+function cFind(t){ $('#cQ').value=t; loadConcepts() }
+async function loadConcepts(){
+  const p = new URLSearchParams({q:$('#cQ').value, scheme:$('#cScheme').value, origin:$('#cOrigin').value});
+  const rows = await api('/api/concepts?'+p);
+  $('#cRows').innerHTML = rows.map(c => `<tr><td><b>${esc(c.pref_label_ko)}</b>${c.pref_label_en?`<div class="small muted">${esc(c.pref_label_en)}</div>`:''}</td>
+    <td style="white-space:nowrap"><span class="pill">${esc(c.scheme)}</span> <span class="pill ${c.origin}">${c.origin==='seed'?'시드':'내 확장'}</span>${c.status!=='active'?' <span class="pill warn">제안</span>':''}</td>
+    <td class="small">${esc(c.alts||'')}</td><td class="num">${c.uses}</td>
+    <td>${c.status==='proposed'?`<button class="btn sm ok" onclick="approve('${c.concept_id}')">승인</button>`:''}</td></tr>`).join('') || '<tr><td colspan="5"><div class="empty">없음</div></td></tr>';
+}
+let cT; $('#cQ').oninput = () => {clearTimeout(cT); cT=setTimeout(loadConcepts,250)};
+$('#cScheme').onchange = loadConcepts; $('#cOrigin').onchange = loadConcepts;
+async function approve(id){ await api(`/api/concepts/${id}/approve`,{method:'POST'}); toast('승인 — 검색·라벨링에 바로 쓰입니다'); loadConcepts() }
+$('#cAdd').onclick = () => {
+  $('#dlgT').textContent = '개념 추가 (내 확장)';
+  $('#dlgB').innerHTML = `<div class="kv" style="align-items:center"><b>표준명</b><input class="inp" id="naL" placeholder="예: 사과 씨">
+    <b>체계</b><select class="inp" id="naS">${['부산물','원물','공정','성분','물성','단위','시험법','용도'].map(s=>`<option>${s}</option>`).join('')}</select>
+    <b>동의어</b><input class="inp" id="naA" placeholder="쉼표로 구분 (예: apple seed, 사과씨)">
+    <b>상위 개념</b><input class="inp" id="naB" placeholder="선택 (예: 과실 착즙박)"><b>정의</b><input class="inp" id="naD"></div>
+    <div class="row" style="margin-top:12px"><span class="grow small muted">내 확장은 ontology/mine.ttl에 쌓이고 표준 시드는 바뀌지 않습니다.</span><button class="btn primary" id="naGo">추가</button></div>`;
+  dlg.showModal();
+  $('#naGo').onclick = async () => {
+    const r = await api('/api/concepts',{method:'POST', body:{label:$('#naL').value, scheme:$('#naS').value, alt_labels:$('#naA').value.split(',').map(s=>s.trim()).filter(Boolean), broader:$('#naB').value||null, definition:$('#naD').value||null}});
+    if(r.error||r.exists){toast(r.error||r.note);return} dlg.close(); toast('추가했습니다'); $('#cOrigin').value='mine'; loadConcepts();
+  };
+};
+
+// ---------- AI에 묻기
+$('#askBtn').onclick = async () => {
+  const q = $('#askQ').value.trim(); if(!q) return;
+  const role = $('#askRole').value;
+  $('#askBtn').disabled = true; $('#askState').textContent = 'Claude Code가 자료를 찾는 중…'; $('#askOut').hidden = true;
+  const t0 = Date.now();
+  try{
+    const job = await waitJob(await api('/api/ask',{method:'POST', body:{prompt:q, project:S.project, role, write:role==='report_writer'}}),
+      () => $('#askState').textContent = `Claude Code가 자료를 찾는 중… ${Math.round((Date.now()-t0)/1000)}초`);
+    const r = job.result||{};
+    $('#askOut').hidden = false;
+    $('#askAns').textContent = r.ok ? r.result : ('실패: ' + (r.error || job.error || '알 수 없음'));
+    $('#askMeta').textContent = r.ok ? `${Math.round((r.duration_ms||0)/1000)}초 · ${r.num_turns||'?'}턴 · 세션 ${r.session_id||''}` : '설정 → 연결 점검으로 Claude Code 상태를 확인하세요.';
+    if(role==='report_writer') loadReports();
+  } finally { $('#askBtn').disabled = false; $('#askState').textContent = '' }
+};
+async function loadReports(){
+  const rs = await api('/api/reports');
+  $('#rpRows').innerHTML = rs.length ? rs.map(r=>`<tr class="click" onclick="openReport('${r.report_id}')"><td><b>${esc(r.title)}</b></td><td class="num">${r.citations}</td><td><span class="pill">${r.status==='draft'?'초안':r.status}</span></td><td class="small muted">${esc(r.created_at)}</td></tr>`).join('')
+    : '<tr><td colspan="4"><div class="empty">아직 초안이 없습니다. “리포트 작성자”로 물어보세요.</div></td></tr>';
+}
+async function openReport(id){
+  const r = await api('/api/reports/'+id);
+  $('#dlgT').textContent = r.title;
+  $('#dlgB').innerHTML = `<div class="answer">${esc(r.body_md)}</div><h4>근거</h4><ol class="small">${r.citations.map(c=>`<li>${esc(c.claim_text)} ${c.chunk_id?`<a href="#" onclick="openChunk('${c.chunk_id}');return false">원문</a>`:'(측정값)'}</li>`).join('')}</ol>`;
+  dlg.showModal();
+}
+
+// ---------- 설정
+async function loadSettings(){
+  S.settings = await api('/api/settings');
+  $$('input[name=coa]').forEach(r => r.checked = r.value===S.settings.coa_rule);
+  $('#setWatch').checked = !!S.settings.watch_inbox; $('#setTimeout').value = S.settings.claude_timeout_sec;
+  const sep = S.home.includes('\\') ? '\\' : '/';
+  $('#paths').innerHTML = [['데이터 폴더',''],['받은편지함','inbox'],['자료함','library'],['DB','db'+sep+'rd.sqlite'],['온톨로지','ontology'],['MCP 설정','config'+sep+'mcp.json'],['에이전트 지침','agents']]
+    .map(([k,p]) => `<b>${k}</b><code>${esc(S.home + (p?sep+p:''))}</code>`).join('');
+  const e = await api('/api/engines/check');
+  const c = e.claude.cli;
+  $('#engInfo').innerHTML = `<b>Claude Code</b><span>${c.installed?`<span class="pill ok">설치됨</span> <span class="mono small">${esc(c.version||'')}</span>`:`<span class="pill bad">찾지 못함</span> <span class="small">${esc(c.message||'')}</span>`}</span>
+    ${c.path?`<b>경로</b><code>${esc(c.path)}</code>`:''}<b>MCP 설정</b><code>${esc(e.claude.mcp_config)}</code>
+    <b>Codex</b><span>${e.codex.cli.installed?`<span class="pill">설치됨</span> <span class="small muted">2단계에서 연결</span>`:'<span class="small muted">없음 (보조 엔진이라 없어도 됨)</span>'}</span>`;
+  $('#engDot').className = 'dot ' + (c.installed?'ok':'bad');
+}
+$$('input[name=coa]').forEach(r => r.onchange = async () => { await api('/api/settings',{method:'POST', body:{coa_rule:r.value}}); toast('CoA 규칙을 바꿨습니다') });
+$('#engCheck').onclick = loadSettings;
+$('#engSmoke').onclick = async () => {
+  $('#smokeOut').textContent = 'Claude Code에 도구 호출을 시켜 보는 중… (최대 3분)';
+  const job = await waitJob(await api('/api/engines/check?smoke=true'));
+  const r = job.result||{}, s = r.smoke||{};
+  $('#smokeOut').innerHTML = s.passed ? `<span class="pill ok">통과</span> 도구 호출 확인 — 답: “${esc(s.answer)}” (${Math.round((s.duration_ms||0)/1000)}초)`
+    : `<span class="pill bad">실패</span> ${esc(s.answer||r.cli?.message||job.error||'')}<br>${esc(r.hint||'')}`;
+};
+$('#setSave').onclick = async () => {
+  S.settings = await api('/api/settings',{method:'POST', body:{default_project:$('#setProj').value, watch_inbox:$('#setWatch').checked, claude_timeout_sec:+$('#setTimeout').value}});
+  toast('저장했습니다');
+};
+$('#newProj').onclick = async () => {
+  const name = prompt('새 프로젝트 이름'); if(!name) return;
+  await api('/api/projects',{method:'POST', body:{name}}); S.project = name; await loadProjects(); toast(`'${name}' 프로젝트를 만들었습니다`);
+};
+
+boot().catch(e => toast('서버에 연결하지 못했습니다: '+e.message));
+setInterval(() => { if($('#v-library').classList.contains('active')) loadDocs().catch(()=>{}) }, 8000);
+</script>
+</body>
+</html>

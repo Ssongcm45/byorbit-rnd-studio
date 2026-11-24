@@ -1,0 +1,134 @@
+"""표준 시드: 농·임·수산 부산물 분류 골격 + 사과박 상세 + 기본 시소러스.
+
+이 파일이 표준 시드의 원본이다. 초기화할 때 DB에 적재하고 ontology/seed.ttl로도 내보낸다.
+연구원이 추가하는 개념은 '내 확장'(origin=mine)으로 따로 쌓이고 이 파일은 바꾸지 않는다.
+"""
+
+# 대분류 → 중분류 → 소분류(부산물 id)
+TAXONOMY = [
+    ("agri", "농업", "Agricultural byproduct", [
+        ("agri-fruit", "과실 착즙박", ["apple-pomace", "pear-pomace", "grape-pomace", "citrus-peel"]),
+        ("agri-grain", "곡류·양조 부산물", ["rice-husk", "rice-bran", "bsg", "distillers"]),
+        ("agri-veg", "채소·두류·특작", ["cabbage-leaf", "onion-peel", "okara", "ginseng-residue"]),
+        ("agri-proc", "식품가공 부산물", ["scg"]),
+        ("agri-res", "작물 잔사", ["rice-straw", "corn-stover"]),
+    ]),
+    ("forest", "임업", "Forestry byproduct", [
+        ("for-saw", "제재 부산물", ["sawdust", "bark", "wood-chip"]),
+        ("for-bio", "미이용 산림바이오매스", ["thinning", "branches"]),
+        ("for-proc", "임산물 가공", ["chestnut-shell", "pine-cone", "sms"]),
+    ]),
+    ("fish", "수산", "Fishery byproduct", [
+        ("fish-shell", "패각", ["oyster-shell", "scallop-shell", "cockle-shell"]),
+        ("fish-crust", "갑각류", ["crab-shell", "shrimp-shell"]),
+        ("fish-proc", "어류 가공", ["fish-frame", "fish-skin", "fish-viscera"]),
+        ("fish-sea", "해조류", ["wakame-stem", "kelp-residue"]),
+    ]),
+    ("live", "축산", "Livestock byproduct", []),
+]
+
+# id: (한글명, 영문명, 동의어, 숨은 표기, 원물, 발생 공정, 주요 성분)
+BYPRODUCTS = {
+    "apple-pomace": ("사과박", "Apple pomace", ["사과 착즙박", "사과 포마스", "apple marc", "사과찌꺼기"], ["사과퍼미스"], "사과", "착즙", ["식이섬유", "펙틴", "폴리페놀", "당류"]),
+    "pear-pomace": ("배박", "Pear pomace", ["배 착즙박"], [], "배", "착즙", ["식이섬유", "폴리페놀"]),
+    "grape-pomace": ("포도박", "Grape pomace", ["포도 착즙박", "grape marc", "포도 찌꺼기"], [], "포도", "착즙", ["폴리페놀", "안토시아닌", "식이섬유"]),
+    "citrus-peel": ("감귤박", "Citrus peel", ["감귤피", "감귤 껍질", "citrus pomace", "귤껍질"], [], "감귤", "착즙", ["펙틴", "헤스페리딘", "정유"]),
+    "rice-husk": ("왕겨", "Rice husk", ["벼 껍질"], [], "벼", "도정", ["실리카", "셀룰로스", "리그닌"]),
+    "rice-bran": ("미강", "Rice bran", ["쌀겨"], [], "벼", "도정", ["미강유", "단백질", "식이섬유"]),
+    "bsg": ("맥주박", "Brewers' spent grain", ["맥주 부산물", "BSG"], [], "맥아", "양조", ["단백질", "식이섬유"]),
+    "distillers": ("주정박", "Distillers' grains", ["주정 부산물"], [], "곡류", "증류", ["단백질", "식이섬유"]),
+    "cabbage-leaf": ("배추 외엽", "Cabbage outer leaves", ["배추 겉잎"], [], "배추", "절임", ["식이섬유"]),
+    "onion-peel": ("양파 껍질", "Onion peel", ["양파 겉껍질"], [], "양파", "탈피", ["퀘르세틴", "식이섬유"]),
+    "okara": ("비지", "Okara", ["콩비지", "soybean curd residue"], [], "대두", "두부 제조", ["단백질", "식이섬유"]),
+    "ginseng-residue": ("홍삼박", "Red ginseng residue", ["홍삼 추출박"], [], "인삼", "추출", ["식이섬유", "사포닌"]),
+    "scg": ("커피박", "Spent coffee grounds", ["커피 찌꺼기", "SCG", "커피 부산물"], [], "커피", "추출", ["셀룰로스", "리그닌", "유지"]),
+    "rice-straw": ("볏짚", "Rice straw", ["짚"], [], "벼", "수확", ["셀룰로스", "리그닌"]),
+    "corn-stover": ("옥수수대", "Corn stover", ["옥수수 줄기"], [], "옥수수", "수확", ["셀룰로스", "헤미셀룰로스"]),
+    "sawdust": ("톱밥", "Sawdust", ["목분", "wood flour"], [], "목재", "제재", ["셀룰로스", "리그닌"]),
+    "bark": ("수피", "Bark", ["나무껍질"], [], "목재", "박피", ["리그닌", "탄닌"]),
+    "wood-chip": ("목재 칩", "Wood chips", ["목재칩"], [], "목재", "제재", ["셀룰로스"]),
+    "thinning": ("숲가꾸기 산물", "Forest thinning residue", ["간벌재"], [], "입목", "숲가꾸기", ["셀룰로스", "리그닌"]),
+    "branches": ("가지", "Branches", ["지조"], [], "입목", "벌채", ["셀룰로스"]),
+    "chestnut-shell": ("밤 껍질", "Chestnut shell", ["율피", "밤 겉껍질"], [], "밤", "탈각", ["탄닌", "폴리페놀"]),
+    "pine-cone": ("잣송이", "Pine nut cone", ["잣방울"], [], "잣", "탈각", ["리그닌"]),
+    "sms": ("버섯 수확후 배지", "Spent mushroom substrate", ["폐배지", "SMS"], [], "버섯 배지", "수확", ["셀룰로스"]),
+    "oyster-shell": ("굴 패각", "Oyster shell", ["굴껍데기", "굴 껍질"], [], "굴", "탈각", ["탄산칼슘"]),
+    "scallop-shell": ("가리비 패각", "Scallop shell", ["가리비 껍데기"], [], "가리비", "탈각", ["탄산칼슘"]),
+    "cockle-shell": ("꼬막 패각", "Cockle shell", ["꼬막 껍데기"], [], "꼬막", "탈각", ["탄산칼슘"]),
+    "crab-shell": ("게 껍질", "Crab shell", ["게 껍데기"], [], "게", "가공", ["키틴", "탄산칼슘", "단백질"]),
+    "shrimp-shell": ("새우 껍질", "Shrimp shell", ["새우 머리"], [], "새우", "박피", ["키틴", "아스타잔틴", "단백질"]),
+    "fish-frame": ("어류 머리·뼈", "Fish frame", ["어두", "어골"], [], "어류", "필렛팅", ["단백질", "칼슘"]),
+    "fish-skin": ("어피", "Fish skin", ["생선 껍질"], [], "어류", "필렛팅", ["콜라겐", "젤라틴"]),
+    "fish-viscera": ("어류 내장", "Fish viscera", ["생선 내장"], [], "어류", "손질", ["효소", "유지"]),
+    "wakame-stem": ("미역줄기", "Wakame stem", ["미역 줄기"], [], "미역", "가공", ["알긴산", "식이섬유"]),
+    "kelp-residue": ("다시마 가공 잔사", "Kelp processing residue", ["다시마 부산물"], [], "다시마", "추출", ["알긴산", "식이섬유"]),
+}
+
+# 체계: [(한글 표준명, 영문, [동의어...])]
+THESAURUS = {
+    "공정": [
+        ("동결건조", "Freeze drying", ["freeze-drying", "freeze-dried", "동결 건조", "FD"]),
+        ("열풍건조", "Hot-air drying", ["hot-air drying", "hot air drying", "열풍 건조", "HAD"]),
+        ("진공건조", "Vacuum drying", ["vacuum drying", "vacuum-dried", "진공 건조"]),
+        ("열수 추출", "Hot water extraction", ["hot water extraction", "열수추출"]),
+        ("소성", "Calcination", ["calcination", "하소"]),
+        ("분쇄", "Milling", ["milling", "grinding", "미분쇄"]),
+        ("발효", "Fermentation", ["fermentation"]),
+        ("성형", "Molding", ["molding", "moulding"]),
+        ("착즙", "Juicing", ["juice extraction", "압착"]),
+    ],
+    "성분": [
+        ("식이섬유", "Dietary fiber", ["dietary fiber", "dietary fibre", "TDF", "총식이섬유", "총 식이섬유"]),
+        ("펙틴", "Pectin", ["pectin"]),
+        ("폴리페놀", "Polyphenol", ["총페놀", "총 페놀", "총폴리페놀", "total phenolic content", "TPC", "polyphenol", "polyphenols"]),
+        ("키틴", "Chitin", ["chitin"]),
+        ("탄산칼슘", "Calcium carbonate", ["calcium carbonate", "CaCO3"]),
+        ("산화칼슘", "Calcium oxide", ["calcium oxide", "CaO", "생석회"]),
+        ("셀룰로스", "Cellulose", ["cellulose", "셀룰로오스"]),
+        ("리그닌", "Lignin", ["lignin"]),
+        ("단백질", "Protein", ["protein", "조단백"]),
+        ("콜라겐", "Collagen", ["collagen"]),
+    ],
+    "물성": [
+        ("수분", "Moisture", ["moisture", "moisture content", "수분 함량"]),
+        ("보수력", "Water holding capacity", ["WHC", "water holding capacity", "water-holding capacity"]),
+        ("회분", "Ash", ["ash", "조회분"]),
+        ("입도", "Particle size", ["particle size", "입자 크기"]),
+        ("수율", "Yield", ["yield"]),
+    ],
+    "단위": [
+        ("g/100 g", "g/100 g", ["g/100g"]),
+        ("mg GAE/g", "mg GAE/g", ["mgGAE/g"]),
+        ("mg/g", "mg/g", []),
+        ("g/g", "g/g", []),
+        ("%", "percent", ["wt%"]),
+        ("℃", "degree Celsius", ["°C"]),
+        ("µm", "micrometre", ["um", "μm"]),
+    ],
+    "시험법": [
+        ("AOAC 991.43", "AOAC 991.43", []),
+        ("상압가열건조법", "Oven drying method", ["상압 가열 건조법"]),
+        ("Folin-Ciocalteu법", "Folin-Ciocalteu method", ["Folin-Ciocalteu", "폴린-시오칼토법"]),
+    ],
+    "용도": [
+        ("식품소재", "Food ingredient", ["식품 소재", "food ingredient"]),
+        ("비건가죽", "Vegan leather", ["비건 가죽", "vegan leather", "식물성 가죽"]),
+        ("화장품 원료", "Cosmetic ingredient", ["cosmetic ingredient"]),
+        ("바이오플라스틱 필러", "Bioplastic filler", ["바이오복합재 필러", "biocomposite filler"]),
+        ("사료", "Feed", ["feed", "animal feed"]),
+        ("토양개량제", "Soil conditioner", ["soil conditioner"]),
+    ],
+}
+
+# 체계 → 온톨로지 클래스 / 라벨 종류
+SCHEME_CLASS = {
+    "부산물": ("Byproduct", "부산물", "BYPRODUCT"),
+    "분류": ("Category", "분류", None),
+    "원물": ("SourceCommodity", "원물", "COMMODITY"),
+    "공정": ("Process", "공정", "PROCESS"),
+    "성분": ("Constituent", "성분", "CONSTITUENT"),
+    "물성": ("Property", "물성", "PROPERTY"),
+    "단위": ("Unit", "단위", "UNIT"),
+    "시험법": ("Method", "시험법", "METHOD"),
+    "용도": ("Application", "용도", "APPLICATION"),
+}

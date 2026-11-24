@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 로컬 데이터는 저장소 밖(BYORBIT_HOME)에 둔다 — 실수로 들어오지 않게
+*.sqlite
+.env*
+
+# OS
+Thumbs.db
+.DS_Store
