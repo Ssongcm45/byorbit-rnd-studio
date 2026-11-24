@@ -236,6 +236,17 @@ code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:
       <h2>데이터 폴더</h2><p class="sub">모든 자료와 DB는 이 PC의 이 폴더에만 있습니다. 백업은 폴더째 복사하면 됩니다.</p>
       <div class="kv" id="paths"></div>
     </div>
+    <div class="card">
+      <h2>식품 영양 DB 연결 (ByOrbit Food MCP)</h2><p class="sub">켜면 AI가 농진청 원물·식약처 식품 성분 DB를 참고 기준값으로 함께 조회합니다. 읽기 전용 도구 12개만 허용합니다.</p>
+      <div class="kv" style="align-items:center">
+        <b>식품 DB 쓰기</b><label><input type="checkbox" id="foodOn"> 켜기</label>
+        <b>Food MCP 폴더</b><input class="inp" id="foodDir" placeholder="비우면 자동으로 찾습니다">
+      </div>
+      <div class="kv" id="foodInfo" style="margin-top:10px"><b>상태</b><span>확인 중…</span></div>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="foodSave">저장</button><button class="btn" id="foodCheck">연결 점검</button></div>
+      <p class="small muted" id="foodOut" style="margin:8px 0 0"></p>
+      <p class="small muted" style="margin:6px 0 0">식품 도구에는 식품명과 성분값만 넘어가며, 질의는 Food MCP의 Neon DB로 갑니다. extract_label_table(파일·URL 읽기)은 보안상 막혀 있습니다.</p>
+    </div>
   </div>
 </div></section>
 </main>
@@ -495,6 +506,17 @@ async function loadSettings(){
     ${c.path?`<b>경로</b><code>${esc(c.path)}</code>`:''}<b>MCP 설정</b><code>${esc(e.claude.mcp_config)}</code>
     <b>Codex</b><span>${e.codex.cli.installed?`<span class="pill">설치됨</span> <span class="small muted">2단계에서 연결</span>`:'<span class="small muted">없음 (보조 엔진이라 없어도 됨)</span>'}</span>`;
   $('#engDot').className = 'dot ' + (c.installed?'ok':'bad');
+  renderFood(e.food||{});
+}
+function renderFood(f){
+  $('#foodOn').checked = !!S.settings.food_mcp; $('#foodDir').value = S.settings.food_mcp_dir||'';
+  $('#foodDir').placeholder = f.dir ? `비우면 자동: ${f.dir}` : '04_byorbit-agent 폴더 경로 (안에 mcp 폴더가 있는 곳)';
+  const yn = (v, ok, no) => v ? `<span class="pill ok">${ok}</span>` : `<span class="pill bad">${no}</span>`;
+  $('#foodInfo').innerHTML = `<b>상태</b><span>${f.active?'<span class="pill ok">켜짐</span>':f.ready?'<span class="pill">꺼짐 · 준비됨</span>':'<span class="pill warn">준비 안 됨</span>'} <span class="small">${esc(f.message||'')}</span></span>
+    <b>폴더</b>${f.dir?`<code>${esc(f.dir)}</code>`:'<span class="small muted">찾지 못함</span>'}
+    <b>Node.js</b><span>${yn(f.node,'있음','없음')} ${f.node?`<span class="mono small">${esc(f.node)}</span>`:''}</span>
+    <b>서버 파일</b><span>${yn(f.script_exists,'있음','없음')} <span class="mono small">mcp/food-db-server.mjs</span></span>
+    <b>.env.local</b><span>${yn(f.env_local_exists,'있음','없음')} <span class="small muted">DATABASE_URL — 내용은 이 앱이 읽지 않습니다</span></span>`;
 }
 $$('input[name=coa]').forEach(r => r.onchange = async () => { await api('/api/settings',{method:'POST', body:{coa_rule:r.value}}); toast('CoA 규칙을 바꿨습니다') });
 $('#engCheck').onclick = loadSettings;
@@ -508,6 +530,21 @@ $('#engSmoke').onclick = async () => {
 $('#setSave').onclick = async () => {
   S.settings = await api('/api/settings',{method:'POST', body:{default_project:$('#setProj').value, watch_inbox:$('#setWatch').checked, claude_timeout_sec:+$('#setTimeout').value}});
   toast('저장했습니다');
+};
+$('#foodSave').onclick = async () => {
+  try {
+    S.settings = await api('/api/settings',{method:'POST', body:{food_mcp:$('#foodOn').checked, food_mcp_dir:$('#foodDir').value.trim()}});
+    const e = await api('/api/engines/check'); renderFood(e.food||{});
+    toast(e.food?.active ? '식품 DB를 켰습니다. 다음 AI 실행부터 붙습니다' : '저장했습니다');
+  } catch(err) { toast(err.message) }
+};
+$('#foodCheck').onclick = async () => {
+  $('#foodOut').textContent = 'Food MCP 서버를 띄워 도구 목록을 받는 중… (최대 30초)';
+  const job = await waitJob(await api('/api/engines/food/check',{method:'POST'}));
+  const r = job.result||{};
+  $('#foodOut').innerHTML = r.ok
+    ? `<span class="pill ok">통과</span> 도구 ${r.tools.length}개 확인 (${Math.round((r.duration_ms||0)/100)/10}초)${r.missing?.length?` — <span class="pill warn">없는 도구</span> ${esc(r.missing.join(', '))}`:''}`
+    : `<span class="pill bad">실패</span> ${esc(r.error||job.error||'')}`;
 };
 $('#newProj').onclick = async () => {
   const name = prompt('새 프로젝트 이름'); if(!name) return;

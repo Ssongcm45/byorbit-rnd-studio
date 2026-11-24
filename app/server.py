@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, db, engines, search as _search, thesaurus, tools
-from .engines import claude_code
+from .engines import claude_code, food_mcp
 from .ingest import parsers, pipeline, watcher
 
 STATIC = Path(__file__).with_name("static")
@@ -76,6 +76,8 @@ class SettingsIn(BaseModel):
     coa_rule: str | None = None
     watch_inbox: bool | None = None
     claude_timeout_sec: int | None = None
+    food_mcp: bool | None = None
+    food_mcp_dir: str | None = None
 
 
 @app.get("/api/settings")
@@ -92,14 +94,27 @@ def set_settings(s: SettingsIn):
         raise HTTPException(400, "engine은 claude 또는 codex")
     if "default_project" in upd:
         db.ensure_project(upd["default_project"])
-    return config.save_settings(upd)
+    if "food_mcp_dir" in upd:
+        d = upd["food_mcp_dir"] = upd["food_mcp_dir"].strip().strip('"')
+        if d and not Path(d).expanduser().joinpath("mcp", "food-db-server.mjs").is_file():
+            raise HTTPException(400, f"'{d}'에 mcp\\food-db-server.mjs가 없습니다. "
+                                     "04_byorbit-agent 폴더(그 안에 mcp 폴더가 있는 곳)의 경로를 넣거나, 비워 두면 자동으로 찾습니다.")
+    saved = config.save_settings(upd)
+    claude_code.write_mcp_config()  # 식품 DB 켜기·끄기를 MCP 설정에 바로 반영
+    return saved
 
 
 @app.get("/api/engines/check")
 def engines_check(smoke: bool = False):
     if smoke:
         return _job("check", claude_code.check, smoke=True)
-    return {"claude": claude_code.check(smoke=False), "codex": engines.codex.check()}
+    return {"claude": claude_code.check(smoke=False), "codex": engines.codex.check(), "food": food_mcp.status()}
+
+
+@app.post("/api/engines/food/check")
+def food_check():
+    """식품 DB 서버를 띄워 도구 목록까지 받아 본다(백그라운드 작업). DB 조회는 하지 않는다."""
+    return _job("food-check", food_mcp.check)
 
 
 # ---------------------------------------------------------------- 프로젝트

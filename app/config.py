@@ -19,6 +19,8 @@ DEFAULT_SETTINGS = {
     "watch_inbox": True,
     "port": 8765,
     "claude_timeout_sec": 600,
+    "food_mcp": False,             # 식품 영양 DB(ByOrbit Food MCP)를 Claude Code 실행에 붙일지
+    "food_mcp_dir": "",            # 비우면 BYORBIT_FOOD_MCP_DIR → 옆 폴더 04_byorbit-agent 순서로 찾는다
 }
 
 SUBDIRS = ["inbox", "library", "ontology", "agents", "db", "reports", "exports", "config", "logs"]

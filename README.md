@@ -26,7 +26,7 @@
 | 측정값 | CoA에서 읽은 값과 승인한 추출값을 봅니다. CSV로 저장할 수 있습니다. |
 | 개념 | 부산물 분류 트리(표준 시드)와 동의어를 보고, 내 확장 개념을 추가합니다. |
 | AI에 묻기 | Claude Code가 자료를 찾아 출처를 달아 답합니다. "리포트 작성자"를 고르면 근거 번호가 달린 초안을 `reports` 폴더에 저장합니다. |
-| 설정 | 엔진 상태, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더 경로를 다룹니다. |
+| 설정 | 엔진 상태, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더 경로, 식품 영양 DB 연결을 다룹니다. |
 
 **받은편지함**: 데이터 폴더의 `inbox`에 파일을 넣으면 자동으로 처리되어 `library\<프로젝트>\`로 옮겨집니다. `inbox\<프로젝트명>\`에 넣으면 그 프로젝트로 들어갑니다.
 
@@ -53,6 +53,8 @@ Claude Code를 쓰는 순간에는 질문과 도구가 돌려준 본문 일부�
 | 보내지 않기 | 기밀(CoA) 본문과 측정값을 전혀 넘기지 않습니다. |
 
 Claude Code에는 이 앱의 도구 7개만 허용하고, 파일 읽기를 포함한 내장 도구(셸·파일 읽기/수정·웹·하위 에이전트)는 모두 없애고 실행합니다(`--tools ""`, `--strict-mcp-config`, `--allowedTools`, `--disallowedTools`). 그래서 Claude Code가 `library\`의 원본 파일을 직접 읽어 가림을 우회할 수 없습니다.
+
+식품 영양 DB 연결을 켜면 식품 도구 12개(읽기 전용)가 더해지고, 식품명·성분값이 Food MCP의 Neon DB로 질의됩니다. 파일·URL을 읽는 `extract_label_table`은 늘 막습니다(아래 "식품 영양 DB 연결" 참고).
 
 기밀 자료는 본문뿐 아니라 파일명·제목·섹션 제목도 가립니다. 파일명은 `기밀자료-xxxxxx.확장자`로 바꿔 넘기고, 근거는 chunk_id로 남으므로 내 화면에서는 원래 파일명이 보입니다.
 
@@ -82,6 +84,26 @@ claude --mcp-config "%USERPROFILE%\ByOrbit-RD\config\mcp.json"
 
 도구는 `search_chunks`, `get_chunk`, `lookup_concept`, `query_measurements`, `save_annotations`, `save_report_draft`, `propose_concept`입니다.
 
+## 식품 영양 DB 연결 (선택)
+
+옆 프로젝트 `04_byorbit-agent`의 **ByOrbit Food MCP**(농진청 원물·식약처 식품 성분 DB)를 Claude Code 실행에 함께 붙일 수 있습니다. 켜면 AI가 부산물의 측정 성분을 원물 기준값과 견주거나(`search_food`·`get_food`·`compare_foods`), 주장된 영양 성분 값을 확인하고(`verify_nutrition`), 표시 기준을 볼 수 있습니다(`nutrition_analysis`·`verify_food_claim`). 식품 DB 값은 참고 기준값이므로 답변에서 "식품 DB(출처명)"로 자료 근거와 따로 표시합니다.
+
+**켜는 법**
+
+- 앱의 **설정 → 식품 영양 DB 연결**에서 "켜기"를 체크하고 저장합니다. "연결 점검"으로 서버가 도구 목록을 내주는지 확인합니다(DB 조회는 하지 않습니다).
+- 폴더는 비워 두면 이 저장소 옆의 `04_byorbit-agent`를 자동으로 찾습니다. 다른 곳에 있으면 화면에서 경로를 넣거나 환경 변수 `BYORBIT_FOOD_MCP_DIR`를 지정합니다.
+- `settings.json`에서 직접 바꿀 수도 있습니다: `"food_mcp": true`, `"food_mcp_dir": ""`.
+
+**필요한 것**
+
+- Node.js(`node`가 PATH에 있거나 환경 변수 `BYORBIT_NODE`에 경로 지정)
+- `04_byorbit-agent` 폴더에 `npm install`로 `node_modules`가 설치되어 있을 것
+- 그 폴더의 `.env.local`에 `DATABASE_URL`(Neon Postgres). 이 앱은 그 파일을 읽지 않으며, `mcp.json`에도 시크릿을 넣지 않습니다. 서버가 자기 `.env.local`을 직접 읽습니다.
+
+**무엇이 PC 밖으로 나가나**: 식품 도구를 부를 때 식품명과 성분값이 Food MCP의 Neon DB로 질의됩니다. AI 지침은 `[가림]` 표시·로트번호·공급처·시료번호를 식품 도구 인자에 넣지 말라고 정해 둡니다. CoA 규칙이 "보내지 않기"이면 기밀 수치가 처음부터 Claude에게 보이지 않으므로 식품 DB로도 나갈 수 없습니다.
+
+**막아 둔 도구**: Food MCP의 `extract_label_table`은 로컬 파일 경로나 URL을 받아 읽습니다. 이것을 열면 내장 파일 읽기를 없앤 방어가 우회되어 `library\`의 기밀 원본을 가림 없이 읽을 수 있으므로, 허용 목록에서 빼고 켜짐 여부와 관계없이 `--disallowedTools`에 늘 넣습니다. 허용하는 식품 도구는 읽기 전용 12개입니다.
+
 ## 명령줄
 
 ```
@@ -105,11 +127,11 @@ app\
   ingest\           parsers · chunker · coa · pipeline · watcher
   tools.py          MCP 도구 (가림·검토 대기 규칙 포함)
   mcp_server.py     MCP 서버 byorbit-rd (stdio)
-  engines\          claude_code(기본) · codex(2단계)
+  engines\          claude_code(기본) · food_mcp(식품 영양 DB, 선택) · codex(2단계)
   server.py         FastAPI
   static\index.html 화면
 agents\             라벨러·사서·성분 분석가·검증자·리포트 작성자 지침
-tests\test_m1.py    시험 29개
+tests\test_m1.py    시험 38개
 ```
 
 ## 시험
@@ -119,7 +141,7 @@ tests\test_m1.py    시험 29개
 .venv\Scripts\python -m pytest -q
 ```
 
-DB·시드, 4개 형식 투입, CoA 측정값, 중복 거절, 동의어 검색, 기밀 가림·차단, 라벨 저장 규칙, 리포트 근거 검사를 확인합니다. 실제 MCP 서버 프로세스와의 stdio 연결, Claude Code 명령 구성과 결과 해석(가짜 CLI), 웹 API도 함께 시험합니다.
+DB·시드, 4개 형식 투입, CoA 측정값, 중복 거절, 동의어 검색, 기밀 가림·차단, 라벨 저장 규칙, 리포트 근거 검사를 확인합니다. 실제 MCP 서버 프로세스와의 stdio 연결, Claude Code 명령 구성과 결과 해석(가짜 CLI), 식품 DB 연결(허용·차단 목록, 가짜 Food MCP 서버 점검), 웹 API도 함께 시험합니다.
 
 ## 다음 단계
 

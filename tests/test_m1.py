@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -421,3 +422,164 @@ def test_cli_init_and_search(home):
     p = subprocess.run([sys.executable, "-m", "app.cli", "search", "사과 착즙박"], cwd=ROOT, env=env,
                        capture_output=True, text=True, encoding="utf-8", timeout=60)
     assert p.returncode == 0 and "검색어 확장" in p.stdout
+
+
+# ---------------------------------------------------------------- 식품 영양 DB (ByOrbit Food MCP)
+
+FOOD_TOOL_PREFIX = "mcp__byorbit-food__"
+
+
+@pytest.fixture
+def food_dir(home, tmp_path, monkeypatch):
+    """가짜 Food MCP 폴더. 끝나면 설정을 늘 되돌린다(데이터 폴더를 세션 내내 같이 쓴다)."""
+    from app import config
+    from app.engines import food_mcp
+    d = tmp_path / "food-agent"
+    (d / "mcp").mkdir(parents=True)
+    (d / "mcp" / "food-db-server.mjs").write_text("// dummy\n", encoding="utf-8")
+    monkeypatch.setattr(food_mcp, "node_executable", lambda: "node")
+    try:
+        yield d
+    finally:
+        config.save_settings({"food_mcp": False, "food_mcp_dir": ""})
+
+
+def _capture_runner(seen):
+    def runner(cmd, **kw):
+        seen["cmd"] = cmd
+        if "--append-system-prompt-file" in cmd:
+            seen["role"] = Path(cmd[cmd.index("--append-system-prompt-file") + 1]).read_text(encoding="utf-8")
+        return FakeProc(json.dumps({"type": "result", "is_error": False, "result": "ok", "session_id": "s"}))
+    return runner
+
+
+def _mcp_cfg(cmd):
+    return json.loads(Path(cmd[cmd.index("--mcp-config") + 1]).read_text(encoding="utf-8"))
+
+
+def test_food_off_by_default(home, monkeypatch):
+    from app import config
+    from app.engines import claude_code, food_mcp
+    monkeypatch.setattr(claude_code, "executable", lambda: "claude")
+    config.save_settings({"food_mcp": False, "food_mcp_dir": ""})
+    seen = {}
+    assert claude_code.run("Q", role="librarian", runner=_capture_runner(seen))["ok"]
+    cmd = seen["cmd"]
+    assert list(_mcp_cfg(cmd)["mcpServers"]) == ["byorbit-rd"]
+    assert not any(a.startswith(FOOD_TOOL_PREFIX) for a in cmd[cmd.index("--allowedTools") + 1].split(","))
+    # 꺼져 있어도 파일·URL을 읽는 도구는 차단 목록에 있다
+    assert FOOD_TOOL_PREFIX + "extract_label_table" in cmd[cmd.index("--disallowedTools") + 1].split(",")
+    assert food_mcp.GUIDE not in seen["role"]
+
+
+def test_food_active_command(food_dir, monkeypatch):
+    from app import config
+    from app.engines import claude_code, food_mcp
+    monkeypatch.setattr(claude_code, "executable", lambda: "claude")
+    config.save_settings({"food_mcp": True, "food_mcp_dir": str(food_dir)})
+    st = food_mcp.status()
+    assert st["active"] and st["script_exists"] and not st["env_local_exists"]
+    seen = {}
+    assert claude_code.run("Q", role="librarian", runner=_capture_runner(seen))["ok"]
+    cmd = seen["cmd"]
+    food = _mcp_cfg(cmd)["mcpServers"]["byorbit-food"]
+    assert food["command"] == "node"
+    assert food["args"] == [str((food_dir / "mcp" / "food-db-server.mjs").resolve())]
+    assert food["env"] == {}  # 시크릿은 넣지 않는다
+    allowed = cmd[cmd.index("--allowedTools") + 1].split(",")
+    assert {FOOD_TOOL_PREFIX + n for n in food_mcp.TOOLS} <= set(allowed)
+    assert len([a for a in allowed if a.startswith(FOOD_TOOL_PREFIX)]) == 12
+    assert FOOD_TOOL_PREFIX + "extract_label_table" not in allowed
+    blocked = cmd[cmd.index("--disallowedTools") + 1].split(",")
+    assert FOOD_TOOL_PREFIX + "extract_label_table" in blocked
+    assert {"Bash", "Read", "Glob", "Grep", "Agent", "Task", "WebFetch"} <= set(blocked)
+    assert cmd[cmd.index("--tools") + 1] == ""
+    assert food_mcp.GUIDE in seen["role"]
+
+    # 스모크 점검(role 없음)에는 지침 파일이 붙지 않는다
+    seen2 = {}
+    claude_code.run("Q", role=None, runner=_capture_runner(seen2))
+    assert "--append-system-prompt-file" not in seen2["cmd"]
+
+    # 끄면 다음 실행부터 바로 빠진다(mcp.json을 매번 새로 쓴다)
+    config.save_settings({"food_mcp": False})
+    seen3 = {}
+    claude_code.run("Q", role="librarian", runner=_capture_runner(seen3))
+    assert "byorbit-food" not in _mcp_cfg(seen3["cmd"])["mcpServers"]
+    assert food_mcp.GUIDE not in seen3["role"]
+
+
+def test_food_guide_in_old_cli_fallback(food_dir, monkeypatch):
+    from app import config
+    from app.engines import claude_code, food_mcp
+    monkeypatch.setattr(claude_code, "executable", lambda: "claude")
+    config.save_settings({"food_mcp": True, "food_mcp_dir": str(food_dir)})
+    inputs = []
+
+    def runner(cmd, **kw):
+        inputs.append(kw["input"])
+        if "--append-system-prompt-file" in cmd:
+            return FakeProc("", 1, "error: unknown option '--append-system-prompt-file'")
+        return FakeProc(json.dumps({"type": "result", "is_error": False, "result": "ok", "session_id": "s"}))
+
+    assert claude_code.run("Q", role="librarian", runner=runner)["ok"]
+    assert food_mcp.GUIDE in inputs[-1] and inputs[-1].endswith("Q")
+
+
+FAKE_FOOD_SERVER = r"""
+import { createInterface } from 'node:readline'
+const send = m => process.stdout.write(JSON.stringify(m) + '\n')
+createInterface({ input: process.stdin }).on('line', line => {
+  const { id, method } = JSON.parse(line)
+  if (method === 'initialize') send({ jsonrpc: '2.0', id, result: { protocolVersion: '2025-06-18', capabilities: { tools: {} }, serverInfo: { name: 'fake', version: '0' } } })
+  else if (method === 'tools/list') send({ jsonrpc: '2.0', id, result: { tools: ['search_food', 'get_food', 'verify_nutrition', 'extract_label_table'].map(name => ({ name })) } })
+})
+"""
+
+FAKE_FOOD_SERVER_NO_DB = (
+    "process.stderr.write('[food-db] DATABASE_URL 미설정 — 서버를 시작할 수 없습니다.\\n')\n"
+    "process.exit(1)\n")
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
+def test_food_check_fake_server(food_dir, monkeypatch):
+    from app import config
+    from app.engines import food_mcp
+    monkeypatch.setattr(food_mcp, "node_executable", lambda: shutil.which("node"))
+    (food_dir / "mcp" / "food-db-server.mjs").write_text(FAKE_FOOD_SERVER, encoding="utf-8")
+    config.save_settings({"food_mcp_dir": str(food_dir)})
+    r = food_mcp.check(timeout=20)
+    assert r["ok"], r
+    assert {"search_food", "get_food", "verify_nutrition"} <= set(r["tools"])
+    assert "compare_foods" in r["missing"] and "search_food" not in r["missing"]
+    assert r["blocked"] == ["extract_label_table"]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node 없음")
+def test_food_check_server_exits(food_dir, monkeypatch):
+    from app import config
+    from app.engines import food_mcp
+    monkeypatch.setattr(food_mcp, "node_executable", lambda: shutil.which("node"))
+    (food_dir / "mcp" / "food-db-server.mjs").write_text(FAKE_FOOD_SERVER_NO_DB, encoding="utf-8")
+    config.save_settings({"food_mcp_dir": str(food_dir)})
+    r = food_mcp.check(timeout=20)
+    assert not r["ok"] and "DATABASE_URL" in r["error"], r
+
+
+def test_food_check_not_ready(home, monkeypatch):
+    from app.engines import food_mcp
+    monkeypatch.setattr(food_mcp, "resolve_dir", lambda: None)
+
+    def boom(*a, **k):
+        raise AssertionError("준비되지 않았으면 띄우지 않는다")
+
+    r = food_mcp.check(popen=boom)
+    assert not r["ok"] and "BYORBIT_FOOD_MCP_DIR" in r["error"]
+
+
+def test_api_food_settings(client, tmp_path):
+    r = client.post("/api/settings", json={"food_mcp_dir": str(tmp_path / "없는폴더")})
+    assert r.status_code == 400 and "food-db-server.mjs" in r.json()["detail"]
+    e = client.get("/api/engines/check").json()
+    assert {"enabled", "ready", "active", "message"} <= set(e["food"])
+    assert "food" in e["claude"]

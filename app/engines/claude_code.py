@@ -1,7 +1,7 @@
 """Claude Code CLI를 헤드리스(-p)로 불러 일을 맡긴다.
 
 이 PC에 설치되어 로그인된 Claude Code를 그대로 쓴다. 자료는 MCP 서버 'byorbit-rd'를 통해서만 읽고 쓰게 하고,
-파일 수정·셸·웹 도구는 막는다.
+파일 수정·셸·웹 도구는 막는다. 설정에서 켜면 식품 영양 DB 서버 'byorbit-food'의 읽기 전용 도구도 함께 붙인다.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 from .. import config, db
+from . import food_mcp
 
 SERVER = "byorbit-rd"
 READ_TOOLS = ["search_chunks", "get_chunk", "lookup_concept", "query_measurements"]
@@ -40,7 +41,8 @@ def mcp_config_path() -> Path:
 
 
 def write_mcp_config() -> Path:
-    """Claude Code가 띄울 MCP 서버 설정. 지금 쓰는 파이썬(가상환경)으로 app.mcp_server를 실행한다."""
+    """Claude Code가 띄울 MCP 서버 설정. 지금 쓰는 파이썬(가상환경)으로 app.mcp_server를 실행한다.
+    식품 DB가 켜져 있고 준비되었으면 byorbit-food도 넣는다(시크릿 없음 — 그 서버가 자기 .env.local을 읽는다)."""
     cfg = {"mcpServers": {SERVER: {
         "type": "stdio",
         "command": sys.executable,
@@ -48,6 +50,9 @@ def write_mcp_config() -> Path:
         "env": {"PYTHONPATH": str(config.APP_ROOT), "BYORBIT_HOME": str(config.data_home()),
                 "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
     }}}
+    food = food_mcp.server_config()
+    if food:
+        cfg["mcpServers"][food_mcp.SERVER] = food
     p = mcp_config_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -68,7 +73,12 @@ def version() -> dict:
 
 def allowed_tools(write: bool = True) -> list[str]:
     names = READ_TOOLS + (WRITE_TOOLS if write else [])
-    return [f"mcp__{SERVER}__{n}" for n in names]
+    return [f"mcp__{SERVER}__{n}" for n in names] + food_mcp.allowed_tools()
+
+
+def disallowed_tools() -> str:
+    # 식품 서버의 extract_label_table(파일·URL 읽기)은 켜짐 여부와 관계없이 늘 막는다
+    return ",".join([BLOCKED] + food_mcp.blocked_tools())
 
 
 def agent_instructions(role: str | None) -> str | None:
@@ -88,7 +98,7 @@ def build_command(exe: str, role_file: Path | None, write: bool, max_turns: int 
     if no_builtin_tools:
         cmd += ["--tools", ""]  # 내장 도구(파일 읽기 포함) 없음 — 자료는 MCP 도구로만
     cmd += ["--allowedTools", ",".join(allowed_tools(write)),
-            "--disallowedTools", BLOCKED]
+            "--disallowedTools", disallowed_tools()]
     if role_file:
         cmd += ["--append-system-prompt-file", str(role_file)]
     if max_turns:
@@ -106,10 +116,11 @@ def run(prompt: str, role: str | None = None, write: bool = True, max_turns: int
     exe = executable()
     if not exe:
         return {"ok": False, "error": "Claude Code를 찾지 못했습니다."}
-    if not mcp_config_path().exists():
-        write_mcp_config()
+    write_mcp_config()  # 매번 새로 쓴다 — 식품 DB 켜기·끄기 같은 설정 변경이 바로 반영되도록
     timeout = timeout or int(config.load_settings().get("claude_timeout_sec", 600))
     role_text = agent_instructions(role)
+    if role_text and food_mcp.active():
+        role_text = f"{role_text}\n\n{food_mcp.GUIDE}"
     role_file = None
     if role_text:
         role_file = config.path("config", f".role-{role}.md")
@@ -193,7 +204,8 @@ SMOKE_PROMPT = ("byorbit-rd 도구 lookup_concept을 term='사과 포마스'로 
 def check(smoke: bool = True, runner=subprocess.run) -> dict:
     """연결 점검: ① 설치·버전 ② MCP 설정 파일 ③ (선택) 실제로 도구를 불러 '사과박'을 받아오는지."""
     v = version()
-    res = {"engine": "claude", "cli": v, "mcp_config": str(write_mcp_config()), "smoke": None}
+    res = {"engine": "claude", "cli": v, "mcp_config": str(write_mcp_config()), "smoke": None,
+           "food": food_mcp.status()}
     if not v.get("installed") or not smoke:
         res["ok"] = bool(v.get("installed")) and not smoke
         return res
