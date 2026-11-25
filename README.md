@@ -1,4 +1,4 @@
-# ByOrbit R&D Studio 개인용 — 2단계(M2)
+# ByOrbit R&D Studio 개인용 — 3단계(M3)
 
 농·임·수산 부산물 연구 자료(논문·보고서·CoA)를 **내 PC에서** 모으고, 찾고, Claude Code에게 근거 있는 답을 받는 로컬 웹앱입니다.
 
@@ -26,6 +26,8 @@
 | 측정값 | CoA에서 읽은 값과 승인한 추출값을 봅니다. CSV로 저장할 수 있습니다. |
 | 개념 | 부산물 분류 트리(표준 시드)와 동의어를 보고, 내 확장 개념을 추가합니다. |
 | AI에 묻기 | Claude Code가 자료를 찾아 출처를 달아 답합니다. "리포트 작성자"를 고르면 근거 번호가 달린 초안을 `reports` 폴더에 저장합니다. |
+| 수집 | 공식 API(해외 학술·국내 학술·국가 R&D·특허·공공데이터)와 크롤러로 논문·보고서·특허·데이터를 찾아 **수집함**에 모읍니다. 검토 후 '자료함에 넣기'(오픈 액세스면 원문, 아니면 서지·초록). 검색을 저장하면 앱이 켜져 있는 동안 정한 주기로 새 자료를 찾습니다(아래 "자료 수집"). |
+| 실험 | 공정 흐름(원료→세척→탈수→분쇄→건조→분말화→추출→저장)을 직접 고치고, 내 실험 데이터를 넣어(표 입력·CSV/XLSX) 예측과 비교하고 모델을 보정합니다(아래 "내 실험"). |
 | 시각화 | **흐름**·**건조 방식**·**분자 구조** 세 화면입니다(아래 "시각화" 참고). |
 | 설정 | 엔진 상태, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더 경로, 식품 영양 DB 연결을 다룹니다. |
 
@@ -138,6 +140,21 @@ Codex CLI를 업데이트하면 보안 시험을 다시 해야 합니다(`app/en
 - **분자 구조**: 성분명(한글·영문·동의어)으로 2D 구조식·3D 모델·성질을 봅니다. 구조는 이 PC의 시드 24종과 RDKit으로 그려 인터넷이 필요 없습니다. 펙틴·셀룰로스·식이섬유·폴리페놀처럼 단일 분자가 아닌 것은 대표 단위체(갈락투론산·셀로비오스·갈산)로 보여 주고 그 사실을 표시합니다.
 - 3D 라이브러리(3Dmol.js 2.4.2, three.js r170)는 `app/static/vendor/`에 고정 버전으로 들어 있어 오프라인에서도 동작합니다. 구조 그림에는 RDKit(requirements.txt에 포함)이 필요하며, 없으면 분자 구조 화면에 설치 안내가 나옵니다.
 
+## 자료 수집
+
+- **해외 학술(키 불필요)**: OpenAlex · Crossref · Europe PMC · Semantic Scholar.
+- **국내·키 필요**: KCI · ScienceON · NTIS(과제·보고서) · KIPRIS(특허) · 공공데이터(식약처 식품영양성분DB · 기능성 원료 인정현황 · 농사로 농식품부산물 영양정보). 키는 **환경 변수로만** 넣습니다(`BYORBIT_KCI_KEY` 등). 발급 방법과 변수 이름은 `docs/COLLECT-SOURCES.md`와 수집 화면의 '키 발급 안내'에 있습니다.
+- **크롤러**: API가 없는 공개 자료 목록(농촌진흥청 보도자료, 국립농업과학원·원예특작과학원 시험연구보고서 등). robots.txt·이용약관을 확인해 허용된 곳만, 사이트마다 간격을 두고 읽습니다. 사이트는 수집 화면에서 추가·끄기.
+- **나가는 것**: 검색어(와 그 출처의 API 키)뿐. 자료함·CoA·시료·실험 데이터는 보내지 않고, 오류 메시지에서도 키를 가립니다. 같은 자료는 DOI·출처 ID·제목으로 하나로 합칩니다.
+- 한계: OpenAlex는 키 없이 하루 약 100회, Semantic Scholar는 키가 없으면 자주 잠시 막힙니다. 국내 API 7개 중 6개는 실제 키로 아직 확인하지 못했습니다.
+
+## 내 실험
+
+- **공정 흐름 편집**: 틀(사과박 동결건조 분말 · 열풍건조 분말 · 열풍건조 + 에탄올 추출)에서 시작해 단계 추가·삭제·순서·끄기·파라미터를 고칩니다. 단계 사이에 질량·수분·TPC 변화가 막대로 보입니다. 건조 단계는 '건조 방식' 탭의 예측 엔진을 그대로 써서 값과 근거가 같습니다.
+- **내 데이터**: 런(조건)별로 단계·대상·값을 표에 넣거나 CSV/XLSX를 가져옵니다(열 맞추기, ND·"< 0.01"·단위 변환). 내보내기도 됩니다.
+- **결과·보정**: 예측 대 실측(잔차·패리티·MAE/RMSE), 조건 하나를 바꿔 보는 민감도 곡선, 내 데이터로 모델 보정(보정 전후를 함께 표시, 활성화 에너지는 온도 3개 이상일 때 선택 시에만 다시 맞춤), 다음 실험 조건 제안.
+- 근거: 건조 외 단계(세척·압착·분쇄·추출·저장)의 계수는 대부분 '가정'으로 표시됩니다. 내 값으로 바꾸면 '내 입력'이 됩니다. 자세한 내용은 `docs/EXPERIMENT.md`.
+
 ## 보안: 화면 접근
 
 화면은 127.0.0.1/localhost 주소로만 열리고, 다른 사이트에서 보낸 쓰기 요청(POST 등)은 막습니다(DNS 리바인딩·CSRF 방어). 명령줄처럼 Origin이 없는 요청은 그대로 허용합니다.
@@ -168,12 +185,15 @@ app\
   mcp_server.py     MCP 서버 byorbit-rd (stdio)
   engines\          claude_code(기본) · food_mcp(식품 영양 DB, 선택) · codex(보조)
   viz\              structures(분자 구조·RDKit·PubChem) · drying(건조 모델·상평형도·비교) · system(흐름 지도)
-  routes_viz.py     /api/viz
+  routes_viz.py     /api/viz · routes_predict.py /api/viz/predict
+  collect\          자료 수집: base·http·registry · store·scheduler · crawler · sources\(출처별 모듈)
+  experiment\       내 실험: steps(단계 모델) · store · sim · importer · calib · plan
+  routes_collect.py /api/collect · routes_experiment.py /api/exp
   server.py         FastAPI
   static\           index.html 화면 · viz\ 시각화 모듈 · vendor\ 3Dmol.js·three.js
 agents\             라벨러·사서·성분 분석가·검증자·리포트 작성자 지침
-tests\             test_m1 · test_m2 · test_codex · test_ocr · test_viz (시험 125개)
-docs\PLAN-M2.md    M2·시각화 계획과 작업 계약
+tests\             test_m1 · test_m2 · test_codex · test_ocr · test_viz · test_predict · test_collect · test_collect_kr · test_experiment (시험 210개)
+docs\              PLAN-M2·PLAN-M3(계획·작업 계약) · PREDICT-SOURCES · COLLECT-SOURCES · EXPERIMENT
 ```
 
 ## 시험

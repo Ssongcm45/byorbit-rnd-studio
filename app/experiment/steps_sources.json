@@ -1,0 +1,127 @@
+{
+  "version": "2026-11-25",
+  "note": "내 실험 공정 단계(세척·압착·분쇄·체분리·추출·저장)의 계수와 근거. 건조 단계는 app/viz/predict_sources.json을 그대로 쓴다. 문헌(literature) 항목은 실제로 읽은 곳(locator)이 있어야 하고, 읽지 못한 값은 assumption으로만 둔다. 'ref'가 있는 항목은 predict_sources.json의 같은 파라미터를 빌려 쓴다. 사람이 읽는 설명은 docs/EXPERIMENT.md.",
+  "sources": {},
+  "parameters": {
+    "f_mass": {
+      "label": "투입량 기본값(계산 기준)", "value": 100.0, "unit": "kg 습량",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "계산 기준량일 뿐 결과(수분·농도·수율 %)에는 영향이 없다. 실제 투입량을 넣으면 질량이 그 값으로 바뀐다.", "validity": {}}
+    },
+    "f_moisture": {
+      "label": "원료 수분 기본값", "ref": "a_initial_moisture"
+    },
+    "w_water_uptake": {
+      "label": "세척 후 표면에 남는 물(습량 대비)", "value": 3.0, "unit": "% 습량", "band": [0.0, 8.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "물을 빼고 난 뒤 표면에 붙어 남는 물의 크기를 가정. 사과박 세척 수치를 찾지 못함 — 세척 후 수분을 실측해 넣으면 그 값으로 보정된다.",
+                   "validity": {}}
+    },
+    "w_solids_loss": {
+      "label": "세척으로 녹아 나가는 고형분(건물 대비)", "value": 1.0, "unit": "% 건물", "band": [0.0, 3.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "당류 등 수용성 고형분이 일부 씻겨 나간다고 가정. 식이섬유(불용성)는 남는다고 본다. 수치 미확인.", "validity": {}}
+    },
+    "w_tpc_loss": {
+      "label": "세척으로 녹아 나가는 폴리페놀(TPC 대비)", "value": 2.0, "unit": "% TPC", "band": [0.0, 6.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "수용성 폴리페놀이 표면에서 일부 녹아 나간다고 가정. 세척 시간·물 양에 따른 정량식은 쓰지 않는다. 수치 미확인.", "validity": {}}
+    },
+    "p_dissolved": {
+      "label": "압착액의 용해 고형분 농도", "value": 8.0, "unit": "% w/w", "band": [4.0, 12.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "짜낸 물에 녹아 나가는 고형분(당류 등)의 농도를 착즙액 수준으로 가정. 압착액 Brix를 재서 넣으면 바뀐다. 수치 미확인.", "validity": {}}
+    },
+    "p_tpc_partition": {
+      "label": "압착액으로 나가는 TPC 비율(고형분 손실 대비)", "value": 1.0, "unit": "×", "band": [0.5, 1.5],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "TPC 손실률 = (잃은 건물 ÷ 건물) × 이 배율. 1이면 폴리페놀이 용해 고형분과 같은 비율로 빠진다고 본다. 수치 미확인.", "validity": {}}
+    },
+    "p_min_moisture": {
+      "label": "기계 압착으로 낮출 수 있는 수분(대략 하한)", "value": 55.0, "unit": "% 습량",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "이보다 낮은 목표를 넣으면 경고만 한다(계산은 넣은 목표대로). 설비에 따라 다르다.", "validity": {}}
+    },
+    "m_holdup": {
+      "label": "분쇄기 내부 잔류 손실", "value": 0.5, "unit": "% 습량", "band": [0.0, 2.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "분쇄기 안에 남는 양. 성분 변화 없이 질량만 줄인다고 본다. 수치 미확인.", "validity": {}}
+    },
+    "m_particle_thickness": {
+      "label": "입자 크기를 건조 두께로 쓰기", "value": null, "unit": "-",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "건조 단계에서 '두께 기준 = 분쇄 입자 크기'를 고르면 분쇄 입자 크기를 건조의 특성 길이(층 두께 대신)로 쓴다. 성기게 펼친 입자에서 확산 길이가 입자 크기에 가깝다는 근사(가정).",
+                   "validity": {}}
+    },
+    "s_yield_table": {
+      "label": "체 통과 수율(체 눈 크기별, 기본값)", "value": {"75": 50, "150": 70, "250": 85, "500": 95, "1000": 98}, "unit": "% (µm별)",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "체 눈이 작을수록 통과량이 준다는 일반 경향을 가정한 표. 분쇄기·원료에 따라 크게 다르다 — 통과 수율을 실측해 넣으세요. 사이 값은 선형 보간.",
+                   "validity": {"mesh_um": [75, 1000]}}
+    },
+    "s_holdup": {
+      "label": "체분리·회수 손실", "value": 1.0, "unit": "% 습량", "band": [0.0, 3.0],
+      "evidence": {"type": "assumption", "locator": null, "note": "체·용기에 남는 분말. 수치 미확인.", "validity": {}}
+    },
+    "s_no_fractionation": {
+      "label": "체 통과분과 잔류분의 성분이 같다", "value": null, "unit": "-",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "입자 크기별로 TPC·TDF가 다를 수 있으나 정량 근거가 없어 같다고 본다.", "validity": {}}
+    },
+    "e_ymax": {
+      "label": "최대 추출 가능 TPC(최적 용매에서)", "value": 80.0, "unit": "% TPC", "band": [60.0, 95.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "분말 속 TPC 가운데 용매로 뽑아낼 수 있는 최대 비율을 가정. 사과박 수치를 원문에서 확인하지 못함 — 내 추출 실측으로 바꾸세요.",
+                   "validity": {}}
+    },
+    "e_etoh_opt": {
+      "label": "TPC 추출에 가장 좋은 에탄올 농도", "value": 60.0, "unit": "% v/v",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "수용성 에탄올(물 혼합)이 순수 물·순수 에탄올보다 폴리페놀을 잘 뽑는다는 일반 경향을 종 모양 곡선으로 근사. 최적 농도 값은 가정.",
+                   "validity": {"ethanol_pct": [0, 100]}}
+    },
+    "e_etoh_width": {
+      "label": "에탄올 농도 효과 폭(종 모양 곡선 σ)", "value": 35.0, "unit": "% v/v", "band": [25.0, 50.0],
+      "evidence": {"type": "assumption", "locator": null, "note": "최적에서 멀어질 때 수율이 줄어드는 폭. 가정.", "validity": {}}
+    },
+    "e_k_ref": {
+      "label": "추출 속도상수 k(50 ℃)", "value": 0.10, "unit": "1/min", "band": [0.05, 0.2],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "Y(t) = Y_eq·(1 − e^(−k·t)) 1차 접근식의 속도상수. 분말·교반 조건에 따라 다르다. 가정.",
+                   "validity": {"temp_c": [20, 80]}}
+    },
+    "e_ea": {
+      "label": "추출 속도 활성화 에너지", "value": 20.0, "unit": "kJ/mol", "band": [10.0, 40.0],
+      "evidence": {"type": "assumption", "locator": null, "note": "확산 지배 추출의 일반 크기로 가정.", "validity": {"temp_c": [20, 80]}}
+    },
+    "e_solids": {
+      "label": "추출되는 고형분(건물 대비, 평형)", "value": 25.0, "unit": "% 건물", "band": [15.0, 35.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "당류·유기산 등 함께 녹아 나오는 고형분. 추출물 수율(고형분)을 실측하면 바꾸세요. 가정.", "validity": {}}
+    },
+    "e_min_ratio": {
+      "label": "용매 비율 하한(이보다 적으면 포화 위험)", "value": 10.0, "unit": "mL/g",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "용매가 적으면 용해 한계로 수율이 줄 수 있다. 이 모델은 용매 비율 효과를 계산하지 않고 하한 미만에서 경고만 한다.", "validity": {}}
+    },
+    "st_k_pack": {
+      "label": "포장별 수분 흡습 속도상수", "value": {"방습(알루미늄)": 0.002, "일반 PE": 0.02, "개방": 0.3}, "unit": "1/일", "band": [0.5, 2.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "X(t) = Xe + (X0 − Xe)·e^(−k·t). 포장 투습도에 따른 크기 순서만 가정. 내 포장재의 투습도·실측 수분으로 바꾸세요.",
+                   "validity": {}}
+    },
+    "st_gab": {
+      "label": "GAB 등온흡습(저장 습도에서 평형 수분)", "ref": "gab"
+    },
+    "st_tpc_k25": {
+      "label": "건조 분말 TPC 저장 손실 속도상수(25 ℃)", "value": 0.001, "unit": "1/일", "band": [0.0003, 0.003],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "건조 분말의 폴리페놀이 저장 중 천천히 준다고 가정(90일 약 9%). 건조 속도식(40–120 ℃ 문헌 맞춤)을 상온으로 외삽하지 않는다 — 수분활성도가 낮은 분말은 기전이 다르다.",
+                   "validity": {"temp_c": [4, 40]}}
+    },
+    "st_q10": {
+      "label": "저장 TPC 손실의 Q10", "value": 2.0, "unit": "-", "band": [1.5, 3.0],
+      "evidence": {"type": "assumption", "locator": null, "note": "10 ℃ 오를 때 손실 속도가 이만큼 배가 된다고 가정.", "validity": {}}
+    }
+  }
+}

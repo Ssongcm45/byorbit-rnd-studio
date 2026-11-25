@@ -119,6 +119,8 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(
     <a data-v="meas">측정값</a>
     <a data-v="onto">개념</a>
     <a data-v="ask">AI에 묻기</a>
+    <a data-v="collect">수집</a>
+    <a data-v="exp">실험</a>
     <a data-v="viz">시각화</a>
     <a data-v="settings">설정</a>
   </nav>
@@ -230,6 +232,10 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(
 
 <!-- 시각화 (app/static/viz) — 흐름·건조 방식·분자 구조 -->
 <section class="view" id="v-viz"><div id="vizRoot"></div></section>
+<!-- 자료 수집 (app/static/collect) — 공식 API·크롤러 → 수집함 -->
+<section class="view" id="v-collect"><div id="collectRoot"></div></section>
+<!-- 내 실험 (app/static/exp) — 공정 흐름·내 데이터·예측 비교·보정 -->
+<section class="view" id="v-exp"><div id="expRoot" style="max-width:1320px;margin:0 auto;padding:16px"></div></section>
 
 <!-- 설정 -->
 <section class="view" id="v-settings"><div class="wrap">
@@ -684,6 +690,18 @@ window.addEventListener('byorbit:open-structure', () => {
 });
 document.querySelector('#nav a[data-v=viz]').addEventListener('click', ensureViz);
 if (location.hash === '#viz') ensureViz();
+
+// 수집·실험 탭도 처음 열 때 붙인다
+let collect = null, exp = null;
+const ensureCollect = () => collect ||= import('/static/collect/collect.js').then(m =>
+  m.mountCollect(document.getElementById('collectRoot'), {api, toast, project: () => S.project}));
+const ensureExp = () => exp ||= import('/static/exp/exp.js').then(m =>
+  m.mountExperiment(document.getElementById('expRoot'), {api, toast, project: S.project,
+    openDrying: method => { show('viz'); ensureViz().openDrying(method) }}));
+document.querySelector('#nav a[data-v=collect]').addEventListener('click', ensureCollect);
+document.querySelector('#nav a[data-v=exp]').addEventListener('click', ensureExp);
+if (location.hash === '#collect') ensureCollect();
+if (location.hash === '#exp') ensureExp();
 document.getElementById('proj').addEventListener('change', e => viz?.setProject(e.target.value));
 </script>
 </body>

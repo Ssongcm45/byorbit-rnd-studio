@@ -193,3 +193,47 @@ CREATE TABLE IF NOT EXISTS usage_log (
   usage_id TEXT PRIMARY KEY, run_id TEXT REFERENCES run(run_id), engine TEXT, session_id TEXT,
   task TEXT, duration_ms INTEGER, chunks INTEGER, ok INTEGER, at TEXT DEFAULT (datetime('now'))
 );
+
+-- G. 자료 수집 (공식 API·크롤러) — M3 ---------------------------------------
+CREATE TABLE IF NOT EXISTS collect_query (
+  query_id TEXT PRIMARY KEY, name TEXT NOT NULL, query TEXT NOT NULL,
+  sources_json TEXT NOT NULL DEFAULT '[]', project TEXT,
+  auto INTEGER NOT NULL DEFAULT 0, interval_h INTEGER NOT NULL DEFAULT 24,
+  last_run_at TEXT, created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS collect_item (
+  item_id TEXT PRIMARY KEY, source TEXT NOT NULL, source_id TEXT NOT NULL,
+  doi TEXT, title TEXT NOT NULL, title_key TEXT, year INTEGER, doc_type TEXT,
+  item_json TEXT NOT NULL, oa INTEGER,
+  status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','accepted','rejected','ingested')),
+  doc_id TEXT REFERENCES document(doc_id) ON DELETE SET NULL,
+  query_id TEXT REFERENCES collect_query(query_id) ON DELETE SET NULL,
+  first_seen_at TEXT DEFAULT (datetime('now')), UNIQUE (source, source_id)
+);
+CREATE INDEX IF NOT EXISTS idx_collect_item_doi ON collect_item(doi);
+CREATE INDEX IF NOT EXISTS idx_collect_item_title ON collect_item(title_key);
+CREATE TABLE IF NOT EXISTS collect_job (
+  job_id TEXT PRIMARY KEY, kind TEXT NOT NULL, query_id TEXT, query TEXT, sources_json TEXT,
+  status TEXT NOT NULL DEFAULT 'running', stats_json TEXT, error TEXT,
+  started_at TEXT DEFAULT (datetime('now')), finished_at TEXT
+);
+
+-- H. 내 실험 (공정 흐름 workflow 위에서 조건·결과 기록, 예측과 비교) — M3 ----
+CREATE TABLE IF NOT EXISTS experiment (
+  exp_id TEXT PRIMARY KEY, name TEXT NOT NULL, wf_id TEXT REFERENCES workflow(wf_id),
+  byproduct_id TEXT REFERENCES byproduct(byproduct_id), plan_id TEXT REFERENCES experiment_plan(exp_id),
+  confidentiality TEXT NOT NULL DEFAULT '내부' CHECK (confidentiality IN ('일반','내부','기밀')),
+  note TEXT, created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS experiment_run (
+  xrun_id TEXT PRIMARY KEY, exp_id TEXT NOT NULL REFERENCES experiment(exp_id) ON DELETE CASCADE,
+  label TEXT, conditions_json TEXT NOT NULL DEFAULT '{}', run_date TEXT, note TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS experiment_value (
+  xval_id TEXT PRIMARY KEY, xrun_id TEXT NOT NULL REFERENCES experiment_run(xrun_id) ON DELETE CASCADE,
+  step_key TEXT, target_text TEXT NOT NULL, target_concept_id TEXT REFERENCES concept(concept_id),
+  value REAL, value_text TEXT, unit_text TEXT, basis TEXT,
+  kind TEXT NOT NULL DEFAULT 'measured' CHECK (kind IN ('measured','predicted')),
+  created_at TEXT DEFAULT (datetime('now'))
+);

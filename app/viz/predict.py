@@ -4,6 +4,8 @@
 - 예측에 쓰는 모든 수는 predict_sources.json(문헌·가정), 사용자 DB(실측), <data_home>/config/equipment.json(설비 사양)에서만 온다.
 - 결과마다 식, 파라미터 값, 근거(종류·인용·DOI·확인 여부·읽은 곳·유효 범위)를 함께 돌려준다.
 - 근거 범위 밖 입력은 '외삽' 경고를 붙인다. 시료는 '시료 n'으로만 — 로트·공급처·시료번호를 내보내지 않는다.
+- 내 실험(app/experiment)의 실측은 사용자가 '보정에 적용'한 실험만 CoA와 함께 보정 근거로 쓴다('실험 <이름> · 런 n').
+  설정 파일: <data_home>/config/calibration.json. 적용 전후는 app/experiment/calib.py의 미리보기로 보인다.
 - 이것은 모델 추정이다. 측정값이 아니다.
 """
 from __future__ import annotations
@@ -434,11 +436,30 @@ def _kind(target: str, unit: str) -> str | None:
     return None
 
 
-def measured(byproduct: str | None, project: str | None = None) -> dict:
+def _exp_generation():
+    try:
+        from ..experiment import calib as XC
+        return XC.generation()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _exp_samples(byproduct: str | None, exp_ids: tuple) -> list[dict]:
+    """보정에 적용한 내 실험의 건조 단계 실측 → measured()와 같은 모양의 시료 목록."""
+    if not exp_ids:
+        return []
+    from ..experiment import calib as XC
+    return XC.drying_samples(byproduct, exp_ids)
+
+
+def measured(byproduct: str | None, project: str | None = None, exp_ids: tuple | list = ()) -> dict:
     """시료별 실측 → {samples:[{alias, method, temp_c, time_h, tpc, tdf, moist_init, moist_final}], ...}.
+    exp_ids: 보정에 적용한 내 실험(그 실험의 런이 '실험 <이름> · 런 n' 시료로 더해진다).
     측정값 수가 바뀌면 다시 읽고, 아니면 캐시를 쓴다(슬라이더 응답 속도)."""
     stamp = db.one("SELECT COUNT(*) AS n, MAX(created_at) AS t, MAX(rowid) AS r FROM measurement")
-    key = (byproduct, project, stamp["n"], stamp["t"], stamp["r"], str(config.db_path()))
+    exp_ids = tuple(sorted(exp_ids or ()))
+    xgen = _exp_generation() if exp_ids else None
+    key = (byproduct, project, stamp["n"], stamp["t"], stamp["r"], str(config.db_path()), exp_ids, xgen)
     if key in _meas_cache:
         return _meas_cache[key]
     samples: dict[str, dict] = {}
@@ -456,7 +477,11 @@ def measured(byproduct: str | None, project: str | None = None) -> dict:
             k = "moist_init"  # 건조 후 수분이 40%를 넘는 일은 드물다 → 생시료 수분으로 본다
         s.setdefault(k, float(r["value"]))
     lst = list(samples.values())
-    out = {"samples": lst, "n_samples": len(lst)}
+    for s in lst:
+        s.setdefault("source", "coa")
+    xs = _exp_samples(byproduct, exp_ids)
+    lst += xs
+    out = {"samples": lst, "n_samples": len(lst), "n_coa": len(lst) - len(xs), "n_exp": len(xs)}
     inits = [s["moist_init"] for s in lst if s.get("moist_init") is not None]
     if inits:
         out["initial_moisture"] = {"value": statistics.fmean(inits), "n": len(inits)}
@@ -471,16 +496,113 @@ def measured(byproduct: str | None, project: str | None = None) -> dict:
 
 
 def measured_param(label: str, value, unit: str, n: int, aliases: list[str], note: str, key: str) -> dict:
+    exp = any(str(a).startswith("실험 ") for a in aliases)
+    coa = any(not str(a).startswith("실험 ") for a in aliases)
+    loc = "내 DB 측정값(" + ("CoA·내 실험" if exp and coa else "내 실험" if exp else "CoA") + ")"
     return {"key": key, "label": label, "value": value, "unit": unit,
             "evidence": {"type": "measured", "citation": None, "doi": None, "verified": False, "verified_at": None,
-                         "locator": "내 DB 측정값(CoA)", "n": n, "samples": aliases,
+                         "locator": loc, "n": n, "samples": aliases,
                          "note": note + (" — 실측 n=%d, 보정 신뢰도 낮음" % n if n <= 2 else ""), "validity": {}}}
 
 
 # ---------------------------------------------------------------- 보정
 
-def dry_calibration(meas: dict) -> dict | None:
-    """열풍건조 시료(온도·시간·생시료/건조후 수분이 모두 있는 것)로 Lewis k를 맞춘다. Ea는 문헌 맞춤값 유지."""
+CAL_FILE_NOTE = "건조 예측 보정에 쓸 내 실험 목록(부산물별). 내 실험 화면의 '보정에 적용'이 쓴다."
+EA_PLAUSIBLE_KJ = (5.0, 150.0)
+
+
+def calibration_file() -> Path:
+    return config.path("config", "calibration.json")
+
+
+def _read_cal_file() -> dict:
+    f = calibration_file()
+    try:
+        return json.loads(f.read_text(encoding="utf-8")) if f.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def calibration_settings(byproduct: str | None) -> dict:
+    """{experiments: [exp_id], ea_fit: bool, applied_at} — 없으면 빈 설정(CoA만 보정에 씀)."""
+    cur = (_read_cal_file().get("byproducts") or {}).get(byproduct or DEFAULT_BYPRODUCT) or {}
+    return {"experiments": [x for x in cur.get("experiments") or [] if isinstance(x, str)],
+            "ea_fit": bool(cur.get("ea_fit")), "applied_at": cur.get("applied_at")}
+
+
+def save_calibration(byproduct: str | None, experiments: list[str], ea_fit: bool) -> dict:
+    data = _read_cal_file()
+    data.setdefault("byproducts", {})[byproduct or DEFAULT_BYPRODUCT] = {
+        "experiments": sorted(set(experiments)), "ea_fit": bool(ea_fit), "applied_at": date.today().isoformat()}
+    data["note"] = CAL_FILE_NOTE
+    f = calibration_file()
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    _meas_cache.clear()
+    return calibration_settings(byproduct)
+
+
+def geometry_factor(thickness_mm: float | None, velocity_ms: float | None) -> float:
+    """열풍 k의 두께·풍속 배율 (L_ref/L)^n·(v/v_ref)^m — CoA처럼 모르면 문헌 조건(배율 1)."""
+    f = 1.0
+    if thickness_mm:
+        f *= (pv("ha_l_ref") / thickness_mm) ** pv("a_thickness_exp")
+    if velocity_ms:
+        f *= (max(velocity_ms, 0.05) / pv("ha_v_ref")) ** pv("a_velocity_exp")
+    return f
+
+
+def _fit_factor(pts: list[dict], ea_lit_j: float, ea_fit: bool, tref_c: float = 60.0) -> dict:
+    """r_i = k_실측/k_문헌. 배율만(기하평균), 또는 서로 다른 온도 3개 이상에서 ln r = α + β(1/T − 1/T_ref)로 Ea까지.
+    Ea는 사용자가 고를 때만 바꾼다(ea_fit) — 그렇지 않으면 맞춤 결과를 보이기만 한다."""
+    lr = [math.log(p["k_meas"] / p["k_lit"]) for p in pts]
+    n = len(pts)
+    mean = statistics.fmean(lr)
+    rmse = math.sqrt(sum((x - mean) ** 2 for x in lr) / (n - 1)) if n >= 2 else None
+    temps = sorted({round(p["temp_c"], 1) for p in pts})
+    ea = {"available": len(temps) >= 3, "n_temps": len(temps), "temps": temps, "applied": False,
+          "ea_lit_kj": round(ea_lit_j / 1000, 2), "tref_c": tref_c}
+    if len(temps) >= 3:
+        xs = [1 / (p["temp_c"] + 273.15) - 1 / (tref_c + 273.15) for p in pts]
+        mx = statistics.fmean(xs)
+        sxx = sum((x - mx) ** 2 for x in xs)
+        beta = sum((x - mx) * (y - mean) for x, y in zip(xs, lr)) / sxx
+        alpha = mean - beta * mx
+        res = [y - (alpha + beta * x) for x, y in zip(xs, lr)]
+        ea_rmse = math.sqrt(sum(r * r for r in res) / max(n - 2, 1))
+        ea_cal = ea_lit_j - beta * R_GAS
+        ok = EA_PLAUSIBLE_KJ[0] * 1000 < ea_cal < EA_PLAUSIBLE_KJ[1] * 1000
+        ea.update(alpha=alpha, beta=beta, ea_kj=round(ea_cal / 1000, 2), rmse_ln=round(ea_rmse, 4), plausible=ok)
+        if ea_fit and ok:
+            ea["applied"] = True
+            ea["message"] = (f"Ea를 내 실측({len(temps)}개 온도, n={n})으로 맞춤: {ea_cal / 1000:.1f} kJ/mol "
+                             f"(문헌 맞춤 {ea_lit_j / 1000:.1f}). 잔차 RMSE(ln k) {ea_rmse:.3f}.")
+        elif not ok:
+            ea["message"] = (f"맞춘 Ea {ea_cal / 1000:.1f} kJ/mol이 그럴듯한 범위({EA_PLAUSIBLE_KJ[0]:g}–{EA_PLAUSIBLE_KJ[1]:g} kJ/mol) 밖이라 "
+                             "쓰지 않습니다. 온도 범위를 넓히거나 런을 늘리세요.")
+        else:
+            ea["message"] = (f"{len(temps)}개 온도로 Ea를 맞출 수 있습니다({ea_cal / 1000:.1f} kJ/mol, 문헌 맞춤 {ea_lit_j / 1000:.1f}). "
+                             "적용하려면 보정 화면에서 'Ea도 맞춤'을 고르세요.")
+    else:
+        ea["message"] = f"서로 다른 온도가 {len(temps)}개라 Ea는 문헌 맞춤값을 그대로 씁니다(3개 이상이면 맞출 수 있음)."
+    factor = math.exp(ea["alpha"]) if ea["applied"] else math.exp(mean)
+    return {"factor": factor, "rmse_ln": None if rmse is None else round(rmse, 4), "ea": ea}
+
+
+def cal_factor(cal: dict | None, t_c: float) -> float:
+    """보정 배율 c(T). Ea까지 맞췄으면 온도에 따라 달라진다."""
+    if not cal or not cal.get("applied"):
+        return 1.0
+    ea = cal.get("ea") or {}
+    if ea.get("applied"):
+        return math.exp(ea["alpha"] + ea["beta"] * (1 / (t_c + 273.15) - 1 / (ea["tref_c"] + 273.15)))
+    return cal["factor"]
+
+
+def dry_calibration(meas: dict, ea_fit: bool = False) -> dict | None:
+    """열풍건조 시료(온도·시간·생시료/건조후 수분이 모두 있는 것)로 Lewis k를 맞춘다.
+    배율은 기하평균. Ea는 문헌 맞춤값을 유지하고, 서로 다른 온도가 3개 이상이고 사용자가 고를 때만 맞춘다.
+    내 실험 런은 두께·풍속을 알므로 그 배율을 곱한 문헌 k와 비교한다(CoA는 문헌 조건 3 mm, 0.9 m/s로 가정)."""
     pts = []
     for s in meas["samples"]:
         if s["method"] != "열풍건조" or None in (s.get("temp_c"), s.get("time_h"), s.get("moist_init"), s.get("moist_final")):
@@ -492,62 +614,106 @@ def dry_calibration(meas: dict) -> dict | None:
         if xf <= xe:
             continue
         k_meas = -math.log((xf - xe) / (x0 - xe)) / s["time_h"]
-        pts.append({"sample": s["alias"], "temp_c": s["temp_c"], "time_h": s["time_h"], "moist_init": s["moist_init"],
-                    "moist_final": s["moist_final"], "k_meas": k_meas, "k_lit": k_dry_lit(s["temp_c"])})
+        geo = geometry_factor(s.get("thickness_mm"), s.get("air_velocity_ms"))
+        pts.append({"sample": s["alias"], "source": s.get("source", "coa"), "temp_c": s["temp_c"], "time_h": s["time_h"],
+                    "moist_init": s["moist_init"], "moist_final": s["moist_final"], "k_meas": k_meas,
+                    "k_lit": k_dry_lit(s["temp_c"]) * geo, "geometry": round(geo, 4)})
     if not pts:
         return None
-    factor = math.exp(statistics.fmean(math.log(p["k_meas"] / p["k_lit"]) for p in pts))
+    fit = _fit_factor(pts, dry_fit()["ea_j"], ea_fit)
+    cal = {"applied": True, "factor": round(fit["factor"], 3), "rmse_ln": fit["rmse_ln"], "ea": fit["ea"]}
     for p in pts:
         x0 = wb_to_db(p["moist_init"])
         xe = gab_xe(heated_air_aw(p["temp_c"]))
-        pred = xe + (x0 - xe) * math.exp(-p["k_lit"] * factor * p["time_h"])
+        pred = xe + (x0 - xe) * math.exp(-p["k_lit"] * cal_factor(cal, p["temp_c"]) * p["time_h"])
+        lit = xe + (x0 - xe) * math.exp(-p["k_lit"] * p["time_h"])
         p["pred_final"] = round(db_to_wb(pred), 2)
+        p["lit_final"] = round(db_to_wb(lit), 2)
         p["residual"] = round(p["moist_final"] - db_to_wb(pred), 2)
+        p["residual_lit"] = round(p["moist_final"] - db_to_wb(lit), 2)
         p["k_meas"], p["k_lit"] = round(p["k_meas"], 4), round(p["k_lit"], 4)
-    return {"applied": True, "factor": round(factor, 3), "n": len(pts), "points": pts,
-            "how": "시료의 생시료→건조후 수분과 온도·시간에서 k를 역산해 문헌 k(T)에 곱할 배율을 구함(기하평균). Ea는 문헌 맞춤값 유지. "
-                   "시료의 두께·풍속은 CoA에 없어 문헌 조건(3 mm, 0.9 m/s)으로 가정.",
-            "confidence": "낮음" if len(pts) <= 2 else "보통",
-            "message": (f"실측 n={len(pts)} — 보정 신뢰도 낮음" if len(pts) <= 2 else f"실측 n={len(pts)}로 보정")}
+    n = len(pts)
+    n_exp = sum(1 for p in pts if p["source"] == "experiment")
+    how = ("시료의 생시료→건조후 수분과 온도·시간에서 k를 역산해 문헌 k(T)에 곱할 배율을 구함(기하평균). Ea는 문헌 맞춤값 유지. "
+           "시료의 두께·풍속은 CoA에 없어 문헌 조건(3 mm, 0.9 m/s)으로 가정.")
+    if n_exp:
+        how += " 내 실험 런은 기록한 두께·풍속의 배율(두께 지수·풍속 지수, 가정)을 곱한 문헌 k와 비교함."
+    if fit["ea"]["applied"]:
+        how = how.replace("Ea는 문헌 맞춤값 유지. ", "") + " " + fit["ea"]["message"]
+    msg = f"실측 n={n}" + (f" (CoA {n - n_exp} · 내 실험 {n_exp})" if n_exp else "")
+    cal.update({"n": n, "n_exp": n_exp, "n_coa": n - n_exp, "points": pts, "how": how,
+                "confidence": "낮음" if n <= 2 else "보통", "message": msg + (" — 보정 신뢰도 낮음" if n <= 2 else "로 보정")})
+    return cal
 
 
-def tpc_calibration(meas: dict) -> dict | None:
-    """동결건조 TPC 평균을 잔존율 1(기준)로 두고, 열풍건조 시료의 잔존율로 겉보기 k(T)의 배율을 맞춘다."""
+def tpc_calibration(meas: dict, ea_fit: bool = False) -> dict | None:
+    """동결건조 TPC 평균을 잔존율 1(기준)로 두고, 열풍건조 시료의 잔존율로 겉보기 k(T)의 배율을 맞춘다.
+    내 실험 런에 건조 전 TPC가 있으면 그 런 안의 잔존율(건조 후 ÷ 건조 전)을 바로 쓴다(원료 차이가 섞이지 않음)."""
     ref = meas.get("tpc_ref")
-    if not ref:
+    has_ret = any(s.get("tpc_ret") is not None for s in meas["samples"])
+    if not ref and not has_ret:
         return None
     pts = []
     for s in meas["samples"]:
-        if s["method"] != "열풍건조" or None in (s.get("temp_c"), s.get("time_h"), s.get("tpc")) or s["time_h"] <= 0:
+        if s["method"] != "열풍건조" or None in (s.get("temp_c"), s.get("time_h")) or s["time_h"] <= 0:
             continue
-        r = s["tpc"] / ref["value"]
+        if s.get("tpc_ret") is not None:
+            r, basis, tin = s["tpc_ret"], "런 안 건조 전후", s.get("tpc_in")
+        elif s.get("tpc") is not None and ref:
+            r, basis, tin = s["tpc"] / ref["value"], "동결건조 기준", ref["value"]
+        else:
+            continue
         if not 0 < r < 1:
             continue
-        pts.append({"sample": s["alias"], "temp_c": s["temp_c"], "time_h": s["time_h"], "tpc": s["tpc"],
-                    "retention": round(r, 4), "k_meas": -math.log(r) / s["time_h"], "k_lit": k_tpc_lit(s["temp_c"])})
+        pts.append({"sample": s["alias"], "source": s.get("source", "coa"), "temp_c": s["temp_c"], "time_h": s["time_h"],
+                    "tpc": s.get("tpc"), "tpc_in": tin, "retention": round(r, 4), "basis": basis,
+                    "k_meas": -math.log(r) / s["time_h"], "k_lit": k_tpc_lit(s["temp_c"])})
     if not pts:
         return {"applied": False, "n": 0, "ref": ref, "message": "열풍건조 TPC 실측(온도·시간 포함)이 없어 문헌 상수 그대로 씀"}
-    factor = math.exp(statistics.fmean(math.log(p["k_meas"] / p["k_lit"]) for p in pts))
+    fit = _fit_factor(pts, tpc_fit()["ea_j"], ea_fit)
+    cal = {"applied": True, "factor": round(fit["factor"], 3), "rmse_ln": fit["rmse_ln"], "ea": fit["ea"]}
     for p in pts:
-        pred = math.exp(-p["k_lit"] * factor * p["time_h"]) * ref["value"]
-        p["pred_tpc"] = round(pred, 3)
-        p["residual"] = round(p["tpc"] - pred, 3)
+        ret = math.exp(-p["k_lit"] * cal_factor(cal, p["temp_c"]) * p["time_h"])
+        lit = math.exp(-p["k_lit"] * p["time_h"])
+        p["pred_retention"] = round(ret, 4)
+        p["lit_retention"] = round(lit, 4)
+        if p.get("tpc") is not None and p.get("tpc_in"):
+            p["pred_tpc"] = round(ret * p["tpc_in"], 3)
+            p["residual"] = round(p["tpc"] - ret * p["tpc_in"], 3)
+            p["residual_lit"] = round(p["tpc"] - lit * p["tpc_in"], 3)
+        else:
+            p["residual"] = round(p["retention"] - ret, 4)
+            p["residual_lit"] = round(p["retention"] - lit, 4)
         p["k_meas"], p["k_lit"] = round(p["k_meas"], 4), round(p["k_lit"], 4)
     n = len(pts)
-    return {"applied": True, "factor": round(factor, 3), "n": n, "ref": ref, "points": pts,
-            "how": "동결건조 시료의 TPC 평균을 잔존율 1로 두고, 열풍건조 시료의 잔존율로 k를 역산해 문헌 k(T)에 곱할 배율을 구함. "
-                   "Ea는 문헌 맞춤값 유지. 서로 다른 시료(로트)를 비교하므로 원료 차이가 보정에 섞인다.",
-            "confidence": "낮음" if n <= 2 or ref["n"] <= 2 else "보통",
-            "message": (f"실측 n={n}(기준 동결건조 n={ref['n']}) — 보정 신뢰도 낮음" if n <= 2 or ref["n"] <= 2
-                        else f"실측 n={n}로 보정")}
+    n_exp = sum(1 for p in pts if p["source"] == "experiment")
+    refn = ref["n"] if ref else 0
+    how = ("동결건조 시료의 TPC 평균을 잔존율 1로 두고, 열풍건조 시료의 잔존율로 k를 역산해 문헌 k(T)에 곱할 배율을 구함. "
+           "Ea는 문헌 맞춤값 유지. 서로 다른 시료(로트)를 비교하므로 원료 차이가 보정에 섞인다.")
+    if n_exp:
+        how += " 내 실험 런에 건조 전 TPC가 있으면 그 런의 건조 전후 비율을 잔존율로 씀(원료 차이 없음)."
+    if fit["ea"]["applied"]:
+        how = how.replace("Ea는 문헌 맞춤값 유지. ", "") + " " + fit["ea"]["message"]
+    low = n <= 2 or (refn <= 2 and any(p["basis"] == "동결건조 기준" for p in pts))
+    msg = f"실측 n={n}(기준 동결건조 n={refn})" if ref else f"실측 n={n}"
+    if n_exp:
+        msg += f" (CoA {n - n_exp} · 내 실험 {n_exp})"
+    cal.update({"n": n, "n_exp": n_exp, "n_coa": n - n_exp, "ref": ref, "points": pts, "how": how,
+                "confidence": "낮음" if low else "보통", "message": msg + (" — 보정 신뢰도 낮음" if low else "로 보정")})
+    return cal
 
 
 # ---------------------------------------------------------------- 공정 모의
 
 def _cal_widen(cal: dict | None) -> float:
+    """보정 후 불확실 폭 배율: n ≤ 2이면 ×1.5, 그 밖에는 max(1.2, e^RMSE(ln k)) (최대 ×3)."""
     if not cal or not cal.get("applied"):
         return 1.0
-    return 1.5 if cal["n"] <= 2 else 1.2
+    if cal["n"] <= 2:
+        return 1.5
+    ea = cal.get("ea") or {}
+    rm = ea.get("rmse_ln") if ea.get("applied") else cal.get("rmse_ln")
+    return min(3.0, max(1.2, math.exp(rm))) if rm else 1.2
 
 
 def _k_dry(method: str, inp: dict, cal: dict | None) -> tuple[float, float, float, float]:
@@ -572,7 +738,8 @@ def _k_dry(method: str, inp: dict, cal: dict | None) -> tuple[float, float, floa
         k, k_lo, k_hi = k * f, k_lo * fb[0], k_hi * fb[1]
     if cal and cal.get("applied"):
         w = _cal_widen(cal)
-        k, k_lo, k_hi = k * cal["factor"], k_lo * cal["factor"] / w, k_hi * cal["factor"] * w
+        f = cal_factor(cal, t)
+        k, k_lo, k_hi = k * f, k_lo * f / w, k_hi * f * w
     if method == "자연건조":
         xe = gab_xe(inp["rh"] / 100.0)
     elif method == "진공건조":
@@ -673,7 +840,8 @@ def simulate(method: str, inp: dict, ctx: dict) -> dict:
             kt, kt_lo, kt_hi = kt * f, kt_lo * fb[0], kt_hi * fb[1]
         if tc and tc.get("applied"):
             w = _cal_widen(tc)
-            kt, kt_lo, kt_hi = kt * tc["factor"], kt_lo * tc["factor"] / w, kt_hi * tc["factor"] * w
+            f = cal_factor(tc, inp["temp_c"])
+            kt, kt_lo, kt_hi = kt * f, kt_lo * f / w, kt_hi * f * w
         out.update(kt=kt, kt_lo=kt_lo, kt_hi=kt_hi, ret=math.exp(-kt * th), ret_lo=math.exp(-kt_hi * th),
                    ret_hi=math.exp(-kt_lo * th))
         if out["t_target"] is not None:
@@ -1148,24 +1316,29 @@ def _canon_byproduct(b: str | None) -> str:
     return b
 
 
-def context(byproduct: str | None, project: str | None) -> dict:
-    meas = measured(byproduct, project)
-    return {"meas": meas, "dry_cal": dry_calibration(meas), "tpc_cal": tpc_calibration(meas), "equip": load_equipment()}
+def context(byproduct: str | None, project: str | None, calib: dict | None = None) -> dict:
+    """calib: {experiments:[exp_id], ea_fit} — 주면 저장된 보정 설정 대신 쓴다(미리보기용)."""
+    cs = calib if calib is not None else calibration_settings(byproduct)
+    meas = measured(byproduct, project, tuple(cs.get("experiments") or ()))
+    ea = bool(cs.get("ea_fit"))
+    return {"meas": meas, "dry_cal": dry_calibration(meas, ea), "tpc_cal": tpc_calibration(meas, ea), "equip": load_equipment(),
+            "calib": {"experiments": list(cs.get("experiments") or []), "ea_fit": ea}}
 
 
-def predict(method: str | None, inputs: dict | None = None, byproduct: str | None = None, project: str | None = None) -> dict:
+def predict(method: str | None, inputs: dict | None = None, byproduct: str | None = None, project: str | None = None,
+            calib: dict | None = None) -> dict:
     t0 = time.perf_counter()
     m = method_or_error(method)
     bp = _canon_byproduct(byproduct)
-    ctx = context(bp, project)
+    ctx = context(bp, project, calib)
     meas = ctx["meas"]
     inp = clean_inputs(m, inputs, meas)
     sim = simulate(m, inp, ctx)
     outs = [_moisture_output(m, inp, sim, ctx, meas, bp), _tpc_output(m, inp, sim, ctx, meas, bp),
             _tdf_output(m, inp, sim, ctx, meas, bp), _color_output(m, inp), _energy_output(m, inp, sim, ctx, bp)]
     return {"method": m, "byproduct": bp, "inputs": inp, "stage": sim.get("stage"), "outputs": outs,
-            "summary": _summary(outs), "disclaimer": DISCLAIMER,
-            "privacy": "시료는 '시료 n'으로만 표시합니다(로트·공급처·시료번호 없음).",
+            "summary": _summary(outs), "disclaimer": DISCLAIMER, "calib": ctx["calib"],
+            "privacy": "시료는 '시료 n'·'실험 <이름> · 런 n'으로만 표시합니다(로트·공급처·시료번호 없음).",
             "elapsed_ms": round((time.perf_counter() - t0) * 1000, 1)}
 
 

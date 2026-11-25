@@ -16,7 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, db, engines, labeling, search as _search, thesaurus, tools
-from . import routes_predict, routes_viz
+from . import routes_collect, routes_experiment, routes_predict, routes_viz
+from .collect import scheduler as collect_scheduler
 from .engines import claude_code, food_mcp
 from .ingest import parsers, pipeline, watcher
 
@@ -30,7 +31,10 @@ async def _lifespan(app: FastAPI):
     labeling.mark_interrupted()  # 지난번에 끝나지 못한 AI 라벨 실행 → '중단됨' (이어하기 가능)
     if config.load_settings().get("watch_inbox") and not getattr(app.state, "no_watch", False):
         watcher.start()
+    if not getattr(app.state, "no_watch", False):
+        collect_scheduler.start()  # 저장 검색 자동 실행(앱이 켜져 있는 동안). BYORBIT_COLLECT_SCHEDULER=0이면 끔
     yield
+    collect_scheduler.stop()
 
 
 app = FastAPI(title="ByOrbit R&D Studio (개인용)", version=config.APP_VERSION, lifespan=_lifespan)
@@ -581,5 +585,7 @@ def index():
 
 
 app.include_router(routes_viz.router)  # /api/viz — 흐름·건조 방식·분자 구조
+app.include_router(routes_collect.router)  # /api/collect — 자료 수집·수집함·저장 검색·크롤러 사이트
+app.include_router(routes_experiment.router)  # /api/exp — 내 실험(공정 흐름·런·비교·보정)
 app.include_router(routes_predict.router)  # /api/viz/predict — 건조 조건 → 예상 결과(근거 포함)
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")
