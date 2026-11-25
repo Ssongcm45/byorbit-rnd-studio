@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>시각화 (단독 확인)</title>
+<style>
+:root{
+  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
+  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
+  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
+  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+header{padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line);font-weight:700}
+header small{font-weight:400;color:var(--muted);margin-left:8px}
+</style>
+</head>
+<body>
+<header>ByOrbit 시각화 <small>단독 확인 페이지 — 본 앱에서는 '시각화' 탭으로 열립니다</small></header>
+<main id="viz"></main>
+<script type="module">
+import {mountViz, openStructure} from './viz.js';
+const q = new URLSearchParams(location.search);
+window.viz = mountViz(document.getElementById('viz'), {initial: {tab: q.get('tab') || 'flow', term: q.get('term') || '', method: q.get('method') || ''}});
+window.openStructure = openStructure;
+</script>
+</body>
+</html>

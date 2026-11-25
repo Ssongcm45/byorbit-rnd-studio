@@ -1,0 +1,4 @@
+# Windows 배치·PowerShell은 CRLF여야 한다 — LF면 chcp 65001에서 한글 줄이 깨져 명령으로 실행된다
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

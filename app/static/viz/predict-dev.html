@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>건조 결과 예측 (단독 확인)</title>
+<link rel="stylesheet" href="./viz.css">
+<style>
+:root{
+  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
+  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
+  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
+  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+header{padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line);font-weight:700}
+header small{font-weight:400;color:var(--muted);margin-left:8px}
+</style>
+</head>
+<body>
+<header>ByOrbit 건조 결과 예측 <small>단독 확인 페이지 — ?method=열풍건조&amp;temp_c=80&amp;open=1</small></header>
+<main id="pred" style="max-width:1280px;margin:0 auto;padding:16px"></main>
+<script type="module">
+import {mountPredict} from './predict.js';
+const q = new URLSearchParams(location.search);
+const cond = {};
+for (const k of ['temp_c', 'time_h', 'pressure_pa', 'air_velocity_ms', 'thickness_mm', 'outlet_c', 'residence_s', 'rh', 'initial_moisture', 'target_moisture']) {
+  if (q.has(k)) cond[k] = Number(q.get(k));
+}
+if (q.has('temp')) cond.temp_c = Number(q.get('temp'));
+window.pred = mountPredict(document.getElementById('pred'), {
+  method: q.get('method') || '열풍건조', byproduct: q.get('byproduct') || '', project: q.get('project') || '',
+  openEvidence: q.get('open') === '1', onChange: c => { window.lastCond = c }
+});
+if (Object.keys(cond).length) window.pred.setConditions(cond);
+</script>
+</body>
+</html>

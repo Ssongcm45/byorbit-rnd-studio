@@ -6,35 +6,96 @@ import shutil
 import threading
 import time
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlsplit
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, db, engines, search as _search, thesaurus, tools
+from . import config, db, engines, labeling, search as _search, thesaurus, tools
+from . import routes_predict, routes_viz
 from .engines import claude_code, food_mcp
 from .ingest import parsers, pipeline, watcher
 
 STATIC = Path(__file__).with_name("static")
-app = FastAPI(title="ByOrbit R&D Studio (개인용)", version=config.APP_VERSION)
 
 
-@app.on_event("startup")
-def _startup():
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
     db.init(seed=True)
     claude_code.write_mcp_config()
+    labeling.mark_interrupted()  # 지난번에 끝나지 못한 AI 라벨 실행 → '중단됨' (이어하기 가능)
     if config.load_settings().get("watch_inbox") and not getattr(app.state, "no_watch", False):
         watcher.start()
+    yield
+
+
+app = FastAPI(title="ByOrbit R&D Studio (개인용)", version=config.APP_VERSION, lifespan=_lifespan)
+
+
+# ---------------------------------------------------------------- 접근 방어 (DNS 리바인딩·CSRF)
+
+LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
+# FastAPI TestClient가 보내는 Host. 실제 브라우저가 이 이름으로 이 PC에 닿으려면 DNS 조작이 아니라
+# hosts 파일 수정이 필요하므로(이미 PC를 장악한 상태) 시험용으로 허용한다.
+TEST_HOSTS = {"testserver"}
+UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
+
+
+def _split_host(h: str) -> tuple[str, str]:
+    h = (h or "").strip().lower()
+    if h.startswith("["):
+        host, _, rest = h.partition("]")
+        return host + "]", rest.lstrip(":")
+    host, _, port = h.partition(":")
+    return host, port
+
+
+@app.middleware("http")
+async def _guard(request: Request, call_next):
+    host, port = _split_host(request.headers.get("host", ""))
+    if host not in LOCAL_HOSTS and host not in TEST_HOSTS:
+        return JSONResponse(status_code=403, content={
+            "detail": "이 PC의 주소(http://127.0.0.1:포트)로만 열 수 있습니다. 주소창에 127.0.0.1을 쓰세요."})
+    if request.method in UNSAFE:
+        origin = request.headers.get("origin")
+        if origin is None and request.headers.get("referer"):
+            u = urlsplit(request.headers["referer"])
+            origin = f"{u.scheme}://{u.netloc}"
+        if origin is not None:
+            u = urlsplit(origin)
+            o_host, o_port = _split_host(u.netloc)
+            same = (u.scheme == "http" and o_host in LOCAL_HOSTS and o_port == port) or \
+                   (host in TEST_HOSTS and o_host in TEST_HOSTS)
+            if not same:
+                return JSONResponse(status_code=403, content={
+                    "detail": "다른 사이트에서 온 요청은 막습니다. 이 앱 화면(127.0.0.1)에서 다시 시도하세요."})
+    return await call_next(request)
 
 
 # ---------------------------------------------------------------- 백그라운드 작업
 
 JOBS: dict[str, dict] = {}
+JOB_TTL_SEC = 3600
+JOB_CAP = 200
+
+
+def _prune_jobs(now: float | None = None) -> None:
+    """끝난 지 1시간 지난 작업을 지우고, 전체를 200건 이하로 유지한다(끝난 것 중 오래된 것부터)."""
+    now = now or time.time()
+    for jid in [j for j, v in JOBS.items() if v["status"] != "running" and now - v.get("finished", now) > JOB_TTL_SEC]:
+        JOBS.pop(jid, None)
+    if len(JOBS) > JOB_CAP:
+        done = sorted((v.get("finished", 0), j) for j, v in JOBS.items() if v["status"] != "running")
+        for _, jid in done[:len(JOBS) - JOB_CAP]:
+            JOBS.pop(jid, None)
 
 
 def _job(kind: str, fn, *args, **kw) -> dict:
+    _prune_jobs()
     jid = uuid.uuid4().hex[:12]
     JOBS[jid] = {"job_id": jid, "kind": kind, "status": "running", "started": time.time()}
 
@@ -346,20 +407,41 @@ def annotations(status: str = "pending", project: str | None = None, limit: int 
 
 
 class Review(BaseModel):
-    status: str  # accepted | rejected
+    status: str  # accepted | rejected | pending·auto(되돌리기)
+
+
+def _doc_byproduct(t, doc_id: str) -> str | None:
+    """자료의 부산물: CoA 시료 → 없으면 그 자료에 가장 많이 붙은 부산물 라벨(거절 제외)."""
+    r = t.execute("SELECT byproduct_id FROM sample WHERE coa_doc_id=? AND byproduct_id IS NOT NULL LIMIT 1",
+                  (doc_id,)).fetchone()
+    if r:
+        return r[0]
+    r = t.execute("SELECT b.byproduct_id, COUNT(*) AS n FROM annotation a JOIN chunk c ON c.chunk_id=a.chunk_id "
+                  "JOIN byproduct b ON b.concept_id=a.concept_id WHERE c.doc_id=? AND a.status!='rejected' "
+                  "GROUP BY b.byproduct_id ORDER BY n DESC, MIN(c.ord) LIMIT 1", (doc_id,)).fetchone()
+    return r[0] if r else None
 
 
 @app.post("/api/annotations/{ann_id}")
 def review(ann_id: str, r: Review):
-    if r.status not in ("accepted", "rejected"):
-        raise HTTPException(400, "accepted 또는 rejected")
+    if r.status not in ("accepted", "rejected", "pending", "auto"):
+        raise HTTPException(400, "status는 accepted·rejected 또는 되돌리기용 pending·auto 중 하나입니다")
     a = db.one("SELECT * FROM annotation WHERE ann_id=?", (ann_id,))
     if not a:
         raise HTTPException(404, "라벨 없음")
     meas = None
+    removed = 0
+    undo = r.status in ("pending", "auto")
     with db.tx() as t:
-        t.execute("UPDATE annotation SET status=?, reviewed_at=datetime('now') WHERE ann_id=?", (r.status, ann_id))
+        t.execute("UPDATE annotation SET status=?, reviewed_at=CASE WHEN ? THEN NULL ELSE datetime('now') END "
+                  "WHERE ann_id=?", (r.status, int(undo), ann_id))
         db.log_change(t, "annotation", ann_id, {"status": a["status"]}, {"status": r.status})
+        # 되돌리기·재결정: 이 라벨에서 올렸던 추출 측정값을 지운다(승인을 두 번 눌러도 한 건만 남는다)
+        for (mid,) in t.execute("SELECT meas_id FROM measurement WHERE ann_id=? AND entry='extracted'",
+                                (ann_id,)).fetchall():
+            t.execute("DELETE FROM measurement WHERE meas_id=?", (mid,))
+            db.log_change(t, "measurement", mid, {"ann_id": ann_id, "entry": "extracted"}, None)
+            removed += 1
         # 승인된 수치 라벨 → 측정값(entry=extracted)으로 올린다
         if r.status == "accepted" and a["normalized_value"]:
             v = json.loads(a["normalized_value"])
@@ -370,11 +452,12 @@ def review(ann_id: str, r: Review):
                 value = None
             target = v.get("target") or a["surface_text"]
             meas = db.new_id()
-            t.execute("INSERT INTO measurement(meas_id, target_concept_id, target_text, value, value_text, unit_concept_id, "
-                      "unit_text, basis, ann_id, doc_id, entry, verified_at) VALUES (?,?,?,?,?,?,?,?,?,?, 'extracted', datetime('now'))",
-                      (meas, a["concept_id"], target, value, str(v.get("value")), a["unit_concept_id"], v.get("unit"),
-                       v.get("basis"), ann_id, doc))
-    return {"ok": True, "measurement_id": meas}
+            t.execute("INSERT INTO measurement(meas_id, byproduct_id, target_concept_id, target_text, value, value_text, "
+                      "unit_concept_id, unit_text, basis, ann_id, doc_id, entry, verified_at) "
+                      "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'extracted', datetime('now'))",
+                      (meas, _doc_byproduct(t, doc), a["concept_id"], target, value, str(v.get("value")),
+                       a["unit_concept_id"], v.get("unit"), v.get("basis"), ann_id, doc))
+    return {"ok": True, "measurement_id": meas, "removed_measurements": removed}
 
 
 # ---------------------------------------------------------------- 측정값
@@ -420,29 +503,49 @@ def ask(a: AskIn):
 
 class LabelIn(BaseModel):
     doc_id: str
-    max_chunks: int = 20
+    max_chunks: int | None = None
+    batch_size: int = labeling.DEFAULT_BATCH
+    force: bool = False
 
 
 @app.post("/api/label")
 def label(l: LabelIn):
-    """(베타) 라벨러 지침으로 Claude Code가 청크를 읽고 save_annotations로 라벨을 제안한다."""
-    ids = [r["chunk_id"] for r in db.rows("SELECT chunk_id FROM chunk WHERE doc_id=? ORDER BY ord LIMIT ?",
-                                          (l.doc_id, min(l.max_chunks, 100)))]
-    if not ids:
-        raise HTTPException(404, "청크 없음")
-    prompt = ("다음 청크들을 차례로 get_chunk로 읽고, 지침에 따라 save_annotations로 라벨을 저장하세요. "
-              "다 끝나면 저장 건수만 한 줄로 보고하세요.\n" + "\n".join(ids))
+    """AI 라벨 실행 시작: 청크를 batch_size개씩 묶어 라벨러(Claude Code)에 맡긴다. 진행은 /api/label/runs/{run_id}."""
+    try:
+        return {"run_id": labeling.start(l.doc_id, l.max_chunks, l.batch_size, l.force)}
+    except labeling.LabelError as e:
+        raise HTTPException(404, str(e))
 
-    def go():
-        r = engines.get().run(prompt, role="labeler", write=True, max_turns=12 + 3 * len(ids), task="label")
-        if r.get("ok"):
-            d = db.one("SELECT parse_status FROM document WHERE doc_id=?", (l.doc_id,))
-            st = json.loads(d["parse_status"])
-            st["label"] = "llm"
-            with db.tx() as t:
-                t.execute("UPDATE document SET parse_status=? WHERE doc_id=?", (json.dumps(st), l.doc_id))
-        return r
-    return _job("label", go)
+
+@app.get("/api/label/runs")
+def label_runs(doc_id: str | None = None, limit: int = 50):
+    return labeling.list_runs(doc_id or None, limit=min(limit, 200))
+
+
+@app.get("/api/label/runs/{run_id}")
+def label_run(run_id: str):
+    try:
+        return labeling.status(run_id)
+    except KeyError:
+        raise HTTPException(404, "라벨 실행 기록이 없습니다. 자료함에서 'AI 라벨'을 다시 누르세요.")
+
+
+@app.post("/api/label/runs/{run_id}/cancel")
+def label_cancel(run_id: str):
+    try:
+        return labeling.cancel(run_id)
+    except KeyError:
+        raise HTTPException(404, "라벨 실행 기록이 없습니다. 자료함을 새로고침하세요.")
+
+
+@app.post("/api/label/runs/{run_id}/resume")
+def label_resume(run_id: str):
+    try:
+        return labeling.resume(run_id)
+    except KeyError:
+        raise HTTPException(404, "라벨 실행 기록이 없습니다. 자료함을 새로고침하세요.")
+    except labeling.LabelError as e:
+        raise HTTPException(409, str(e))
 
 
 @app.get("/api/reports")
@@ -477,4 +580,6 @@ def index():
     return FileResponse(STATIC / "index.html")
 
 
+app.include_router(routes_viz.router)  # /api/viz — 흐름·건조 방식·분자 구조
+app.include_router(routes_predict.router)  # /api/viz/predict — 건조 조건 → 예상 결과(근거 포함)
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

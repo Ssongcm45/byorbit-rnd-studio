@@ -90,6 +90,47 @@ def make_coa(path: Path) -> Path:
     return path
 
 
+def make_coa_hot_air(path: Path) -> Path:
+    """두 번째 CoA: 같은 사과박을 열풍건조(60 ℃, 12 h)한 시료. ByOrbit CoA 양식의 항목을 모두 쓴다.
+    건조 방법별 비교(동결건조 vs 열풍건조)를 시험하는 용도 — 수치는 모두 가짜다."""
+    import openpyxl
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "CoA"
+    ws.append(["부산물 성적서 (예시 · ByOrbit CoA 양식)"])
+    ws.append([])
+    ws.append(["부산물종", "apple_pomace", "", "Batch ID", "AP-2611-07"])
+    ws.append(["품종", "후지", "", "산지", "경북 영주"])
+    ws.append(["수확시기", "2026-10", "", "공급처", "△△식품"])
+    ws.append(["분석기관", "예시분석연구원", "", "분석일", "2026-11-12"])
+    ws.append(["건조방법", "hot_air", "", "건조온도(℃)", 60])
+    ws.append(["건조시간(h)", 12, "", "성적서번호", "R-2026-0533"])
+    ws.append([])
+    ws.append(["시험항목", "결과", "단위", "기준", "시험방법"])
+    ws.append(["수분(생시료)", 78.4, "%", "습량", "상압가열건조법"])
+    ws.append(["수분(건조 후)", 7.9, "%", "습량", "상압가열건조법"])
+    ws.append(["총식이섬유 TDF", 47.9, "g/100 g", "건량", "AOAC 991.43"])
+    ws.append(["총폴리페놀 TPC", 5.7, "mg GAE/g", "건량", "Folin-Ciocalteu법"])
+    ws.append(["펙틴", 11.2, "g/100 g", "건량", ""])
+    ws.append(["조단백", 4.1, "g/100 g", "건량", ""])
+    ws.append(["당류", 18.5, "g/100 g", "건량", ""])
+    ws.append(["조지방", 2.3, "g/100 g", "건량", ""])
+    ws.append(["pH", 4.2, "", "", ""])
+    ws.append(["납 (Pb)", "0.03", "ppm", "", ""])
+    ws.append(["카드뮴 (Cd)", "< 0.01", "ppm", "", ""])
+    ws.append(["비소 (As)", "ND", "mg/kg", "", ""])
+    ws.append(["수은 (Hg)", "불검출", "mg/kg", "", ""])
+    ws.append(["일반세균", "1.2×10^3", "CFU/g", "", ""])
+    ws.append(["대장균", "음성", "", "", ""])
+    ws.append(["살모넬라", "불검출", "", "", ""])
+    ws.append(["리스테리아", "ND", "", "", ""])
+    ws.append([])
+    ws.append(["비고", "본 성적서는 시험용 가상 자료임"])
+    wb.save(str(path))
+    return path
+
+
 def make_hwpx(path: Path) -> Path:
     hp = "http://www.hancom.co.kr/hwpml/2011/paragraph"
     hs = "http://www.hancom.co.kr/hwpml/2011/section"
@@ -133,6 +174,13 @@ def make_all(out: Path) -> dict:
     }
 
 
+def make_samples(out: Path) -> dict:
+    """예시 자료 전체 + 두 번째 CoA(열풍건조). `samples` 명령용 — 시험(test_m1)은 make_all만 쓴다."""
+    files = make_all(out)
+    files["coa_hot_air"] = make_coa_hot_air(out / "예시CoA_사과박_열풍건조_AP-2611-07.xlsx")
+    return files
+
+
 if __name__ == "__main__":
-    for k, v in make_all(Path(sys.argv[1] if len(sys.argv) > 1 else "samples")).items():
+    for k, v in make_samples(Path(sys.argv[1] if len(sys.argv) > 1 else "samples")).items():
         print(k, v)

@@ -1,0 +1,250 @@
+{
+  "version": "2026-11-24",
+  "note": "건조 결과 예측의 파라미터·근거 목록. 값을 바꾸면 예측이 바로 바뀐다. 문헌(literature) 항목은 실제로 읽은 곳(locator)이 있어야 하고, 읽지 못한 값은 assumption으로만 둔다. 사람이 읽는 설명은 docs/PREDICT-SOURCES.md.",
+  "sources": {
+    "llavata2022": {
+      "citation": "Llavata B, Picinelli A, Simal S, Cárcel JA. Cider apple pomace as a source of nutrients: Evaluation of the polyphenolic profile, antioxidant and fiber properties after drying process at different temperatures. Food Chemistry: X 15 (2022) 100403.",
+      "title": "Cider apple pomace as a source of nutrients: Evaluation of the polyphenolic profile, antioxidant and fiber properties after drying process at different temperatures",
+      "authors": "B. Llavata, A. Picinelli, S. Simal, J.A. Cárcel",
+      "year": 2022,
+      "doi": "10.1016/j.fochx.2022.100403",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9532687",
+      "verified": true,
+      "verified_at": "2026-11-24",
+      "read": "오픈 액세스 전문(PMC9532687)을 읽음 — §2.2 건조 조건, §2.3 GAB 식, §3.1·표 1 건조 시간과 Deff, §3.2 활성화 에너지, 표 2 TPC 잔존율, §3.4 AIR 수율."
+    },
+    "araujo2024": {
+      "citation": "Araujo et al. A Comparative Study of Drying Technologies for Apple and Ginger Pomace: Kinetic Modeling and Antioxidant Properties. Processes 12(10) (2024) 2096.",
+      "title": "A Comparative Study of Drying Technologies for Apple and Ginger Pomace: Kinetic Modeling and Antioxidant Properties",
+      "authors": "Araujo, Martins, Pintado, Morais, Morais",
+      "year": 2024,
+      "doi": "10.3390/pr12102096",
+      "url": "https://doi.org/10.3390/pr12102096",
+      "verified": true,
+      "verified_at": "2026-11-24",
+      "read": "초록만 읽음(Crossref 메타데이터의 abstract). 본문은 접속 거부(403)로 열람하지 못함."
+    },
+    "burdo2025": {
+      "citation": "Burdo O, Bezbah I, Bandura V, Bezbah S, Petrovskyi V, Osadchuk P. Energy-efficient technologies for thermal treatment and drying of food products. Journal of Central European Agriculture 26(2) (2025) 405–416.",
+      "title": "Energy-efficient technologies for thermal treatment and drying of food products",
+      "authors": "O. Burdo, I. Bezbah, V. Bandura, S. Bezbah, V. Petrovskyi, P. Osadchuk",
+      "year": 2025,
+      "doi": "10.5513/JCEA01/26.2.4515",
+      "url": "https://hrcak.srce.hr/file/481297",
+      "verified": true,
+      "verified_at": "2026-11-24",
+      "read": "오픈 액세스 PDF 전문의 Introduction(PDF 2쪽)을 읽음. 건조기 종류별 비에너지 값은 이 논문이 다른 문헌(Mustaffa et al. 2018 등)을 인용한 2차 정리값이다."
+    },
+    "murphykoop2005": {
+      "citation": "Murphy DM, Koop T. Review of the vapour pressures of ice and supercooled water for atmospheric applications. Q. J. R. Meteorol. Soc. 131 (2005) 1539–1565.",
+      "title": "Review of the vapour pressures of ice and supercooled water for atmospheric applications",
+      "authors": "D.M. Murphy, T. Koop",
+      "year": 2005,
+      "doi": "10.1256/qj.04.94",
+      "url": "https://www.eol.ucar.edu/data-software/conventions-and-standards/water-vapor-pressure-formulations",
+      "verified": true,
+      "verified_at": "2026-11-24",
+      "read": "원문은 유료라 열람하지 못함. 얼음 증기압 식의 계수(9.550426, 5723.265, 3.53068, 0.00728332)를 NCAR/EOL의 증기압 공식 목록(2차 출처)에서 대조함. 이 앱의 drying.p_sub()과 같은 식."
+    },
+    "kara2014": {
+      "citation": "Kara C, Doymaz İ. Effective moisture diffusivity determination and mathematical modelling of drying curves of apple pomace. Heat and Mass Transfer 51 (2015) 983–989.",
+      "title": "Effective moisture diffusivity determination and mathematical modelling of drying curves of apple pomace",
+      "authors": "C. Kara, İ. Doymaz",
+      "year": 2014,
+      "doi": "10.1007/s00231-014-1470-6",
+      "url": "https://doi.org/10.1007/s00231-014-1470-6",
+      "verified": true,
+      "verified_at": "2026-11-24",
+      "read": "DOI·서지만 확인. 초록·본문을 열람하지 못해 수치는 쓰지 않음(관련 읽을거리)."
+    }
+  },
+  "parameters": {
+    "ha_time_table": {
+      "label": "열풍건조 시간(0.76 → 0.15 kg 물/kg 건물)",
+      "value": {"40": 1400, "60": 471, "80": 260, "100": 173, "120": 129},
+      "unit": "min (공기 온도 ℃별)",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "Table 1 (Drying time to reach 0.15 kg w/kg dm)",
+                   "note": "사이더 사과박, 두께 3 mm, 풍속 0.9 m/s. 이 시간에서 Lewis 속도상수 k = -ln(MR)/t를 역산해 Arrhenius 식으로 맞춘다(유도값).",
+                   "validity": {"temp_c": [40, 120], "byproduct": "사과박"}}
+    },
+    "ha_x0_ref": {
+      "label": "문헌 시료 초기 수분", "value": 0.76, "unit": "kg 물/kg 건물",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "§3.1",
+                   "note": "\"The initial moisture content of CAP was 0.76 ± 0.02 kg water/kg dm.\"",
+                   "validity": {"byproduct": "사과박"}}
+    },
+    "ha_xf_ref": {
+      "label": "문헌 건조 시간 기준 수분", "value": 0.15, "unit": "kg 물/kg 건물",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "Table 1 caption, §3.1",
+                   "note": "건조 시간은 0.15 ± 0.01 kg w/kg dm에 이르는 시간.", "validity": {"byproduct": "사과박"}}
+    },
+    "ha_v_ref": {
+      "label": "문헌 풍속", "value": 0.9, "unit": "m/s",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "§2.2", "note": "0.9 ± 0.1 m/s 고정.",
+                   "validity": {"air_velocity_ms": [0.8, 1.0]}}
+    },
+    "ha_l_ref": {
+      "label": "문헌 시료 두께", "value": 3, "unit": "mm",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "§2.2", "note": "180 g을 0.003 m 얇은 층으로 펼침.",
+                   "validity": {"thickness_mm": [2.5, 3.5]}}
+    },
+    "ha_ea_paper": {
+      "label": "건조 활성화 에너지(문헌, 공기 온도 기준)", "value": 38.21, "unit": "kJ/mol",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "§3.2",
+                   "note": "Deff의 공기 온도 기준 Ea(r² 0.9891). 품온 기준으로는 65.05 kJ/mol. 이 앱의 Lewis 맞춤 Ea와 대조·불확실 폭에 쓴다.",
+                   "validity": {"temp_c": [40, 120], "byproduct": "사과박"}}
+    },
+    "ha_ea_araujo": {
+      "label": "건조 활성화 에너지(사과·생강박)", "value": 23.9, "unit": "kJ/mol",
+      "evidence": {"type": "literature", "source": "araujo2024", "locator": "abstract",
+                   "note": "열풍 45·62·70 ℃, 2.5 mm 층, Crank 모델. 불확실 폭의 하한 Ea로 쓴다.",
+                   "validity": {"temp_c": [45, 70], "byproduct": "사과·생강 혼합박"}}
+    },
+    "gab": {
+      "label": "GAB 등온흡습 상수 (m0, C, K)", "value": {"m0": 0.0387, "C": 8.2, "K": 1.0}, "unit": "m0: kg 물/kg 건물",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "§2.3, Eq. 3",
+                   "note": "C = 8.2, K = 1.0, m0 = 3.87 kg w/100 kg dm. 평형 수분 Xe 계산에 쓴다.",
+                   "validity": {"byproduct": "사과박"}}
+    },
+    "tpc_retention_table": {
+      "label": "열풍건조 TPC 잔존율(생시료 대비)", "value": {"40": 22, "60": 55, "80": 66, "100": 57, "120": 45}, "unit": "% (공기 온도 ℃별)",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "Table 2",
+                   "note": "잔존율과 표 1의 건조 시간으로 겉보기 1차 속도상수 k = -ln(R)/t를 역산한다(유도값). 40 ℃에서 잔존율이 가장 낮은 것은 긴 시간 동안의 효소적 산화 때문으로 논문이 해석한다 — 1차 속도식은 열분해와 효소 산화를 합친 '겉보기' 값이다. 공정은 항량까지 진행됐으므로 노출 시간을 과소평가해 k를 과대평가할 수 있다.",
+                   "validity": {"temp_c": [40, 120], "byproduct": "사과박"}}
+    },
+    "tdf_air_yield": {
+      "label": "알코올 불용성 잔사(AIR, 식이섬유 분획) 수율", "value": 68, "unit": "% (생시료 건물 기준)",
+      "evidence": {"type": "literature", "source": "llavata2022", "locator": "§3.4",
+                   "note": "생시료 68 ± 4%, 건조 후 유의한 변화 없음(40–120 ℃). TDF 자체는 보고하지 않음 — 식이섬유가 건조에서 대체로 보존된다는 정성 근거로만 쓴다.",
+                   "validity": {"temp_c": [40, 120], "byproduct": "사과박"}}
+    },
+    "sec_convective_enterprise": {
+      "label": "대류(열풍) 건조기 비에너지 — 현장", "value": 8.0, "unit": "MJ/kg 물",
+      "evidence": {"type": "literature", "source": "burdo2025", "locator": "Introduction, PDF 2쪽",
+                   "note": "\"Energy consumption of convective dryers used at enterprises reaches 8 MJ/kg of moisture removed.\" (2차 정리값)",
+                   "validity": {"byproduct": "식품 일반"}}
+    },
+    "sec_convective": {
+      "label": "대류 건조기 비에너지 — SMER 0.08 kg/MJ", "value": 11.9, "unit": "MJ/kg 물",
+      "evidence": {"type": "literature", "source": "burdo2025", "locator": "Introduction, PDF 2쪽",
+                   "note": "SMER 0.08 kg/MJ = 11.9 MJ/kg(Mustaffa et al. 2018 인용, 2차 정리값).", "validity": {"byproduct": "식품 일반"}}
+    },
+    "sec_sublimation": {
+      "label": "승화(동결) 건조 비에너지", "value": 45.0, "unit": "MJ/kg 물",
+      "evidence": {"type": "literature", "source": "burdo2025", "locator": "Introduction, PDF 2쪽",
+                   "note": "\"The highest indicators are for sublimation drying – 45 MJ/kg\" (2차 정리값, 범위 아닌 단일값).",
+                   "validity": {"byproduct": "식품 일반"}}
+    },
+    "latent_evap": {
+      "label": "물 1 kg 증발 잠열(이론 최소)", "value": 2.5, "unit": "MJ/kg 물",
+      "evidence": {"type": "literature", "source": "burdo2025", "locator": "Introduction, PDF 2쪽",
+                   "note": "\"...convert 1 kg of water into steam is 2.5 MJ, but drying technologies consume 2.5-3 times more.\"",
+                   "validity": {}}
+    },
+    "lab_energy_araujo": {
+      "label": "실험실 오븐 비에너지(참고)", "value": [410.78, 763.79], "unit": "kWh/kg",
+      "evidence": {"type": "literature", "source": "araujo2024", "locator": "abstract",
+                   "note": "실험실 소형 오븐 값으로 산업 설비와 규모가 달라 예측에 쓰지 않는다(참고 표시만).",
+                   "validity": {"temp_c": [45, 70]}}
+    },
+    "p_ice": {
+      "label": "얼음 증기압 식", "value": "ln p = 9.550426 − 5723.265/T + 3.53068 ln T − 0.00728332 T", "unit": "Pa, T in K",
+      "evidence": {"type": "literature", "source": "murphykoop2005", "locator": "얼음 증기압 식(계수는 NCAR/EOL 2차 출처로 대조)",
+                   "note": "승화 잠열은 이 식을 Clausius–Clapeyron(ΔH = RT² d ln p/dT)으로 미분해 얻는다(약 2.84 MJ/kg).",
+                   "validity": {"temp_c": [-100, 0]}}
+    },
+    "a_thickness_exp": {
+      "label": "두께 지수 n (k ∝ (L_ref/L)^n)", "value": 2.0, "unit": "-", "band": [1.0, 2.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "Fick 확산 해의 1항 근사에서 k ∝ Deff/L²(n = 2). 외부 물질전달 저항이 크면 n이 1에 가까워진다 — 불확실 폭에 n = 1을 넣는다. 사과박 두께 실험값은 확인하지 못함.",
+                   "validity": {"thickness_mm": [1, 30]}}
+    },
+    "a_velocity_exp": {
+      "label": "풍속 지수 m (k ∝ (v/v_ref)^m)", "value": 0.3, "unit": "-", "band": [0.0, 0.6],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "풍속은 외부 물질전달에만 영향을 준다고 보고 약한 지수를 가정. 문헌 수치 미확인 — 문헌 풍속(0.9 m/s) 밖은 외삽 경고.",
+                   "validity": {"air_velocity_ms": [0.3, 3.0]}}
+    },
+    "a_ambient": {
+      "label": "외기 조건(가열 전 공기)", "value": {"temp_c": 20, "rh": 60}, "unit": "℃, %RH",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "열풍의 상대습도는 외기(20 ℃, 60%)를 가열한 공기로 계산한다. 자연건조는 화면의 상대습도 입력을 그대로 쓴다.",
+                   "validity": {}}
+    },
+    "a_initial_moisture": {
+      "label": "초기 수분(기본값)", "value": 78.0, "unit": "% 습량",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "실측 생시료 수분이 없을 때의 기본값(사과박 착즙 직후 흔한 수준). 실측이 있으면 그 값을 쓴다.",
+                   "validity": {}}
+    },
+    "a_vacuum_factor": {
+      "label": "진공건조 속도 배율(열풍 상수 대비)", "value": 1.0, "unit": "×", "band": [0.6, 1.6],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "사과박 진공건조 동역학 문헌을 찾지 못해 열풍 상수를 선반 온도로 빌려 쓴다. 폭은 가정.",
+                   "validity": {"temp_c": [40, 120]}}
+    },
+    "a_vacuum_oxygen": {
+      "label": "진공건조 TPC 손실 배율(산소 감소)", "value": 0.7, "unit": "×", "band": [0.5, 1.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "산소 분압이 낮아 산화가 줄어든다는 일반 경향을 가정치로 반영. 사과박 수치 미확인.",
+                   "validity": {}}
+    },
+    "a_fd_kv": {
+      "label": "선반→제품 열전달계수 Kv = Kc + Kp·P/(1+Kd·P)", "value": {"Kc": 8.0, "Kp": 0.6, "Kd": 0.02}, "unit": "W/m²K, W/m²K·Pa, 1/Pa", "band": [0.6, 1.4],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "압력 의존 형태(접촉 + 기체 전도)는 동결건조 열전달의 표준 형식이나, 계수는 트레이·설비마다 달라 일반 크기로 가정(20 Pa에서 약 17 W/m²K). 내 설비 승화 시험값으로 바꾸세요.",
+                   "validity": {"pressure_pa": [5, 100]}}
+    },
+    "a_fd_rp": {
+      "label": "건조층 수증기 이동 저항 Rp", "value": 240000, "unit": "Pa·m²·s/kg", "band": [0.5, 2.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "약 5 cm²·Torr·h/g에 해당하는 평균값 가정. 사과박 측정값 없음.",
+                   "validity": {}}
+    },
+    "a_fd_density": {
+      "label": "동결 시료 겉보기 밀도", "value": 1000, "unit": "kg/m³",
+      "evidence": {"type": "assumption", "locator": null, "note": "물에 가까운 값으로 가정.", "validity": {}}
+    },
+    "a_fd_bound": {
+      "label": "얼지 않는 결합수(1차 건조 후 남는 수분)", "value": 0.25, "unit": "kg 물/kg 건물",
+      "evidence": {"type": "assumption", "locator": null, "note": "식품의 비동결수 일반 크기로 가정. 2차 건조에서 탈착된다.", "validity": {}}
+    },
+    "a_fd_secondary": {
+      "label": "2차 건조 탈착 속도상수(25 ℃) / 평형 수분", "value": {"k25": 0.2, "xe": 0.01}, "unit": "1/h, kg/kg 건물", "band": [0.5, 2.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "온도 의존은 열풍 맞춤 Ea를 빌려 쓴다. 값은 가정.", "validity": {"temp_c": [0, 50]}}
+    },
+    "a_fd_retention": {
+      "label": "동결건조 TPC 잔존율(기준)", "value": 1.0, "unit": "-", "band": [0.9, 1.0],
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "동결건조를 열 손실이 거의 없는 기준(잔존율 1)으로 둔다. 실측 보정의 기준점이기도 하다.", "validity": {}}
+    },
+    "a_spray_moisture": {
+      "label": "분무건조 분말 최종 수분", "value": [3.0, 6.0], "unit": "% 습량",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "문헌 범위 내 추정, 원문 수치 미확인. 사과박 자체는 분무건조가 어렵고 추출액·슬러리에만 적용된다.", "validity": {}}
+    },
+    "a_spray_sec": {
+      "label": "분무건조 비에너지", "value": [4.5, 11.5], "unit": "MJ/kg 물",
+      "evidence": {"type": "assumption", "locator": null, "note": "문헌 범위 내 추정, 원문 수치 미확인.", "validity": {}}
+    },
+    "a_vacuum_sec": {
+      "label": "진공건조 비에너지", "value": [6.0, 15.0], "unit": "MJ/kg 물",
+      "evidence": {"type": "assumption", "locator": null, "note": "문헌 범위 내 추정, 원문 수치 미확인(대류 값과 승화 값 사이로 가정).", "validity": {}}
+    },
+    "a_sun_sec": {
+      "label": "자연건조 구매 에너지", "value": 0.0, "unit": "MJ/kg 물",
+      "evidence": {"type": "assumption", "locator": null, "note": "햇볕·바람만 쓰면 구매 에너지 0으로 둔다(송풍기를 쓰면 설비 사양에 입력).", "validity": {}}
+    },
+    "a_tdf_band": {
+      "label": "TDF 변화 폭(실측 없을 때)", "value": 5.0, "unit": "% 상대",
+      "evidence": {"type": "assumption", "locator": null, "note": "식이섬유 보존(AIR 수율 무변화, Llavata 2022 §3.4)에 근거해 ±5% 상대 폭을 가정.", "validity": {}}
+    },
+    "a_color": {
+      "label": "색 변화(ΔE) 정량 모델", "value": null, "unit": "-",
+      "evidence": {"type": "assumption", "locator": null,
+                   "note": "사과박 건조 중 ΔE의 온도 의존 속도상수를 보고한 문헌을 찾지 못했다(검색 2026-11-24). Araujo 2024 초록은 마이크로파 180 W의 ΔE 7.39 ± 1.1만 보고 — 열풍 조건 값은 원문 미확인. 그래서 정량 예측을 하지 않고 일반 경향만 보인다.",
+                   "validity": {}}
+    }
+  }
+}

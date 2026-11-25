@@ -96,10 +96,10 @@ def main(argv=None):
         from .mcp_server import main as mcp_main
         mcp_main()
     elif args.cmd == "samples":
-        from .sample_files import make_all
+        from .sample_files import make_samples
         db.init(seed=True)
         out = config.path("inbox", args.project) if args.project else config.path("inbox")
-        _print({k: str(v) for k, v in make_all(out).items()})
+        _print({k: str(v) for k, v in make_samples(out).items()})
 
 
 if __name__ == "__main__":

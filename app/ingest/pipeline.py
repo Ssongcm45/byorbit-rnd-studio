@@ -195,33 +195,58 @@ def _concept(term: str | None, schemes: tuple[str, ...]) -> str | None:
     return None
 
 
+_META_NOTE = [("variety", "품종"), ("region", "산지"), ("harvest", "수확시기"), ("lab", "분석기관"),
+              ("analyzed_at", "분석일")]
+
+
+def byproduct_for(term: str | None) -> str | None:
+    """표기 → byproduct_id. 정확히 맞지 않으면 문장 속 부산물 표기를 찾는다('사과박 분말 A' → 사과박)."""
+    if not term:
+        return None
+    cid = _concept(term, ("부산물",))
+    if not cid:
+        cid = next((m["concept_id"] for m in thesaurus.find_mentions(str(term)) if m["scheme"] == "부산물"), None)
+    if not cid:
+        return None
+    r = db.one("SELECT byproduct_id FROM byproduct WHERE concept_id=?", (cid,))
+    return r["byproduct_id"] if r else None
+
+
+def _target_concept(item: str) -> str | None:
+    # '수분(생시료)'·'수분(건조 후)'은 둘 다 개념 '수분' — 항목명(target_text)으로 구분한다
+    return _concept(item, ("성분", "물성")) or _concept(re.sub(r"\s*\(.*\)\s*$", "", item), ("성분", "물성"))
+
+
 def load_coa(path: Path, doc_id: str, project_id: str) -> int:
     data = coa.read(path)
     if not data["header_found"]:
         _note(doc_id, "CoA 머리글(시험항목·결과)을 찾지 못해 측정값은 넣지 않았습니다.")
         return 0
     s = data["sample"]
-    bp_concept = _concept(s.get("sample_name"), ("부산물",))
-    byproduct = db.one("SELECT byproduct_id FROM byproduct WHERE concept_id=?", (bp_concept,)) if bp_concept else None
-    bp_id = byproduct["byproduct_id"] if byproduct else None
+    bp_id = byproduct_for(s.get("byproduct")) or byproduct_for(s.get("sample_name"))
+    drying = s.get("drying")
+    pre_concept = _concept(drying, ("공정",)) if drying and drying != "없음" else None
     sample_id = db.new_id()
     with db.tx() as c:
         c.execute("INSERT INTO sample(sample_id, byproduct_id, supplier, collected_at, pretreatment_concept_id, "
                   "pretreatment_text, lot_no, sample_code, confidentiality, coa_doc_id) VALUES (?,?,?,?,?,?,?,?, '기밀', ?)",
-                  (sample_id, bp_id, s.get("supplier"), s.get("collected_at"),
-                   _concept(s.get("pretreatment"), ("공정",)), s.get("pretreatment"),
-                   s.get("lot_no"), s.get("sample_code"), doc_id))
+                  (sample_id, bp_id, s.get("supplier"), s.get("collected_at") or s.get("harvest"),
+                   pre_concept, s.get("pretreatment_text"), s.get("lot_no"), s.get("sample_code"), doc_id))
         c.execute("INSERT OR IGNORE INTO project_item(project_id, entity_type, entity_id) VALUES (?, 'sample', ?)",
                   (project_id, sample_id))
         for it in data["items"]:
             c.execute("INSERT INTO measurement(meas_id, byproduct_id, sample_id, target_concept_id, target_text, value, "
                       "value_text, unit_concept_id, unit_text, basis, method_concept_id, method_text, doc_id, entry) "
                       "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?, 'coa')",
-                      (db.new_id(), bp_id, sample_id, _concept(it["item"], ("성분", "물성")), it["item"],
+                      (db.new_id(), bp_id, sample_id, _target_concept(it["item"]), it["item"],
                        it["value"], it["value_text"], _concept(it["unit"], ("단위",)), it["unit"], it["basis"],
                        _concept(it["method"], ("시험법",)), it["method"], doc_id))
+    info = [f"{label} {s[k]}" for k, label in _META_NOTE if s.get(k)]
+    if info:
+        _note(doc_id, "CoA 정보 — " + " · ".join(info))
     if not bp_id:
-        _note(doc_id, f"시료명 '{s.get('sample_name') or '?'}'을 부산물 개념에 연결하지 못했습니다. 측정값 화면에서 지정하세요.")
+        name = s.get("byproduct") or s.get("sample_name") or "?"
+        _note(doc_id, f"시료명 '{name}'을 부산물 개념에 연결하지 못했습니다. 개념 화면에서 동의어로 추가한 뒤 '다시 처리'하세요.")
     return len(data["items"])
 
 

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 
 from . import config, db, search as _search, thesaurus
@@ -17,6 +18,9 @@ LABEL_TYPES = {"BYPRODUCT", "COMMODITY", "PROCESS", "CONSTITUENT", "PROPERTY", "
 
 
 def _rule() -> str:
+    # Codex 실행 때 엔진이 MCP 서버 환경에 BYORBIT_FORCE_COA_RULE=block을 넣으면 설정과 관계없이 막는다
+    if os.environ.get("BYORBIT_FORCE_COA_RULE", "").strip().lower() == "block":
+        return "block"
     return config.load_settings().get("coa_rule", "mask")
 
 

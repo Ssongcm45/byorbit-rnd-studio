@@ -98,6 +98,14 @@ dialog::backdrop{background:rgba(10,15,25,.45)}
 .empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;word-break:break-all}
+.bar{height:10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}.bar i.ok{background:var(--ok)}.bar i.err{background:var(--bad)}.bar i.skip{background:var(--line)}
+#rvRows tr{scroll-margin:80px}
+#rvRows tr.rvf{outline:2px solid var(--accent);outline-offset:-2px}#rvRows tr.rvf td{background:var(--accent-soft)}
+#rvRows tr.decided td{opacity:.55}
+kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--surface-2)}
+.kbhelp{position:fixed;right:16px;bottom:64px;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 16px;font-size:13px;width:280px}
+.kbhelp h3{margin:0 0 8px;font-size:14px}.kbhelp .kv{grid-template-columns:110px 1fr}
 @media (max-width:860px){.split,.grid2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -111,6 +119,7 @@ code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:
     <a data-v="meas">측정값</a>
     <a data-v="onto">개념</a>
     <a data-v="ask">AI에 묻기</a>
+    <a data-v="viz">시각화</a>
     <a data-v="settings">설정</a>
   </nav>
   <div class="tr">
@@ -129,6 +138,15 @@ code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:
       <select class="inp" id="upConf" title="보안 등급"><option>일반</option><option selected>내부</option><option>기밀</option></select>
       <label class="btn primary">파일 선택<input type="file" id="fileIn" multiple hidden accept=".pdf,.hwpx,.xlsx,.xlsm,.txt,.md,.csv"></label>
     </div>
+  </div>
+  <div class="card" id="lblCard" hidden>
+    <div class="row"><h2 class="grow">AI 라벨 <span class="muted small" id="lblDoc"></span></h2>
+      <span class="pill" id="lblState"></span>
+      <button class="btn sm" id="lblCancel" hidden>취소</button>
+      <button class="btn sm" id="lblResume" hidden title="오류·대기 청크만 다시 처리">재시도</button>
+      <button class="btn sm" id="lblClose" title="이 표시 닫기">닫기</button></div>
+    <div class="bar" id="lblBar" style="margin:10px 0 6px" role="progressbar" aria-valuemin="0"><i class="ok"></i><i class="err"></i><i class="skip"></i></div>
+    <p class="small muted" id="lblText" style="margin:0"></p>
   </div>
   <div class="card">
     <div class="row"><h2 class="grow">자료 목록 <span class="muted small" id="docSum"></span></h2>
@@ -163,7 +181,8 @@ code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:
   <div class="card">
     <div class="row"><h2 class="grow">라벨 검토</h2>
       <select class="inp" id="rvStatus"><option value="pending">검토 대기</option><option value="auto">자동 확정</option><option value="accepted">승인함</option><option value="rejected">거절함</option></select></div>
-    <p class="sub">AI가 제안한 라벨 중 수치와 신뢰도 0.9 미만은 여기서 사람이 확인합니다. 승인한 수치는 측정값 표로 올라갑니다.</p>
+    <p class="sub">AI가 제안한 라벨 중 수치와 신뢰도 0.9 미만은 여기서 사람이 확인합니다. 승인한 수치는 측정값 표로 올라갑니다.
+      단축키: <kbd>J</kbd>/<kbd>K</kbd> 이동 · <kbd>A</kbd> 승인 · <kbd>R</kbd> 거절 · <kbd>U</kbd> 되돌리기 · <kbd>?</kbd> 도움말</p>
     <table><thead><tr><th>문맥</th><th>라벨</th><th>개념·값</th><th class="num">신뢰도</th><th>출처</th><th></th></tr></thead><tbody id="rvRows"></tbody></table>
   </div>
 </div></section>
@@ -209,6 +228,9 @@ code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:
     <table><thead><tr><th>제목</th><th class="num">근거</th><th>상태</th><th>만든 때</th></tr></thead><tbody id="rpRows"></tbody></table></div>
 </div></section>
 
+<!-- 시각화 (app/static/viz) — 흐름·건조 방식·분자 구조 -->
+<section class="view" id="v-viz"><div id="vizRoot"></div></section>
+
 <!-- 설정 -->
 <section class="view" id="v-settings"><div class="wrap">
   <div class="grid2">
@@ -253,6 +275,13 @@ code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:
 
 <dialog id="dlg"><div class="dhead"><h3 id="dlgT"></h3><button class="btn sm" onclick="dlg.close()">닫기</button></div><div class="dbody" id="dlgB"></div></dialog>
 <div class="toast" id="toast"></div>
+<div class="kbhelp" id="kbHelp" hidden role="dialog" aria-label="라벨 검토 단축키">
+  <h3>라벨 검토 단축키</h3>
+  <div class="kv"><b><kbd>J</kbd> / <kbd>↓</kbd></b><span>다음 라벨</span><b><kbd>K</kbd> / <kbd>↑</kbd></b><span>이전 라벨</span>
+    <b><kbd>A</kbd></b><span>승인 (수치는 측정값으로)</span><b><kbd>R</kbd></b><span>거절</span>
+    <b><kbd>U</kbd></b><span>마지막 결정 되돌리기</span><b><kbd>?</kbd> / <kbd>Esc</kbd></b><span>이 도움말 열기·닫기</span></div>
+  <p class="small muted" style="margin:8px 0 0">입력칸에 글을 쓰는 동안에는 단축키가 동작하지 않습니다.</p>
+</div>
 
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
@@ -315,9 +344,10 @@ async function loadDocs(){
        return `<span class="stg ${c}" title="${k}: ${v||'대기'}">${n}${v==='dict'?'(사전)':v==='llm'?'(AI)':''}</span>`}).join('')}</td>
     <td class="num">${d.chunks}</td><td class="num">${d.annotations}</td><td class="num">${d.measurements||''}</td>
     <td class="row" style="flex-wrap:nowrap"><button class="btn sm" onclick="viewDoc('${d.doc_id}','${esc(d.file_name)}')">보기</button>
-      <button class="btn sm" title="Claude Code로 라벨 제안(베타)" onclick="labelDoc('${d.doc_id}')">AI 라벨</button>
+      <button class="btn sm" title="Claude Code로 라벨 제안 (청크 5개씩 묶어 처리)" onclick="labelDoc('${d.doc_id}','${esc(d.file_name)}')">AI 라벨</button>
       <button class="btn sm bad" onclick="delDoc('${d.doc_id}','${esc(d.file_name)}')">삭제</button></td></tr>`).join('')
     : `<tr><td colspan="8"><div class="empty">아직 자료가 없습니다. 위에 파일을 끌어다 놓거나, 설정에서 예시 자료를 넣어 보세요.</div></td></tr>`;
+  showLatestRun();
 }
 $('#refreshDocs').onclick = loadDocs; $('#allProj').onchange = loadDocs;
 $('#scanInbox').onclick = async () => { const r = await api('/api/inbox/scan',{method:'POST'}); toast(`받은편지함 ${r.results.length}건 처리`); loadDocs() };
@@ -349,13 +379,54 @@ async function delDoc(id, name){
   if(!confirm(`'${name}'을(를) 지울까요?\n자료함의 복사본과 청크·라벨·측정값이 함께 지워집니다. (원래 넣었던 원본 파일은 그대로)`)) return;
   await api('/api/documents/'+id+'?remove_file=true',{method:'DELETE'}); toast('지웠습니다'); loadDocs();
 }
-async function labelDoc(id){
-  if(!confirm('Claude Code가 이 자료의 청크(최대 20개)를 읽고 라벨을 제안합니다.\n본문이 Anthropic으로 전송됩니다. 계속할까요?')) return;
-  toast('AI 라벨링 시작 — 몇 분 걸릴 수 있습니다');
-  const job = await waitJob(await api('/api/label',{method:'POST', body:{doc_id:id}}));
-  const r = job.result||{};
-  toast(job.status==='done' && r.ok ? 'AI 라벨링 완료: '+(r.result||'').slice(0,80) : '실패: '+(job.error||r.error||'').slice(0,120));
-  loadDocs(); refreshPending();
+// ---------- AI 라벨 실행 (진행률·취소·재시도)
+const RUN_ST = {running:['진행 중',''], cancelling:['취소 중','warn'], done:['완료','ok'], error:['일부 실패','bad'], cancelled:['취소됨','warn'], interrupted:['중단됨','warn']};
+let LBL = {run:null, timer:null, names:{}};
+async function labelDoc(id, name){
+  if(!confirm('Claude Code가 이 자료의 청크를 5개씩 묶어 읽고 라벨을 제안합니다.\n이미 AI 라벨이 있는 청크는 건너뜁니다. 본문이 Anthropic으로 전송됩니다. 계속할까요?')) return;
+  try{
+    const r = await api('/api/label',{method:'POST', body:{doc_id:id}});
+    LBL.names[r.run_id] = name; toast('AI 라벨링 시작 — 묶음마다 진행률이 올라갑니다');
+    watchRun(r.run_id);
+  }catch(e){ toast('시작하지 못했습니다: '+e.message) }
+}
+async function watchRun(runId){
+  LBL.run = runId; clearTimeout(LBL.timer);
+  let r;
+  try{ r = await api('/api/label/runs/'+runId) }catch(e){ $('#lblCard').hidden = true; return }
+  renderRun(r);
+  if(r.status==='running' || r.status==='cancelling') LBL.timer = setTimeout(() => watchRun(runId), 2000);
+  else { LBL.timer = null; loadDocs().catch(()=>{}); refreshPending() }
+}
+function renderRun(r){
+  const c = $('#lblCard'); c.hidden = false;
+  $('#lblDoc').textContent = LBL.names[r.run_id] ? '· '+LBL.names[r.run_id] : '';
+  const [label, cls] = RUN_ST[r.status] || [r.status, ''];
+  $('#lblState').className = 'pill '+cls; $('#lblState').textContent = label;
+  const pct = n => r.total ? (100*n/r.total)+'%' : '0';
+  const [iok, ierr, iskip] = $$('#lblBar i');
+  iok.style.width = pct(r.ok); ierr.style.width = pct(r.error); iskip.style.width = pct(r.skipped);
+  $('#lblBar').setAttribute('aria-valuemax', r.total); $('#lblBar').setAttribute('aria-valuenow', r.done);
+  const live = r.status==='running' || r.status==='cancelling';
+  const firstErr = (r.steps||[]).find(s => s.status==='error');
+  $('#lblText').textContent = `${r.done}/${r.total} 청크 · 성공 ${r.ok} · 오류 ${r.error} · 건너뜀 ${r.skipped} · 검토 대기 라벨 ${r.pending_labels}건`
+    + (live ? ` · ${r.batch_size}개씩 처리 중` : '')
+    + (firstErr ? ` — 오류 예: ${(firstErr.output?.error||'').slice(0,100)}` : '')
+    + (!live && (r.error || r.waiting) ? ' · “재시도”를 누르면 남은 청크만 다시 처리합니다.' : '')
+    + (r.status==='done' && r.pending_labels ? ' · 라벨 검토 화면에서 확인하세요.' : '');
+  $('#lblCancel').hidden = r.status!=='running';
+  $('#lblResume').hidden = live || !(r.error || r.waiting);
+}
+$('#lblCancel').onclick = async () => { const r = await api(`/api/label/runs/${LBL.run}/cancel`,{method:'POST'}); toast(r.message||'취소했습니다'); watchRun(LBL.run) };
+$('#lblResume').onclick = async () => {
+  try{ const r = await api(`/api/label/runs/${LBL.run}/resume`,{method:'POST'}); toast(r.ok ? `남은 청크 ${r.remaining}개를 다시 처리합니다` : r.message); watchRun(LBL.run) }
+  catch(e){ toast(e.message) }
+};
+$('#lblClose').onclick = () => { clearTimeout(LBL.timer); $('#lblCard').hidden = true; LBL.closed = LBL.run };
+async function showLatestRun(){
+  if(LBL.timer || !$('#lblCard').hidden) return;
+  try{ const runs = await api('/api/label/runs?limit=1'); const r = runs[0];
+    if(r && r.run_id!==LBL.closed && (r.status==='running' || r.error || r.waiting)) watchRun(r.run_id) }catch{}
 }
 async function refreshPending(){ try{ setPending((await api('/api/health')).counts.pending) }catch{} }
 
@@ -391,23 +462,70 @@ async function openChunk(id){
 }
 
 // ---------- 라벨 검토
+let RV = {ids:[], idx:-1, decided:{}, history:[], status:'pending'};
 async function loadReview(){
   const st = $('#rvStatus').value;
   const rows = await api(`/api/annotations?status=${st}&project=${encodeURIComponent(S.project)}`);
-  $('#rvRows').innerHTML = rows.length ? rows.map(a => {let v=''; try{const o=JSON.parse(a.normalized_value||'null'); if(o) v=`${o.target||''} ${o.value} ${o.unit||''} ${o.basis?'('+o.basis+')':''}`}catch{}
-    return `<tr id="rv-${a.ann_id}"><td class="small">…${esc(a.context.before)}<mark>${esc(a.context.hit)}</mark>${esc(a.context.after)}…</td>
+  RV = {ids: rows.map(a=>a.ann_id), idx: rows.length ? 0 : -1, decided:{}, history:[], status: st};
+  $('#rvRows').innerHTML = rows.length ? rows.map((a,i) => {let v=''; try{const o=JSON.parse(a.normalized_value||'null'); if(o) v=`${o.target||''} ${o.value} ${o.unit||''} ${o.basis?'('+o.basis+')':''}`}catch{}
+    return `<tr id="rv-${a.ann_id}" data-id="${a.ann_id}" onclick="rvFocus(${i}, false)"><td class="small">…${esc(a.context.before)}<mark>${esc(a.context.hit)}</mark>${esc(a.context.after)}…</td>
     <td><span class="pill ${a.label_type==='VALUE'?'warn':''}">${a.label_type}</span><div class="small muted">${a.method}${a.engine?' · '+a.engine:''}</div></td>
     <td>${esc(a.concept||'')}${v?`<div class="mono small">${esc(v)}</div>`:''}</td><td class="num">${a.confidence??''}</td>
     <td class="small"><a href="#" onclick="openChunk('${a.chunk_id}');return false">${esc(a.file_name)}</a></td>
-    <td class="row" style="flex-wrap:nowrap">${st==='pending'||st==='auto'?`<button class="btn sm ok" onclick="rv('${a.ann_id}','accepted')">승인</button><button class="btn sm bad" onclick="rv('${a.ann_id}','rejected')">거절</button>`:''}</td></tr>`}).join('')
+    <td class="row rvact" style="flex-wrap:nowrap">${st==='pending'||st==='auto'?rvButtons(a.ann_id):''}</td></tr>`}).join('')
     : '<tr><td colspan="6"><div class="empty">검토할 라벨이 없습니다. 자료함에서 “AI 라벨”을 실행하면 수치 라벨이 여기로 옵니다.</div></td></tr>';
+  rvFocus(RV.idx, false);
+}
+const rvButtons = id => `<button class="btn sm ok" onclick="event.stopPropagation();rv('${id}','accepted')">승인</button><button class="btn sm bad" onclick="event.stopPropagation();rv('${id}','rejected')">거절</button>`;
+function rvFocus(i, scroll=true){
+  $$('#rvRows tr.rvf').forEach(t=>{t.classList.toggle('rvf', false); t.removeAttribute('aria-current')});
+  if(!RV.ids.length) { RV.idx = -1; return }
+  RV.idx = Math.max(0, Math.min(i, RV.ids.length-1));
+  const tr = $('#rv-'+RV.ids[RV.idx]); if(!tr) return;
+  tr.classList.add('rvf'); tr.setAttribute('aria-current','true');
+  if(scroll) tr.scrollIntoView({block:'nearest'});
+}
+function rvNextOpen(from){
+  for(let i=from+1;i<RV.ids.length;i++) if(!RV.decided[RV.ids[i]]) return i;
+  for(let i=0;i<RV.ids.length;i++) if(!RV.decided[RV.ids[i]]) return i;
+  return from;
 }
 $('#rvStatus').onchange = loadReview;
 async function rv(id, status){
-  const r = await api('/api/annotations/'+id,{method:'POST', body:{status}});
-  $('#rv-'+id)?.remove(); refreshPending();
-  toast(status==='accepted' ? (r.measurement_id?'승인 — 측정값 표에 올렸습니다':'승인했습니다') : '거절했습니다');
+  if(RV.status!=='pending' && RV.status!=='auto') return;
+  let r;
+  try{ r = await api('/api/annotations/'+id,{method:'POST', body:{status}}) }catch(e){ toast('실패: '+e.message); return }
+  RV.history.push({id, prev: RV.status}); RV.decided[id] = status;
+  const tr = $('#rv-'+id);
+  if(tr){ tr.classList.add('decided'); tr.querySelector('.rvact').innerHTML = `<span class="pill ${status==='accepted'?'ok':'bad'}">${status==='accepted'?'승인함':'거절함'}</span>` }
+  refreshPending();
+  toast((status==='accepted' ? (r.measurement_id?'승인 — 측정값 표에 올렸습니다':'승인했습니다') : '거절했습니다') + ' · U로 되돌리기');
+  const i = RV.ids.indexOf(id); rvFocus(rvNextOpen(i));
 }
+async function rvUndo(){
+  const h = RV.history.pop(); if(!h){ toast('되돌릴 결정이 없습니다'); return }
+  try{ await api('/api/annotations/'+h.id,{method:'POST', body:{status:h.prev}}) }catch(e){ RV.history.push(h); toast('되돌리지 못했습니다: '+e.message); return }
+  delete RV.decided[h.id];
+  const tr = $('#rv-'+h.id);
+  if(tr){ tr.classList.toggle('decided', false); tr.querySelector('.rvact').innerHTML = rvButtons(h.id) }
+  refreshPending(); toast('되돌렸습니다 — 다시 검토 대기입니다'); rvFocus(RV.ids.indexOf(h.id));
+}
+function kbHelp(on){ const k=$('#kbHelp'); k.hidden = on===undefined ? !k.hidden : !on }
+document.addEventListener('keydown', e => {
+  if(!$('#v-review').classList.contains('active') || dlg.open) return;
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+  const k = e.key;
+  if(k==='?'){ kbHelp(); e.preventDefault(); return }
+  if(k==='Escape'){ kbHelp(false); return }
+  const id = RV.ids[RV.idx];
+  if(k==='j' || k==='J' || k==='ArrowDown'){ rvFocus(RV.idx+1); e.preventDefault() }
+  else if(k==='k' || k==='K' || k==='ArrowUp'){ rvFocus(RV.idx-1); e.preventDefault() }
+  else if((k==='a' || k==='A') && id && !RV.decided[id]){ rv(id,'accepted'); e.preventDefault() }
+  else if((k==='r' || k==='R') && id && !RV.decided[id]){ rv(id,'rejected'); e.preventDefault() }
+  else if(k==='u' || k==='U'){ rvUndo(); e.preventDefault() }
+});
 
 // ---------- 측정값
 let MROWS=[];
@@ -553,6 +671,20 @@ $('#newProj').onclick = async () => {
 
 boot().catch(e => toast('서버에 연결하지 못했습니다: '+e.message));
 setInterval(() => { if($('#v-library').classList.contains('active')) loadDocs().catch(()=>{}) }, 8000);
+</script>
+<script type="module">
+// 시각화 작업 공간은 처음 열 때 붙인다(3D 라이브러리를 미리 읽지 않도록)
+import {mountViz, openStructure} from '/static/viz/viz.js';
+let viz = null;
+const ensureViz = () => viz ||= mountViz(document.getElementById('vizRoot'), {api, initial: {tab: 'flow', project: S.project}, toast});
+// 측정값·라벨 화면에서 성분 이름을 누르면 구조를 연다: onclick="openStructure('클로로겐산')"
+window.openStructure = term => { show('viz'); ensureViz(); openStructure(term); };
+window.addEventListener('byorbit:open-structure', () => {
+  if (!document.querySelector('#v-viz').classList.contains('active')) { show('viz'); ensureViz(); }
+});
+document.querySelector('#nav a[data-v=viz]').addEventListener('click', ensureViz);
+if (location.hash === '#viz') ensureViz();
+document.getElementById('proj').addEventListener('change', e => viz?.setProject(e.target.value));
 </script>
 </body>
 </html>

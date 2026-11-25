@@ -1,0 +1,4 @@
+# 선택 설치: 로컬 OCR(RapidOCR, 한국어 인식 지원). install-ocr.bat으로 설치합니다.
+# 스캔 PDF와 CoA 사진을 이 PC에서만 글자로 바꿉니다(인터넷으로 나가는 것은 첫 실행 때 받는 인식 모델뿐).
+rapidocr==3.10.0
+onnxruntime==1.32.0

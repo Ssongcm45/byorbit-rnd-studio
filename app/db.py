@@ -72,7 +72,10 @@ def init(seed: bool = True) -> dict:
     with tx() as c:
         c.executescript(SCHEMA.read_text(encoding="utf-8"))
     seeded = 0
-    if seed and not one("SELECT 1 AS x FROM concept LIMIT 1"):
+    # 빈 DB면 시드 전체, 시드 버전이 올라갔으면 빠진 개념·동의어·관계만 더한다(기존 개념·사용자 확장은 그대로)
+    if seed and (not one("SELECT 1 AS x FROM concept LIMIT 1") or
+                 one("SELECT 1 AS x FROM concept_scheme WHERE version IS NOT ? LIMIT 1", (SEED_VERSION,)) or
+                 len(S.SCHEME_CLASS) > (one("SELECT COUNT(*) AS n FROM concept_scheme")["n"])):
         seeded = load_seed()
         export_seed_ttl()
     mine = config.path("ontology", "mine.ttl")
@@ -112,10 +115,26 @@ def _slug(s: str) -> str:
     return s or new_id()[:8]
 
 
+SEED_VERSION = "seed-2"  # seed_data.py를 고치면 올린다 → 기존 DB에 증분 적재
+
+
+def _add_missing_labels(c, cid, labels) -> None:
+    have = {r[0].lower() for r in c.execute("SELECT label FROM concept_label WHERE concept_id=?", (cid,))}
+    for lab, lang, t in labels:
+        if lab.lower() not in have:
+            have.add(lab.lower())
+            c.execute("INSERT INTO concept_label(label_id, concept_id, label, lang, label_type) VALUES (?,?,?,?,?)",
+                      (new_id(), cid, lab, lang, t))
+
+
 def _get_or_make(c, cache, scheme_ids, class_ids, scheme, ko, en=None, alts=(), hidden=(), iri=None, origin="seed"):
     key = (scheme, ko)
     if key in cache:
-        return cache[key]
+        cid = cache[key]
+        if cid in cache.get("_existing", ()):  # 이미 DB에 있던 개념: 새로 생긴 동의어만 더한다
+            labels = ([(en, "en", "pref")] if en else []) + [(a, None, "alt") for a in alts] +                      [(h, None, "hidden") for h in hidden]
+            _add_missing_labels(c, cid, labels)
+        return cid
     cid = new_id()
     cls = S.SCHEME_CLASS[scheme][0]
     c.execute(
@@ -134,6 +153,7 @@ def _get_or_make(c, cache, scheme_ids, class_ids, scheme, ko, en=None, alts=(), 
         c.execute("INSERT INTO concept_label(label_id, concept_id, label, lang, label_type) VALUES (?,?,?,?,?)",
                   (new_id(), cid, lab, lang, t))
     cache[key] = cid
+    cache["_created"] = cache.get("_created", 0) + 1
     return cid
 
 
@@ -142,14 +162,21 @@ def load_seed() -> int:
         scheme_ids, class_ids = {}, {}
         for scheme, (cls, cls_ko, _) in S.SCHEME_CLASS.items():
             sid = new_id()
-            c.execute("INSERT OR IGNORE INTO concept_scheme(scheme_id, name, version) VALUES (?,?, 'seed-1')", (sid, scheme))
+            c.execute("INSERT OR IGNORE INTO concept_scheme(scheme_id, name, version) VALUES (?,?,?)",
+                      (sid, scheme, SEED_VERSION))
+            c.execute("UPDATE concept_scheme SET version=? WHERE name=?", (SEED_VERSION, scheme))
             scheme_ids[scheme] = c.execute("SELECT scheme_id FROM concept_scheme WHERE name=?", (scheme,)).fetchone()[0]
             if cls not in class_ids:
                 kid = new_id()
                 c.execute("INSERT OR IGNORE INTO onto_class(class_id, iri, label_ko, label_en) VALUES (?,?,?,?)",
                           (kid, f"byo:{cls}", cls_ko, cls))
                 class_ids[cls] = c.execute("SELECT class_id FROM onto_class WHERE iri=?", (f"byo:{cls}",)).fetchone()[0]
-        cache: dict = {}
+        # 이미 있는 개념은 (체계, 한글 표준명)으로 재사용한다 — 다시 실행해도 중복이 생기지 않는다
+        cache: dict = {"_existing": set()}
+        for r in c.execute("SELECT s.name, k.pref_label_ko, k.concept_id FROM concept k "
+                           "JOIN concept_scheme s ON s.scheme_id=k.scheme_id"):
+            cache[(r[0], r[1])] = r[2]
+            cache["_existing"].add(r[2])
         mk = lambda *a, **k: _get_or_make(c, cache, scheme_ids, class_ids, *a, **k)  # noqa: E731
         rel = lambda a, b, t: c.execute(  # noqa: E731
             "INSERT OR IGNORE INTO concept_relation(concept_id, target_concept_id, rel_type) VALUES (?,?,?)", (a, b, t))
@@ -176,7 +203,7 @@ def load_seed() -> int:
                     c.execute("INSERT OR IGNORE INTO byproduct(byproduct_id, concept_id, sector, commodity_concept_id, "
                               "generating_process_concept_id) VALUES (?,?,?,?,?)",
                               (new_id(), bp, sec_ko, com_id, gen_id))
-        return len(cache)
+        return cache.get("_created", 0)
 
 
 TTL_PREFIX = """@prefix byo: <https://byorbit.kr/onto/> .
