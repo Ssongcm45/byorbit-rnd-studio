@@ -16,6 +16,7 @@ def key(s) -> str:
 
 # 대상: 구체적인 것부터 확인한다(예: 'TPC 잔존율'이 'TPC'보다 먼저)
 TARGET_ALIASES: list[tuple[str, list[str]]] = [
+    ("product_yield", ["펙틴수율", "펙틴추출수율", "pectinyield", "제품수율", "productyield"]),
     ("tpc_extract_yield", ["tpc추출수율", "추출수율", "폴리페놀추출수율", "extractionyield"]),
     ("extract_tpc", ["추출tpc", "추출물tpc", "추출폴리페놀", "extracttpc"]),
     ("extract_solids", ["추출고형분", "추출물수율", "고형분추출수율", "extractyield"]),
@@ -26,9 +27,11 @@ TARGET_ALIASES: list[tuple[str, list[str]]] = [
     ("energy_total", ["에너지합계", "전력량", "총에너지", "energytotal"]),
     ("energy", ["비에너지", "에너지", "sec", "specificenergy"]),
     ("dm_yield", ["건물수율", "고형분수율", "dmyield", "drymatteryield"]),
-    ("sieve_yield", ["체통과수율", "통과수율", "체수율", "분말수율", "수율", "yield"]),
+    ("sieve_yield", ["체통과수율", "통과수율", "체수율", "분말수율", "sieveyield"]),
     ("moisture", ["수분", "함수율", "moisture", "watercontent", "mc"]),
     ("mass", ["질량", "무게", "중량", "mass", "weight"]),
+    # 맨 마지막: 이름에 다른 단서가 없는 그냥 "수율"은 측정 수율로 둔다(체 통과 수율로 오인하지 않게)
+    ("product_yield", ["수율", "yield"]),
 ]
 LABEL_TO_KEY = {v["label"]: k for k, v in TARGETS.items()}
 

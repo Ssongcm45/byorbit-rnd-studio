@@ -9,7 +9,14 @@ A↔B 계약(docs/PLAN-M3.md)
               pdf_pattern?, interval_s, enabled, default}
   선택 필드(있으면 쓴다): search_urls[]("{q}" 자리에 검색어), link_template("{1}" = 자바스크립트 호출 인자),
   link_rewrite[패턴, 바꿀 말], summary_hint, doc_type("report"|"web"), max_pages, max_depth, terms_url,
-  terms_checked, robots_checked, note, venue
+  terms_checked, robots_checked, note, venue,
+  backend("direct"|"browser"|"apify", 없으면 direct) + 방식 옵션: wait_for(CSS 선택자), wait_ms(브라우저·Apify 대기),
+  actor(Apify 액터 바꾸기), max_charge_usd(Apify 실행 비용 상한, 기본 0.5)
+- backend_status() -> {direct:{ready}, browser:{ready, how, message}, apify:{ready, message}}
+- test_crawl(site_id, query="", max_pages=3) -> {pages, items[{title,url,date}], messages, ...}  (시험 수집, 저장 안 함)
+
+가져오기 방식(app/collect/backends/)은 "페이지를 어떻게 받느냐"만 바꾼다. 아래 규칙은 방식과 상관없이 이 파일의
+한 크롤 루프가 지킨다(Apify가 더 많이·다른 곳을 가져와도 규칙에 맞는 페이지만 쓴다).
 
 지키는 규칙
 - robots.txt를 http.get_text로 받아 urllib.robotparser로 읽는다(호스트마다 하루 캐시). 판정은 RFC 9309의
@@ -20,7 +27,8 @@ A↔B 계약(docs/PLAN-M3.md)
   링크만, 같은 호스트(또는 allow_prefixes에 적힌 호스트)만 따라간다.
 - 로그인·유료 페이지는 기본 목록에 넣지 않는다. 첨부는 href로 공개된 링크만 기록하고, 받는 일은 하지 않는다
   (PDF는 pdf_url로 넘겨 수집함 승인 때 http.download가 %PDF를 확인한다).
-- 밖으로 나가는 것은 목록 주소와 검색어뿐이다.
+- 밖으로 나가는 것은 목록 주소와 검색어뿐이다. Apify 방식은 시작 주소·크롤 설정이 Apify 클라우드로 나가고(유료),
+  검색어는 보내지 않는다(받은 페이지에서 이 PC가 거른다).
 """
 from __future__ import annotations
 
@@ -38,7 +46,8 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from .. import config
-from . import http
+from . import backends, http
+from .backends import BackendUnavailable, FetchError
 from .base import Item, clean_text
 
 log = logging.getLogger(__name__)
@@ -60,7 +69,10 @@ DEFAULT_DATE_PATTERN = r"((?:19|20)\d{2})\s*[.\-/년]\s*(\d{1,2})\s*[.\-/월]\s*
 SITE_FIELDS = ("id", "name", "group", "start_urls", "allow_prefixes", "link_pattern", "title_hint",
                "date_pattern", "pdf_pattern", "interval_s", "enabled", "default")
 OPTIONAL_FIELDS = ("search_urls", "link_template", "link_rewrite", "summary_hint", "doc_type", "max_pages",
-                   "max_depth", "terms_url", "terms_checked", "robots_checked", "note", "venue")
+                   "max_depth", "terms_url", "terms_checked", "robots_checked", "note", "venue",
+                   "backend", "wait_for", "wait_ms", "actor", "max_charge_usd")
+TEST_MAX_PAGES = 3
+MAX_WAIT_MS = 15_000
 
 _file_lock = threading.Lock()
 
@@ -118,6 +130,8 @@ def _with_defaults(s: dict) -> dict:
     s.setdefault("interval_s", MIN_INTERVAL_S)
     s.setdefault("enabled", True)
     s.setdefault("default", False)
+    if not s.get("backend"):
+        s["backend"] = "direct"           # 예전 사이트 파일(방식 필드 없음)은 기본 방식
     return s
 
 
@@ -134,6 +148,7 @@ def list_sites() -> list[dict]:
         merged["interval_s"] = max(float(merged.get("interval_s") or 0), float(d.get("interval_s") or 0),
                                    MIN_INTERVAL_S)
         merged["default"] = True
+        merged["backend"] = merged.get("backend") or "direct"
         out.append(merged)
     for s in user["sites"]:
         if s.get("id") in default_ids:
@@ -246,7 +261,34 @@ def validate_site(site: dict, base: dict | None = None) -> dict:
         raise ValueError("doc_type은 report 또는 web입니다.")
     s["enabled"] = bool(s.get("enabled", True))
     s["group"] = clean_text(s.get("group")) or "사용자 사이트"
+    _validate_backend(s)
     return s
+
+
+_SEL_ENGINE = re.compile(r"^\s*[A-Za-z_\-]+\s*=")     # Playwright의 text=, xpath= 같은 엔진 접두어(CSS만 받는다)
+
+
+def _validate_backend(s: dict) -> None:
+    """가져오기 방식과 그 옵션 검사. 없으면 direct."""
+    b = s.get("backend") or "direct"
+    if b not in backends.BACKENDS:
+        raise ValueError(f"가져오기 방식(backend)은 {', '.join(backends.BACKENDS)} 중 하나입니다: {b!r}")
+    s["backend"] = b
+    w = s.get("wait_for")
+    if w in (None, ""):
+        s["wait_for"] = None
+    else:
+        if not isinstance(w, str) or len(w) > 200 or any(ch in w for ch in "\r\n\t\x00") or _SEL_ENGINE.match(w):
+            raise ValueError("기다릴 요소(wait_for)는 200자 이내 CSS 선택자입니다(예: table.board_list, #list li).")
+        s["wait_for"] = w.strip()
+    try:
+        s["wait_ms"] = None if s.get("wait_ms") in (None, "") else min(MAX_WAIT_MS, max(0, int(s["wait_ms"])))
+    except (TypeError, ValueError):
+        raise ValueError("대기 시간(wait_ms)은 밀리초 정수입니다(0–15000).") from None
+    from .backends import apify as _apify
+    s["actor"] = _apify.norm_actor(s["actor"]) if s.get("actor") else None
+    has_cap = s.get("max_charge_usd") not in (None, "")
+    s["max_charge_usd"] = _apify.charge_cap(s.get("max_charge_usd")) if (b == "apify" or has_cap) else None
 
 
 def save_site(site: dict) -> dict:
@@ -782,70 +824,58 @@ class CrawlReport:
     def __init__(self, site: dict):
         self.site_id = site.get("id")
         self.name = site.get("name")
+        self.backend = site.get("backend") or "direct"
         self.pages = 0
         self.skipped: list[str] = []
         self.messages: list[str] = []
         self.robots_ok = True
+        self.backend_ready = True
 
     def to_dict(self) -> dict:
-        return {"site_id": self.site_id, "name": self.name, "pages": self.pages, "robots_ok": self.robots_ok,
+        return {"site_id": self.site_id, "name": self.name, "backend": self.backend, "pages": self.pages,
+                "robots_ok": self.robots_ok, "backend_ready": self.backend_ready,
                 "skipped": self.skipped[:20], "messages": self.messages[:20]}
 
 
-def crawl_site(site: dict | str, query: str, *, limit: int = 25, since_year: int | None = None,
-               max_pages: int | None = None) -> tuple[list[Item], CrawlReport]:
-    """사이트 하나를 예의 바르게 훑어 검색어와 맞는 Item을 돌려준다."""
-    if isinstance(site, str):
-        site = get_site(site)
-    rep = CrawlReport(site)
-    budget = min(HARD_MAX_PAGES, int(max_pages or site.get("max_pages") or DEFAULT_MAX_PAGES))
-    max_depth = min(HARD_MAX_DEPTH, max(1, int(site.get("max_depth") or DEFAULT_MAX_DEPTH)))
-    terms = query_terms(query)
+class _Crawl:
+    """크롤 한 번의 상태. 방식(direct·browser·apify)과 상관없이 같은 규칙으로 페이지를 받아들인다."""
 
-    seeds: list[str] = []
-    if site.get("search_urls") and query.strip():
-        q = urllib.parse.quote(query.strip())
-        seeds = [u.replace("{q}", q) for u in site["search_urls"]]
-    else:                                  # 사이트 검색이 있으면 그 결과만 본다(쪽수 예산 절약)
-        seeds = list(site.get("start_urls", []))
+    def __init__(self, site: dict, rep: CrawlReport, terms: list[str], budget: int, max_depth: int):
+        self.site, self.rep, self.terms, self.budget, self.max_depth = site, rep, terms, budget, max_depth
+        self.items: dict[str, dict] = {}
+        self.seen: set[str] = set()
+        self.site_desc: set[str] = set()
+        self.queue: list[tuple[str, int, str | None]] = []      # (주소, 깊이, 항목 열쇠)
+        self.hosts = _hosts(site)
 
-    items: dict[str, dict] = {}
-    seen: set[str] = set()
-    site_desc: set[str] = set()
-    queue: list[tuple[str, int, str | None]] = [(u, 0, None) for u in seeds]   # (주소, 깊이, 항목 열쇠)
-    while queue and rep.pages < budget:
-        url, depth, owner = queue.pop(0)
-        if url in seen:
-            continue
-        seen.add(url)
+    def robots_allows(self, url: str, depth: int) -> "Robots | None":
+        """robots.txt가 허용하면 Robots, 막으면 None(이유를 남김)."""
         rb = robots_for(url)
-        if not rb.can_fetch(url):
-            rep.skipped.append(url)
-            msg = f"robots.txt가 막은 주소라 건너뜀: {url}" if not rb.deny_all else f"{rb.note}: {url}"
-            rep.messages.append(msg)
-            if depth == 0:
-                rep.robots_ok = False
-            continue
-        _apply_interval(url, site.get("interval_s") or MIN_INTERVAL_S, rb)
-        try:
-            html = http.get_text(url, max_bytes=4_000_000)
-        except http.HttpError as e:
-            rep.messages.append(f"페이지를 받지 못함: {e}")
-            continue
-        rep.pages += 1
-        entries, attachments, root = extract_entries(html, url, site)
+        if rb.can_fetch(url):
+            return rb
+        self.rep.skipped.append(url)
+        msg = f"robots.txt가 막은 주소라 건너뜀: {url}" if not rb.deny_all else f"{rb.note}: {url}"
+        self.rep.messages.append(msg)
+        if depth == 0:
+            self.rep.robots_ok = False
+        return None
 
+    def accept(self, page_url: str, html: str, depth: int, owner: str | None, *, follow: bool) -> None:
+        """받은 페이지 한 장을 읽는다: 항목 뽑기, 상세 페이지면 항목 보강, follow면 상세 주소를 줄에 넣는다."""
+        site, items = self.site, self.items
+        self.rep.pages += 1
+        entries, attachments, root = extract_entries(html, page_url, site)
         if depth == 0:
             d0 = page_meta(root).get("summary")
             if d0:
-                site_desc.add(d0)                          # 사이트 공통 설명(요약으로 쓰지 않음)
-        if owner and owner in items:                       # 상세 페이지 → 그 항목을 보강
+                self.site_desc.add(d0)                        # 사이트 공통 설명(요약으로 쓰지 않음)
+        if owner and owner in items:                          # 상세 페이지 → 그 항목을 보강
             it = items[owner]
             meta = page_meta(root)
             if not it.get("summary"):
                 sn = select_first(root, site.get("summary_hint"))
                 st = sn.text() if sn else None
-                if not st and meta.get("summary") and meta["summary"] not in site_desc:
+                if not st and meta.get("summary") and meta["summary"] not in self.site_desc:
                     st = meta["summary"]
                 if st:
                     it["summary"] = st[:MAX_SUMMARY]
@@ -860,22 +890,124 @@ def crawl_site(site: dict | str, query: str, *, limit: int = 25, since_year: int
                     it["attachments"].append(a)
                     known.add(a["url"])
             it["detail_fetched"] = True
-
         for e in entries:
-            key = e["url"]
-            if key in items or key == url:
+            k = e["url"]
+            if k in items or k == page_url:
                 continue
             e["depth"] = depth
-            items[key] = e
-            hit = matches(terms, e["title"], e.get("summary"), e["row_text"])
+            items[k] = e
+            hit = matches(self.terms, e["title"], e.get("summary"), e["row_text"])
             e["hit"] = hit
-            if hit and not e["is_attachment"] and depth + 1 <= max_depth:
-                queue.append((key, depth + 1, key))
+            if follow and hit and not e["is_attachment"] and depth + 1 <= self.max_depth:
+                self.queue.append((k, depth + 1, k))
         # 검색어가 맞는 상세 페이지를 먼저 본다(쪽수 예산을 아끼기 위해)
-        queue.sort(key=lambda x: x[1])
+        self.queue.sort(key=lambda x: x[1])
+
+    # ---- 쪽 단위 방식(direct·browser): 주소마다 robots·간격을 지킨 뒤 받는다
+    def run_paged(self, session, seeds: list[str]) -> None:
+        self.queue = [(u, 0, None) for u in seeds]
+        while self.queue and self.rep.pages < self.budget:
+            url, depth, owner = self.queue.pop(0)
+            if url in self.seen:
+                continue
+            self.seen.add(url)
+            rb = self.robots_allows(url, depth)
+            if rb is None:
+                continue
+            _apply_interval(url, self.site.get("interval_s") or MIN_INTERVAL_S, rb)
+            try:
+                pg = session.fetch(url)
+            except FetchError as e:
+                self.rep.messages.append(f"페이지를 받지 못함: {e}")
+                continue
+            final = pg.final_url or url
+            if final != url:                                  # 리디렉션: 다른 호스트·robots가 막은 곳이면 버린다
+                if not backends.is_web_url(final) or urllib.parse.urlsplit(final).hostname not in self.hosts:
+                    self.rep.skipped.append(final)
+                    self.rep.messages.append(f"다른 사이트로 넘어가 버림: {url} → {final}")
+                    continue
+                if not robots_for(final).can_fetch(final):
+                    self.rep.skipped.append(final)
+                    self.rep.messages.append(f"robots.txt가 막은 주소로 넘어가 버림: {final}")
+                    continue
+            if pg.note:
+                self.rep.messages.append(pg.note)
+            self.accept(final, pg.html or "", depth, owner, follow=True)
+
+    # ---- 일괄 방식(apify): 받은 페이지를 같은 규칙으로 거른다(시작 주소·허용 경로·robots·깊이·쪽수)
+    def run_bulk(self, be, seeds: list[str]) -> None:
+        pages, notes = be.crawl(self.site, seeds, self.budget, self.max_depth)
+        self.rep.messages.extend(notes)
+        seed_set = set(seeds)
+
+        def depth_of(pg):
+            if pg.url in seed_set or pg.final_url in seed_set:
+                return 0
+            return pg.depth if isinstance(pg.depth, int) and pg.depth >= 1 else 1
+        dropped = outside = 0
+        for pg in sorted(pages, key=depth_of):               # 목록(깊이 0)을 먼저 읽어야 상세가 항목에 붙는다
+            url = pg.final_url or pg.url
+            depth = depth_of(pg)
+            if url in self.seen:
+                continue
+            self.seen.add(url)
+            if self.rep.pages >= self.budget:
+                dropped += 1
+                continue
+            if not backends.is_web_url(url) or urllib.parse.urlsplit(url).hostname not in self.hosts \
+                    or (depth > 0 and not link_allowed(url, self.site)) or depth > self.max_depth:
+                self.rep.skipped.append(url)
+                outside += 1
+                continue
+            if self.robots_allows(url, depth) is None:
+                continue
+            if pg.status is not None and pg.status >= 400:
+                self.rep.messages.append(f"페이지를 받지 못함: HTTP {pg.status}: {url.split('?')[0]}")
+                continue
+            owner = url if url in self.items else (pg.url if pg.url in self.items else None)
+            self.accept(url, pg.html or "", depth, owner, follow=False)
+        if dropped:
+            self.rep.messages.append(f"쪽수 제한({self.budget}쪽)을 넘어 받은 {dropped}쪽은 버렸습니다.")
+        if outside:
+            self.rep.messages.append(f"허용 경로·깊이 규칙에 맞지 않아 버린 페이지 {outside}쪽")
+
+
+def _seeds(site: dict, query: str, bulk: bool) -> list[str]:
+    if bulk:                                  # 일괄(클라우드) 방식에는 검색어를 보내지 않는다 → 시작 주소만, 거르기는 이 PC에서
+        return list(site.get("start_urls", []))
+    if site.get("search_urls") and query.strip():
+        q = urllib.parse.quote(query.strip())
+        return [u.replace("{q}", q) for u in site["search_urls"]]
+    return list(site.get("start_urls", []))   # 사이트 검색이 있으면 그 결과만 본다(쪽수 예산 절약)
+
+
+def crawl_site(site: dict | str, query: str, *, limit: int = 25, since_year: int | None = None,
+               max_pages: int | None = None) -> tuple[list[Item], CrawlReport]:
+    """사이트 하나를 예의 바르게 훑어 검색어와 맞는 Item을 돌려준다(가져오기 방식은 site['backend'])."""
+    if isinstance(site, str):
+        site = get_site(site)
+    rep = CrawlReport(site)
+    budget = min(HARD_MAX_PAGES, int(max_pages or site.get("max_pages") or DEFAULT_MAX_PAGES))
+    max_depth = min(HARD_MAX_DEPTH, max(1, int(site.get("max_depth") or DEFAULT_MAX_DEPTH)))
+    terms = query_terms(query)
+    bkey = site.get("backend") or "direct"
+    run = _Crawl(site, rep, terms, budget, max_depth)
+    try:
+        be = backends.get(bkey)
+        if be.bulk:
+            run.run_bulk(be, _seeds(site, query, True))
+        else:
+            with be.open(site) as session:
+                run.run_paged(session, _seeds(site, query, False))
+    except BackendUnavailable as e:
+        rep.backend_ready = False
+        rep.messages.append(f"{backends.LABELS.get(bkey, bkey)}: {e}")
+        return [], rep
+    except FetchError as e:
+        rep.messages.append(f"{backends.LABELS.get(bkey, bkey)}: {e}")
 
     out: list[Item] = []
-    for e in items.values():
+    for e in run.items.values():
         if not matches(terms, e["title"], e.get("summary"), e["row_text"]):
             continue
         if since_year and e.get("year") and e["year"] < since_year:
@@ -936,7 +1068,36 @@ def check_site(site_id: str) -> dict:
     terms = site.get("terms_url")
     if not terms:
         lines.append("이용약관 주소가 없습니다. 사이트의 저작권 정책·이용약관을 직접 확인한 뒤 켜세요.")
-    return {"robots_ok": ok, "terms_url": terms, "message": " / ".join(lines)}
+    bkey = site.get("backend") or "direct"
+    try:
+        bst = backends.get(bkey).status()
+    except Exception as e:  # noqa: BLE001
+        bst = {"ready": False, "message": f"상태를 확인하지 못했습니다: {e}"}
+    if bkey != "direct":
+        lines.append(f"가져오기 방식 {backends.LABELS.get(bkey, bkey)} — {bst.get('message', '')}")
+        if bkey == "apify" and ok and any((robots_for(u).crawl_delay() or 0) > MIN_INTERVAL_S for u in urls):
+            lines.append("주의: 이 사이트는 robots Crawl-delay가 있는데 Apify는 Crawl-delay를 지원하지 않습니다"
+                         "(한 번에 한 쪽씩만 요청하도록 설정). 가능하면 기본·브라우저 방식을 쓰세요.")
+    return {"robots_ok": ok, "terms_url": terms, "message": " / ".join(lines), "backend": bkey,
+            "backend_ready": bool(bst.get("ready")), "backend_message": bst.get("message", "")}
+
+
+def backend_status() -> dict:
+    """가져오기 방식별 준비 상태 — {direct:{ready}, browser:{ready, how, message}, apify:{ready, message}}."""
+    return backends.backend_status()
+
+
+def test_crawl(site_id: str, query: str = "", max_pages: int = TEST_MAX_PAGES) -> dict:
+    """시험 수집: 작은 크롤(최대 3쪽)로 찾은 제목을 보여 준다. 수집함에는 넣지 않는다."""
+    site = get_site(site_id)
+    n = max(1, min(TEST_MAX_PAGES, int(max_pages or TEST_MAX_PAGES)))
+    items, rep = crawl_site(site, query or "", limit=20, max_pages=n)
+    return {**rep.to_dict(), "query": query or "", "max_pages": n,
+            "items": [{"title": i.title, "url": i.url, "date": (i.extra or {}).get("date"), "year": i.year,
+                       "pdf_url": i.pdf_url} for i in items]}
+
+
+test_crawl.__test__ = False      # pytest가 이 함수를 시험으로 모으지 않게
 
 
 _last_reports: list[dict] = []

@@ -145,3 +145,18 @@ def download(url: str, dest: Path, max_mb: int = 50, timeout: float = 60,
         raise HttpError("PDF가 아닌 응답입니다(로그인·안내 페이지일 수 있음). 원문 링크를 직접 열어 확인하세요.")
     tmp.replace(dest)
     return dest
+
+
+# ---------------------------------------------------------------- 공개 출구 (다른 모듈은 _wait·_open 대신 이것을 쓴다)
+
+def wait_turn(url: str) -> None:
+    """이 호스트의 최소 간격을 기다린다(브라우저 엔진처럼 다른 경로로 요청할 때도 같은 간격을 지키도록)."""
+    _wait(url)
+
+
+def request(url: str, params: dict | None = None, headers: dict | None = None,
+            timeout: float = DEFAULT_TIMEOUT, data: bytes | None = None, method: str | None = None):
+    """응답 객체(with 문으로 닫기)를 돌려준다. POST·업로드처럼 get_text/get_json으로 안 되는 호출용.
+    간격·재시도·키 가림·http(s) 검사는 다른 함수와 같다."""
+    _check_scheme(url)
+    return _open(url, params, headers, timeout, data=data, method=method)

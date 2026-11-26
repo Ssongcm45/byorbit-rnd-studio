@@ -79,3 +79,20 @@
 .bv .co-src small{overflow-wrap:anywhere}
 .bv .co-keyhelp summary{font-size:11.5px;color:var(--v-accent,#2b5fa8);cursor:pointer;margin-top:2px}
 .bv .co-keyhelp small{color:var(--v-muted)}
+
+/* 크롤러 가져오기 방식(direct·browser·apify)과 시험 수집 */
+.bv .co-site .row .pill{margin-left:4px}
+.bv .co-bk{margin-top:6px}
+.bv .co-bk summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--v-muted);width:max-content;max-width:100%}
+.bv .co-bk .co-form{margin-top:6px;padding:8px;border:1px dashed var(--v-line);border-radius:9px;background:var(--v-surface)}
+.bv .co-bhint{margin:0;font-size:12px;color:var(--v-warn);line-height:1.5;overflow-wrap:anywhere}
+.bv .co-notice{margin:0;font-size:12px;line-height:1.5;padding:6px 9px;border-radius:8px;background:var(--v-warn-soft);color:var(--v-warn);overflow-wrap:anywhere}
+.bv .co-bopts{display:grid;gap:6px}
+.bv .co-bopts p.small{margin:0}
+.bv .co-test{margin-top:8px;padding:8px 10px;border-radius:9px;border:1px solid var(--v-line);background:var(--v-surface);font-size:12.5px}
+.bv .co-test ol,.bv .co-test ul{margin:6px 0 0;padding-left:20px;display:grid;gap:3px}
+.bv .co-test a{color:var(--v-accent);text-decoration:none;overflow-wrap:anywhere}
+.bv .co-test a:hover{text-decoration:underline}
+.bv .co-test details{margin-top:6px}
+.bv .co-test summary{cursor:pointer;color:var(--v-muted)}
+@media (max-width:600px){.bv .co-form .two{grid-template-columns:1fr}}

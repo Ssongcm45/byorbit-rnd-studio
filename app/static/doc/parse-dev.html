@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>파서 선택 (단독 확인)</title>
+<link rel="stylesheet" href="../viz/viz.css">
+<style>
+:root{
+  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
+  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
+  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
+  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme=light]){
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}}
+:root[data-theme=dark]{
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+header{padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line);font-weight:700;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header small{font-weight:400;color:var(--muted);overflow-wrap:anywhere}
+header select{height:30px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);max-width:100%;font:inherit;font-size:13px}
+#toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:9px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;max-width:420px}
+#toast.on{opacity:.95}
+</style>
+</head>
+<body>
+<header>ByOrbit 파서 선택 <select id="doc" aria-label="자료"></select>
+  <small>단독 확인 페이지 — ?doc=&lt;doc_id&gt;&amp;theme=dark</small></header>
+<main id="parse" style="padding-top:14px"></main>
+<div id="toast" role="status"></div>
+<script type="module">
+import {mountParse} from './parse.js';
+const q = new URLSearchParams(location.search);
+if (q.get('theme')) document.documentElement.dataset.theme = q.get('theme');
+const t = document.getElementById('toast');
+const toast = m => { t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3200); };
+const sel = document.getElementById('doc');
+let docs = [];
+try { docs = await (await fetch('/api/documents')).json(); } catch {}
+sel.innerHTML = docs.map(d => `<option value="${d.doc_id}">${d.file_name.replace(/</g, '&lt;')}</option>`).join('') || '<option value="">(자료 없음)</option>';
+const first = q.get('doc') || docs[0]?.doc_id || '';
+sel.value = first;
+window.parse = mountParse(document.getElementById('parse'), {docId: first, toast, onReparsed: r => console.log('다시 청킹', r)});
+sel.onchange = () => window.parse.setDoc(sel.value);
+</script>
+</body>
+</html>

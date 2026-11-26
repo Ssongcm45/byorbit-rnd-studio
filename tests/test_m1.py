@@ -43,7 +43,7 @@ def loaded(samples):
 def test_thirty_tables(home):
     from app import db
     names = db.table_names()
-    assert len(names) == 36  # M1 30 + 수집 3 + 실험 3
+    assert len(names) == 39  # M1 30 + 수집 3 + 실험 3 + 작업대 3
     for t in ("concept", "chunk", "annotation", "measurement", "project", "project_item", "change_log", "usage_log"):
         assert t in names
 
@@ -380,7 +380,7 @@ def test_api_basics(client):
     assert s["results"]
     tree = client.get("/api/concepts/tree").json()
     assert [n["label"] for n in tree][:3] == ["농업", "임업", "수산"]
-    assert len(client.get("/api/schema").json()) == 36
+    assert len(client.get("/api/schema").json()) == 39
 
 
 def test_api_upload_and_delete(client, tmp_path):

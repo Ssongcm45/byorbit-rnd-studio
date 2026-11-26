@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>문서 작업대 (단독 확인)</title>
+<style>
+:root{
+  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
+  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
+  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
+  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme=light]){
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}}
+:root[data-theme=dark]{
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+header{padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line);font-weight:700}
+header small{font-weight:400;color:var(--muted);margin-left:8px;overflow-wrap:anywhere}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+#toast.on{opacity:.95}
+</style>
+</head>
+<body>
+<header>ByOrbit 문서 작업대 <small>단독 확인 페이지 — ?doc=&lt;doc_id&gt;|first&amp;tab=parse|chunks|labels|learned&amp;chunk=&lt;chunk_id&gt;|n&amp;select=표기&amp;theme=dark</small></header>
+<main id="wb"></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module">
+import {mountWorkbench} from './workbench.js';
+const q = new URLSearchParams(location.search);
+if (q.get('theme')) document.documentElement.dataset.theme = q.get('theme');
+const t = document.getElementById('toast');
+const toast = m => { t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3200) };
+async function api(path, opt = {}){
+  const r = await fetch(path, opt.body && !(opt.body instanceof FormData)
+    ? {...opt, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(opt.body)} : opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.detail || r.statusText);
+  return j;
+}
+let doc = q.get('doc'), chunk = q.get('chunk');
+if (doc === 'first' || !doc){
+  const docs = await api('/api/documents').catch(() => []);
+  const want = q.get('name');
+  doc = (docs.find(d => want ? d.file_name.includes(want) : d.file_name.endsWith('.pdf')) || docs[0] || {}).doc_id;
+}
+if (doc && chunk && /^\d+$/.test(chunk)){
+  const cs = await api(`/api/wb/docs/${doc}/chunks`); chunk = (cs.chunks[+chunk] || cs.chunks[0] || {}).chunk_id;
+}
+window.wb = mountWorkbench(document.getElementById('wb'), {api, toast, docId: doc, chunkId: chunk || undefined,
+  tab: q.get('tab') || 'chunks', onClose: () => toast('닫기(앱에서는 자료함으로 돌아갑니다)')});
+// 확인용: ?click=#sel1,#sel2 → 화면이 그려진 뒤 차례로 누른다(미리보기 등 상태 확인)
+if (q.get('click')){
+  const sels = q.get('click').split(',');
+  setTimeout(async () => { for (const s of sels){ document.querySelector(s)?.click(); await new Promise(r => setTimeout(r, 900)) } }, 1500);
+}
+// 확인용: ?select=표기 → 라벨 탭에서 그 표기를 선택하고 팝업을 연다
+if (q.get('select')){
+  setTimeout(() => {
+    const box = document.querySelector('#wbLText'); if (!box) return;
+    const want = q.get('select'), walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+    let acc = 0, n; const full = box.textContent, at = full.indexOf(want); if (at < 0) return;
+    const r = document.createRange(); let set = false;
+    while ((n = walker.nextNode())){
+      const len = n.textContent.length;
+      if (!set && acc + len > at){ r.setStart(n, at - acc); set = true }
+      if (set && acc + len >= at + want.length){ r.setEnd(n, at + want.length - acc); break }
+      acc += len;
+    }
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    document.querySelector('#wbLabelSel').click();
+  }, 1500);
+}
+</script>
+</body>
+</html>

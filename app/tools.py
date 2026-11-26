@@ -294,5 +294,60 @@ def propose_concept(label: str, scheme: str, alt_labels: list[str] | None = None
     return {"concept_id": cid, "status": "proposed"}
 
 
+# ---------------------------------------------------------------- 라벨 사례(few-shot) — AI 라벨러 프롬프트에 붙인다
+
+def label_examples(label_types: list[str] | None = None, concept_ids: list[str] | None = None,
+                   byproduct_ids: list[str] | None = None, limit: int = 8, rule: str | None = None) -> dict:
+    """사람이 만들거나 고친 라벨 사례(positive)와 거절해 배운 사례(negative) 중 관련 높은 것 limit개.
+    이 결과는 Anthropic(또는 Codex)으로 가는 프롬프트에 들어가므로 기밀 자료 사례는 CoA 규칙을 따른다:
+    block → 빼고, mask → 시료 식별자(로트·공급처·시료번호)를 [가림]으로. 표기 자체가 가려지면 뺀다.
+    MCP 도구 목록(TOOLS)에는 넣지 않는다 — 앱(labeling.py)만 부른다."""
+    rule = rule or _rule()
+    limit = max(0, min(int(limit), 20))
+    rows = db.rows("SELECT e.*, k.pref_label_ko AS concept FROM label_example e "
+                   "LEFT JOIN concept k ON k.concept_id=e.concept_id WHERE e.enabled=1 "
+                   "ORDER BY e.created_at DESC, e.rowid DESC LIMIT 500")
+    lt, cs, bs = set(label_types or ()), set(concept_ids or ()), set(byproduct_ids or ())
+    ids = None
+    scored, excluded = [], 0
+    for i, r in enumerate(rows):
+        try:
+            v = json.loads(r["value_json"] or "{}") or {}
+        except ValueError:
+            v = {}
+        if r["confidentiality"] == "기밀":
+            if rule == "block":
+                excluded += 1
+                continue
+            ids = _identifiers() if ids is None else ids
+            r["surface"] = _mask_text(None, r["surface"], ids)
+            r["context"] = _mask_text(None, r["context"], ids)
+            for k in ("target", "unit", "basis"):
+                if v.get(k):
+                    v[k] = _mask_text(None, str(v[k]), ids)
+            if MASK in (r["surface"] or ""):
+                excluded += 1
+                continue
+        score = (3 if r["concept_id"] and r["concept_id"] in cs else 0) + \
+                (2 if v.get("byproduct_id") and v["byproduct_id"] in bs else 0) + \
+                (1 if r["label_type"] in lt else 0) + (1 if r["label_type"] == "VALUE" else 0) - i * 0.001
+        scored.append((score, r, v))
+    scored.sort(key=lambda x: -x[0])
+    neg_cap = max(1, limit // 4)
+    out, negs = [], 0
+    for score, r, v in scored:
+        if len(out) >= limit:
+            break
+        if r["kind"] == "negative":
+            if negs >= neg_cap:
+                continue
+            negs += 1
+        out.append({"kind": r["kind"], "label_type": r["label_type"], "surface": r["surface"],
+                    "context": r["context"], "concept": r["concept"],
+                    "value": {k: v.get(k) for k in ("value", "unit", "target", "basis") if v.get(k) not in (None, "")},
+                    "masked": r["confidentiality"] == "기밀"})
+    return {"examples": out, "excluded_confidential": excluded, "rule": rule}
+
+
 TOOLS = [search_chunks, get_chunk, lookup_concept, query_measurements, save_annotations,
          save_report_draft, propose_concept]

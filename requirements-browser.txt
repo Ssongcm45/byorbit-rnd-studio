@@ -1,0 +1,4 @@
+# 선택 설치: 크롤러 '브라우저' 방식(자바스크립트로 그리는 목록 읽기). install-browser.bat으로 설치합니다.
+# 이 PC에 설치된 Chrome을 헤드리스로 씁니다(Chrome이 없을 때만 chromium 약 150MB를 받음).
+# Playwright MCP가 아니라 파이썬 라이브러리입니다 — AI에게 브라우저를 도구로 주지 않습니다.
+playwright==1.65.2

@@ -40,7 +40,8 @@ def parse(path: Path) -> dict:
     if ext in (".png", ".jpg", ".jpeg", ".tif", ".tiff"):
         return parse_image(path)
     if ext == ".hwp":
-        raise UnsupportedFile("HWP(구 형식)는 1단계에서 지원하지 않습니다. 한글에서 'HWPX로 저장' 후 넣어 주세요.")
+        raise UnsupportedFile("HWP(구 형식)는 기본 파서로 읽지 못합니다. install-kordoc.bat으로 kordoc 도구를 설치하거나 "
+                              "한글에서 'HWPX로 저장' 후 넣어 주세요.")
     raise UnsupportedFile(f"지원하지 않는 형식: {ext}")
 
 

@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, db, engines, labeling, search as _search, thesaurus, tools
-from . import routes_collect, routes_experiment, routes_predict, routes_viz
+from . import routes_collect, routes_experiment, routes_parse, routes_predict, routes_stats, routes_viz, routes_workbench
 from .collect import scheduler as collect_scheduler
 from .engines import claude_code, food_mcp
 from .ingest import parsers, pipeline, watcher
@@ -428,40 +428,13 @@ def _doc_byproduct(t, doc_id: str) -> str | None:
 
 @app.post("/api/annotations/{ann_id}")
 def review(ann_id: str, r: Review):
-    if r.status not in ("accepted", "rejected", "pending", "auto"):
-        raise HTTPException(400, "status는 accepted·rejected 또는 되돌리기용 pending·auto 중 하나입니다")
-    a = db.one("SELECT * FROM annotation WHERE ann_id=?", (ann_id,))
-    if not a:
+    """라벨 검토 — 작업대와 같은 함수(labeling.review_annotation). 이 화면에서는 부정 사례를 배우지 않는다."""
+    try:
+        return labeling.review_annotation(ann_id, r.status, learn=False)
+    except KeyError:
         raise HTTPException(404, "라벨 없음")
-    meas = None
-    removed = 0
-    undo = r.status in ("pending", "auto")
-    with db.tx() as t:
-        t.execute("UPDATE annotation SET status=?, reviewed_at=CASE WHEN ? THEN NULL ELSE datetime('now') END "
-                  "WHERE ann_id=?", (r.status, int(undo), ann_id))
-        db.log_change(t, "annotation", ann_id, {"status": a["status"]}, {"status": r.status})
-        # 되돌리기·재결정: 이 라벨에서 올렸던 추출 측정값을 지운다(승인을 두 번 눌러도 한 건만 남는다)
-        for (mid,) in t.execute("SELECT meas_id FROM measurement WHERE ann_id=? AND entry='extracted'",
-                                (ann_id,)).fetchall():
-            t.execute("DELETE FROM measurement WHERE meas_id=?", (mid,))
-            db.log_change(t, "measurement", mid, {"ann_id": ann_id, "entry": "extracted"}, None)
-            removed += 1
-        # 승인된 수치 라벨 → 측정값(entry=extracted)으로 올린다
-        if r.status == "accepted" and a["normalized_value"]:
-            v = json.loads(a["normalized_value"])
-            doc = t.execute("SELECT doc_id FROM chunk WHERE chunk_id=?", (a["chunk_id"],)).fetchone()[0]
-            try:
-                value = float(str(v.get("value")).replace(",", ""))
-            except (TypeError, ValueError):
-                value = None
-            target = v.get("target") or a["surface_text"]
-            meas = db.new_id()
-            t.execute("INSERT INTO measurement(meas_id, byproduct_id, target_concept_id, target_text, value, value_text, "
-                      "unit_concept_id, unit_text, basis, ann_id, doc_id, entry, verified_at) "
-                      "VALUES (?,?,?,?,?,?,?,?,?,?,?, 'extracted', datetime('now'))",
-                      (meas, _doc_byproduct(t, doc), a["concept_id"], target, value, str(v.get("value")),
-                       a["unit_concept_id"], v.get("unit"), v.get("basis"), ann_id, doc))
-    return {"ok": True, "measurement_id": meas, "removed_measurements": removed}
+    except labeling.ManualError as e:
+        raise HTTPException(400, str(e))
 
 
 # ---------------------------------------------------------------- 측정값
@@ -587,5 +560,8 @@ def index():
 app.include_router(routes_viz.router)  # /api/viz — 흐름·건조 방식·분자 구조
 app.include_router(routes_collect.router)  # /api/collect — 자료 수집·수집함·저장 검색·크롤러 사이트
 app.include_router(routes_experiment.router)  # /api/exp — 내 실험(공정 흐름·런·비교·보정)
+app.include_router(routes_parse.router)  # /api/parse — 파서 선택·다시 파싱·나란히 비교·다시 청킹
+app.include_router(routes_workbench.router)  # /api/wb — 문서 작업대(청크 검사·고치기·규칙·사람 라벨·배운 것)
+app.include_router(routes_stats.router)  # /api/stats — 통계 분석(회귀·t검정·논문용 표·그림)
 app.include_router(routes_predict.router)  # /api/viz/predict — 건조 조건 → 예상 결과(근거 포함)
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

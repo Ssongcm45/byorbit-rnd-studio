@@ -395,7 +395,7 @@ def test_seed_new_concepts(home):
         "SELECT t.pref_label_ko AS k FROM concept_relation r JOIN concept c ON c.concept_id=r.concept_id "
         "JOIN concept t ON t.concept_id=r.target_concept_id WHERE c.pref_label_ko='사과박' AND r.rel_type='contains'")}
     assert {"클로로겐산", "플로리진", "퀘르세틴"} <= contains
-    assert len(db.table_names()) == 36
+    assert len(db.table_names()) == 39
 
 
 # ---------------------------------------------------------------- 접근 방어·작업 정리

@@ -62,7 +62,7 @@ tr.click{cursor:pointer}tr.click:hover td{background:var(--surface-2)}
 .num{text-align:right;font-family:var(--mono)}
 .stg{font-size:10.5px;padding:1px 6px;border-radius:5px;background:var(--surface-2);color:var(--muted);white-space:nowrap;margin-right:2px}
 .stg.done{background:var(--ok-soft);color:var(--ok)}.stg.warn{background:var(--warn-soft);color:var(--warn)}.stg.err{background:var(--bad-soft);color:var(--bad)}
-.cf{display:inline-flex;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
+.cf{display:inline-flex;white-space:nowrap;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
 .cf.s{border-color:var(--bad);color:var(--bad)}.cf.i{border-color:var(--warn);color:var(--warn)}
 .pill{display:inline-flex;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .pill.seed{background:var(--accent-soft);color:var(--accent)}.pill.mine{background:var(--earth-soft);color:var(--earth)}
@@ -121,6 +121,7 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(
     <a data-v="ask">AI에 묻기</a>
     <a data-v="collect">수집</a>
     <a data-v="exp">실험</a>
+    <a data-v="stats">분석</a>
     <a data-v="viz">시각화</a>
     <a data-v="settings">설정</a>
   </nav>
@@ -171,7 +172,8 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(
   <div class="split">
     <div id="qRes" style="display:grid;gap:8px"><div class="empty">검색어를 넣으면 동의어까지 넓혀서 찾습니다.</div></div>
     <div class="card" id="chunkCard" hidden>
-      <div class="row"><h2 class="grow" id="chTitle"></h2><span class="small muted" id="chMeta"></span></div>
+      <div class="row"><h2 class="grow" id="chTitle"></h2><span class="small muted" id="chMeta"></span>
+        <button class="btn sm" id="chWb" title="이 청크를 문서 작업대의 라벨 탭에서 엽니다">작업대에서 열기</button></div>
       <div class="chunktext" id="chText" style="margin-top:8px"></div>
       <p class="small muted" style="margin:8px 0 0">밑줄: 붙은 라벨(실선 확정 · 점선 검토 대기 · 주황 수치)</p>
     </div>
@@ -235,7 +237,11 @@ kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(
 <!-- 자료 수집 (app/static/collect) — 공식 API·크롤러 → 수집함 -->
 <section class="view" id="v-collect"><div id="collectRoot"></div></section>
 <!-- 내 실험 (app/static/exp) — 공정 흐름·내 데이터·예측 비교·보정 -->
+<!-- 통계 분석 (app/static/stats) — 회귀·t검정·가정 점검·논문용 표·그림 -->
+<section class="view" id="v-stats"><div id="statsRoot" style="max-width:1320px;margin:0 auto;padding:16px"></div></section>
 <section class="view" id="v-exp"><div id="expRoot" style="max-width:1320px;margin:0 auto;padding:16px"></div></section>
+<!-- 문서 작업대 (app/static/doc) — 파싱·청크 검사·고치기·규칙 배우기·사람 라벨 -->
+<section class="view" id="v-wb"><div id="wbRoot"></div></section>
 
 <!-- 설정 -->
 <section class="view" id="v-settings"><div class="wrap">
@@ -350,6 +356,7 @@ async function loadDocs(){
        return `<span class="stg ${c}" title="${k}: ${v||'대기'}">${n}${v==='dict'?'(사전)':v==='llm'?'(AI)':''}</span>`}).join('')}</td>
     <td class="num">${d.chunks}</td><td class="num">${d.annotations}</td><td class="num">${d.measurements||''}</td>
     <td class="row" style="flex-wrap:nowrap"><button class="btn sm" onclick="viewDoc('${d.doc_id}','${esc(d.file_name)}')">보기</button>
+      <button class="btn sm" title="청크 검사·고치기, 라벨 붙이기(사람·사전·AI), 배운 규칙" onclick="openWorkbench('${d.doc_id}')">작업대</button>
       <button class="btn sm" title="Claude Code로 라벨 제안 (청크 5개씩 묶어 처리)" onclick="labelDoc('${d.doc_id}','${esc(d.file_name)}')">AI 라벨</button>
       <button class="btn sm bad" onclick="delDoc('${d.doc_id}','${esc(d.file_name)}')">삭제</button></td></tr>`).join('')
     : `<tr><td colspan="8"><div class="empty">아직 자료가 없습니다. 위에 파일을 끌어다 놓거나, 설정에서 예시 자료를 넣어 보세요.</div></td></tr>`;
@@ -378,7 +385,8 @@ async function viewDoc(id, name){
   $('#dlgT').textContent = name;
   $('#dlgB').innerHTML = `<p class="small muted" style="margin-top:0">청크 ${cs.length}개 · <a href="/api/documents/${id}/file" target="_blank">원본 파일 열기</a></p>` +
     cs.map(c => `<div style="margin-bottom:10px"><div class="small muted">#${c.ord+1} · ${c.chunk_type==='table'?'표':'본문'}${c.page?` · p.${c.page}`:''} · 라벨 ${c.annotations}
-      <button class="btn sm" onclick="openChunk('${c.chunk_id}')">라벨 보기</button></div><div class="chunktext" style="max-height:220px">${esc(c.text)}</div></div>`).join('');
+      <button class="btn sm" onclick="openChunk('${c.chunk_id}')">라벨 보기</button>
+      <button class="btn sm" onclick="dlg.close();openWorkbench('${id}','${c.chunk_id}','chunks')">작업대</button></div><div class="chunktext" style="max-height:220px">${esc(c.text)}</div></div>`).join('');
   dlg.showModal();
 }
 async function delDoc(id, name){
@@ -452,12 +460,13 @@ function highlight(text, terms){
   terms.filter(t=>t.length>=2).forEach(t => { const re = new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'); out = out.replace(re, m=>`<mark>${m}</mark>`) });
   return out;
 }
-$('#qBtn').onclick = doSearch; $('#q').onkeydown = e => e.key==='Enter' && doSearch();
+$('#qBtn').onclick = doSearch; $('#q').onkeydown = e => { if(e.key==='Enter') doSearch() };  // false를 돌려주면 키 입력이 막히므로 값을 돌려주지 않는다
 async function openChunk(id){
   const c = await api('/api/chunks/'+id);
   if(dlg.open) dlg.close();
   show('search');
   $('#chunkCard').hidden = false;
+  S.lastChunk = c; $('#chWb').onclick = () => openWorkbench(c.doc_id, c.chunk_id, 'labels');
   $('#chTitle').textContent = c.file_name; $('#chMeta').textContent = `${c.heading||''}${c.page?' · p.'+c.page:''} · 라벨 ${c.annotations.length}`;
   const anns = c.annotations.filter(a=>a.status!=='rejected' && a.span_start!=null).sort((a,b)=>a.span_start-b.span_start);
   let html='', pos=0;
@@ -477,7 +486,8 @@ async function loadReview(){
     return `<tr id="rv-${a.ann_id}" data-id="${a.ann_id}" onclick="rvFocus(${i}, false)"><td class="small">…${esc(a.context.before)}<mark>${esc(a.context.hit)}</mark>${esc(a.context.after)}…</td>
     <td><span class="pill ${a.label_type==='VALUE'?'warn':''}">${a.label_type}</span><div class="small muted">${a.method}${a.engine?' · '+a.engine:''}</div></td>
     <td>${esc(a.concept||'')}${v?`<div class="mono small">${esc(v)}</div>`:''}</td><td class="num">${a.confidence??''}</td>
-    <td class="small"><a href="#" onclick="openChunk('${a.chunk_id}');return false">${esc(a.file_name)}</a></td>
+    <td class="small"><a href="#" onclick="openChunk('${a.chunk_id}');return false">${esc(a.file_name)}</a>
+      <div><a href="#" title="문서 작업대에서 이 청크 열기" onclick="event.stopPropagation();openWorkbench('${a.doc_id}','${a.chunk_id}','labels');return false">작업대</a></div></td>
     <td class="row rvact" style="flex-wrap:nowrap">${st==='pending'||st==='auto'?rvButtons(a.ann_id):''}</td></tr>`}).join('')
     : '<tr><td colspan="6"><div class="empty">검토할 라벨이 없습니다. 자료함에서 “AI 라벨”을 실행하면 수치 라벨이 여기로 옵니다.</div></td></tr>';
   rvFocus(RV.idx, false);
@@ -697,12 +707,25 @@ const ensureCollect = () => collect ||= import('/static/collect/collect.js').the
   m.mountCollect(document.getElementById('collectRoot'), {api, toast, project: () => S.project}));
 const ensureExp = () => exp ||= import('/static/exp/exp.js').then(m =>
   m.mountExperiment(document.getElementById('expRoot'), {api, toast, project: S.project,
-    openDrying: method => { show('viz'); ensureViz().openDrying(method) }}));
+    openDrying: method => { show('viz'); ensureViz().openDrying(method) },
+    openStats: id => { show('stats'); ensureStats().then(st => st.open(id)) }}));
+let stats = null;
+const ensureStats = () => stats ||= import('/static/stats/stats.js').then(m =>
+  m.mountStats(document.getElementById('statsRoot'), {api, toast, project: S.project}));
+document.querySelector('#nav a[data-v=stats]').addEventListener('click', ensureStats);
+if (location.hash === '#stats') ensureStats();
 document.querySelector('#nav a[data-v=collect]').addEventListener('click', ensureCollect);
 document.querySelector('#nav a[data-v=exp]').addEventListener('click', ensureExp);
 if (location.hash === '#collect') ensureCollect();
 if (location.hash === '#exp') ensureExp();
 document.getElementById('proj').addEventListener('change', e => viz?.setProject(e.target.value));
+
+// 문서 작업대: 자료함·검색·라벨 검토에서 연다. 처음 열 때 붙인다
+let wb = null;
+const ensureWb = () => wb ||= import('/static/doc/workbench.js').then(m =>
+  m.mountWorkbench(document.getElementById('wbRoot'), {api, toast, onClose: () => show('library')}));
+window.openWorkbench = (docId, chunkId, tab) => { show('wb'); return ensureWb().then(w => w.open(docId, {chunkId, tab})) };
+if (location.hash === '#wb') ensureWb();   // 새로고침: 자료를 고르라는 안내가 보인다
 </script>
 </body>
 </html>

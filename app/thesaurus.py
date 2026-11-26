@@ -1,6 +1,13 @@
-"""시소러스: 표기 → 개념 매칭과 동의어 확장."""
+"""시소러스: 표기 → 개념 매칭과 동의어 확장.
+
+문서 작업대에서 배운 것도 여기서 반영한다.
+- 배운 동의어: concept_label(alt)로 들어가므로 다른 표기와 똑같이 찾힌다(add_alt_label).
+- 부정 사례: label_example(kind='negative', enabled=1). 사람이 거절한 사전 라벨의 표기는
+  같은 문맥(바로 앞 또는 뒤 낱말이 같을 때)에서 다시 붙이지 않는다. scope='everywhere'면 어디서나 건너뛴다.
+"""
 from __future__ import annotations
 
+import json
 import re
 import threading
 
@@ -33,7 +40,21 @@ def _load() -> dict:
                     surf[k].append((r["concept_id"], r["pref_label_ko"], r["scheme"]))
                 info = by_concept.setdefault(r["concept_id"], {"pref": r["pref_label_ko"], "scheme": r["scheme"], "labels": []})
                 info["labels"].append(r["label"])
-            _cache = {"surf": surf, "concept": by_concept}
+            negs: dict[str, list] = {}
+            try:
+                for r in db.rows("SELECT ex_id, surface, concept_id, value_json, context FROM label_example "
+                                 "WHERE kind='negative' AND enabled=1"):
+                    try:
+                        v = json.loads(r["value_json"] or "{}") or {}
+                    except ValueError:
+                        v = {}
+                    negs.setdefault(_norm(r["surface"]), []).append(
+                        {"ex_id": r["ex_id"], "concept_id": r["concept_id"], "scope": v.get("scope", "context"),
+                         "left": v.get("left") or "", "right": v.get("right") or "",
+                         "context": r["context"] or ""})
+            except Exception:  # noqa: BLE001 — 표가 없는 오래된 DB
+                negs = {}
+            _cache = {"surf": surf, "concept": by_concept, "neg": negs}
         return _cache
 
 
@@ -85,8 +106,56 @@ def _ascii_alnum(ch: str) -> bool:
     return ch.isascii() and ch.isalnum()
 
 
-def find_mentions(text: str, min_len: int = 2) -> list[dict]:
-    """본문에서 시소러스 표기를 찾는다(사전 라벨링). 긴 표기를 먼저, 겹치면 긴 쪽을 남긴다."""
+_PUNCT = " \t\r\n.,;:!?()[]{}<>\"'·…~-—–/"
+
+
+def neighbors(text: str, i: int, j: int) -> tuple[str, str]:
+    """표기 [i, j) 바로 앞·뒤 낱말. 붙어 있는 조사·접두어가 있으면 그것, 없으면 띄어 쓴 다음 낱말."""
+    left_s, right_s = text[:i], text[j:]
+    lt = re.split(r"\s+", left_s.rstrip())[-1] if left_s.strip() else ""
+    rt = re.split(r"\s+", right_s.lstrip())[0] if right_s.strip() else ""
+    return lt.strip(_PUNCT)[-12:].lower(), rt.strip(_PUNCT)[:12].lower()
+
+
+def _negative_hit(c: dict, surf: str, cid: str, text: str, i: int, j: int) -> bool:
+    """부정 사례와 맞는가. 문맥(context): 저장한 앞 낱말 또는 뒤 낱말 중 하나라도 같으면(2글자 이상만 비교)."""
+    for n in c.get("neg", {}).get(surf, ()):
+        if n["concept_id"] not in (None, cid):
+            continue
+        keys = [k for k in (n["left"], n["right"]) if len(k) >= 2]
+        if n["scope"] == "everywhere":
+            return True
+        if not keys:  # 앞뒤 낱말이 너무 짧으면 주변 글(앞뒤 15자)이 저장한 문맥 안에 있을 때만
+            if n.get("context") and text[max(0, i - 15):j + 15] in n["context"]:
+                return True
+            continue
+        lt, rt = neighbors(text, i, j)
+        if (len(n["left"]) >= 2 and n["left"] == lt) or (len(n["right"]) >= 2 and n["right"] == rt):
+            return True
+    return False
+
+
+def add_alt_label(concept_id: str, label: str) -> str | None:
+    """개념에 동의어(alt) 하나를 더한다. 이미 그 개념의 표기면 None. 캐시를 비운다."""
+    label = re.sub(r"\s+", " ", (label or "").strip())
+    if not label:
+        raise ValueError("빈 표기는 동의어로 배울 수 없습니다.")
+    have = db.one("SELECT label_id FROM concept_label WHERE concept_id=? AND lower(label)=lower(?)", (concept_id, label))
+    if have:
+        return None
+    lid = db.new_id()
+    with db.tx() as t:
+        t.execute("INSERT INTO concept_label(label_id, concept_id, label, lang, label_type) VALUES (?,?,?,?, 'alt')",
+                  (lid, concept_id, label, None))
+        db.log_change(t, "concept_label", lid, None,
+                      {"concept_id": concept_id, "label": label, "label_type": "alt", "origin": "mine", "learned": True})
+    invalidate()
+    return lid
+
+
+def find_mentions(text: str, min_len: int = 2, negatives: bool = True) -> list[dict]:
+    """본문에서 시소러스 표기를 찾는다(사전 라벨링). 긴 표기를 먼저, 겹치면 긴 쪽을 남긴다.
+    negatives=True면 사람이 거절해 배운 부정 사례(같은 문맥의 같은 표기)는 건너뛴다."""
     c = _load()
     low = text.lower()
     found = []
@@ -108,9 +177,11 @@ def find_mentions(text: str, min_len: int = 2) -> list[dict]:
                     continue
             if any(taken[i:j]):
                 continue
+            cid, pref, scheme = c["surf"][surf][0]
+            if negatives and _negative_hit(c, surf, cid, text, i, j):
+                continue
             for k in range(i, j):
                 taken[k] = True
-            cid, pref, scheme = c["surf"][surf][0]
             found.append({"start": i, "end": j, "surface": text[i:j], "concept_id": cid,
                           "pref_label": pref, "scheme": scheme})
     return sorted(found, key=lambda x: x["start"])

@@ -1,0 +1,59 @@
+/* 통계 분석 — viz.css(.bv 변수·버튼·표·알약)를 그대로 쓰고, 단계 배치·가정 카드·학술지 미리보기만 더한다 */
+.bv .sx{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-width:0}
+.bv .sx [hidden]{display:none!important}
+.bv .sx .sx-top h2{margin:0;font-size:17px}
+.bv .sx .sx-top .sub{margin:2px 0 0;max-width:90ch}
+.bv .sx .sx-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.bv .sx .sx-steps > li > h3{display:flex;align-items:center;gap:8px;margin:0 0 10px;font-size:15px}
+.bv .sx .sx-n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--v-accent);color:var(--v-accent-ink);font-size:12px;font-weight:700;flex:none}
+.bv .sx h4{margin:18px 0 8px;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bv .sx label.small{display:inline-flex;align-items:center;gap:6px}
+.bv .sx code{font-family:var(--v-mono);font-size:12px;background:var(--v-surface-2);padding:0 4px;border-radius:4px}
+.bv .sx .notice,.bv .sx .info{margin:6px 0}
+.bv .sx .sx-hint{flex-basis:100%;margin:4px 0 0}
+/* 데이터 미리보기 */
+.bv .sx .sx-tablewrap{overflow-x:auto;max-width:100%;border:1px solid var(--v-line);border-radius:8px}
+.bv .sx .sx-data th{vertical-align:bottom;font-family:var(--v-mono);color:var(--v-ink)}
+.bv .sx .sx-data .sx-lab{font-family:var(--v-font);font-weight:400;color:var(--v-muted);font-size:11px}
+.bv .sx .sx-data td{white-space:nowrap;font-size:12.5px;padding:4px 8px}
+.bv .sx .sx-miss{color:var(--v-bad);background:var(--v-bad-soft)}
+.bv .sx .sx-map{margin:8px 0}
+.bv .sx .sx-map summary,.bv .sx details summary{cursor:pointer;font-weight:600;font-size:13px;padding:4px 0}
+.bv .sx .sx-map .btn{margin-top:8px}
+/* 변수 역할 */
+.bv .sx .sx-rolegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px 14px;margin-top:12px;align-items:start}
+.bv .sx .sx-rolegrid > label,.bv .sx .sx-rolegrid fieldset{display:grid;gap:4px;font-size:12.5px;font-weight:600;min-width:0}
+.bv .sx .sx-rolegrid fieldset{border:0;margin:0;padding:0}
+.bv .sx .sx-rolegrid legend{padding:0;margin-bottom:4px}
+.bv .sx .sx-rolegrid .inp{width:100%}
+.bv .sx .sx-rolegrid .chip{display:inline-flex;align-items:center;gap:4px;font-weight:400;cursor:pointer}
+.bv .sx .sx-formula{font-family:var(--v-mono);margin:8px 0 0}
+.bv .sx .sx-methods-short{margin:10px 0 0;font-size:13px}
+/* 결과 */
+.bv .sx .sx-sum{gap:12px}
+.bv .sx .sx-interp{margin:0;padding-left:22px;display:grid;gap:6px;font-size:14px;line-height:1.65;max-width:110ch}
+.bv .sx .sx-paper{background:#fff;color:#000;border:1px solid var(--v-line);border-radius:8px;padding:6px;overflow-x:auto;max-width:100%}
+.bv .sx .sx-paper img{display:block;max-width:100%;height:auto;margin:0 auto}
+.bv .sx .sx-fig{padding:12px}
+.bv .sx .sx-cap{font-family:'Times New Roman','Malgun Gothic',serif;font-size:13px;line-height:1.5;margin:10px 4px 2px;color:#000}
+.bv .sx .sx-checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:10px}
+.bv .sx .sx-check{border:1px solid var(--v-line);border-left-width:4px;border-radius:10px;padding:10px 12px;background:var(--v-surface);min-width:0}
+.bv .sx .sx-check.s-pass{border-left-color:var(--v-ok)}
+.bv .sx .sx-check.s-warn{border-left-color:var(--v-warn)}
+.bv .sx .sx-check.s-fail{border-left-color:var(--v-bad)}
+.bv .sx .sx-check.s-info{border-left-color:var(--v-muted)}
+.bv .sx .sx-check header{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bv .sx .sx-check p{margin:6px 0 0}
+.bv .sx .sx-check .sx-stat{font-family:var(--v-mono);font-size:12px;overflow-wrap:anywhere}
+.bv .sx .sx-diag,.bv .sx details{margin-top:12px}
+.bv .sx .sx-methods{font-size:13px;line-height:1.6;max-width:110ch}
+.bv .sx .seg button{padding:3px 10px;font-size:12px}
+/* 내보내기 */
+.bv .sx .sx-explist{display:grid;gap:8px;margin:12px 0 6px}
+.bv .sx .sx-explist > div{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.bv .sx .sx-explist b{min-width:150px;font-size:13px}
+@media (max-width:640px){
+  .bv .sx .sx-explist b{min-width:0;flex-basis:100%}
+  .bv .sx .sx-interp{font-size:13.5px}
+}
+.bv .sx .sr-only,.bv .sx-steps .sr-only,.bv .sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

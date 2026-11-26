@@ -506,13 +506,14 @@ def test_saved_query_crud(fake, clean):
 
 def test_scheduler_fake_clock(fake, clean):
     from app.collect import scheduler, store
-    t0 = datetime(2026, 11, 25, 9, 0, 0)
+    t0 = store.utcnow().replace(second=0, microsecond=0) + timedelta(minutes=1)  # 실제 시각 기준(날짜 고정 금지)
     q = store.save_query({"name": "자동", "query": QUERY, "sources": ["openalex"], "auto": True, "interval_h": 24})
     manual = store.save_query({"name": "수동", "query": "x", "sources": ["openalex"], "auto": False})
     ran = scheduler.tick(now=t0 + timedelta(minutes=1))
     assert [r["query_id"] for r in ran] == [q["query_id"]] and ran[0]["status"] == "done"
     got = store.get_query(q["query_id"])
-    assert got["last_run_at"] == "2026-11-25 09:01:00" and got["next_run_at"] == "2026-11-26 09:01:00"
+    assert got["last_run_at"] == store._ts(t0 + timedelta(minutes=1))
+    assert got["next_run_at"] == store._ts(t0 + timedelta(minutes=1, hours=24))
     assert store.list_items("new", query_id=q["query_id"])["total"] == 2
     qs = {x["query_id"]: x for x in store.list_queries()}
     assert qs[q["query_id"]]["last_job"]["status"] == "done" and "last_job" not in qs[manual["query_id"]]
@@ -539,7 +540,7 @@ def test_scheduler_fake_clock(fake, clean):
 
 def test_scheduler_failure_does_not_block_others(fake, clean):
     from app.collect import scheduler, store
-    t0 = datetime(2026, 11, 25, 9, 0, 0)
+    t0 = store.utcnow().replace(second=0, microsecond=0) + timedelta(minutes=1)  # 실제 시각 기준(날짜 고정 금지)
     a = store.save_query({"name": "a", "query": "a", "sources": ["openalex"], "auto": True})
     b = store.save_query({"name": "b", "query": "b", "sources": ["openalex"], "auto": True})
     calls = []

@@ -138,6 +138,8 @@ TARGETS: dict[str, dict] = {
     "tpc_extract_yield": {"label": "TPC 추출 수율", "unit": "% TPC"},
     "extract_tpc": {"label": "추출 TPC(투입 분말 1 g당)", "unit": "mg GAE/g 건량"},
     "extract_solids": {"label": "추출 고형분 수율", "unit": "% 건물"},
+    # 펙틴·제품 수율처럼 모델이 예측하지 않는 측정 수율(비교·보정 없이 기록·통계 분석용)
+    "product_yield": {"label": "수율", "unit": "%"},
 }
 
 

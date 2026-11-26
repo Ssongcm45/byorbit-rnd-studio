@@ -278,3 +278,28 @@ def site_delete(site_id: str):
 @router.post("/sites/{site_id}/check")
 def site_check(site_id: str):
     return _crawler_call(_crawler().check_site, site_id)
+
+
+def _crawler_fn(name: str):
+    fn = getattr(_crawler(), name, None)
+    if not callable(fn):
+        raise HTTPException(503, CRAWLER_NOT_READY)
+    return fn
+
+
+@router.get("/sites/backends")
+def site_backends():
+    """가져오기 방식(direct·browser·apify)별 준비 상태 — 미설치·키 없음 안내 포함."""
+    return {"backends": _crawler_call(_crawler_fn("backend_status"))}
+
+
+class SiteTestIn(BaseModel):
+    query: str = Field("", max_length=200)
+    max_pages: int = Field(3, ge=1, le=3)
+
+
+@router.post("/sites/{site_id}/test")
+def site_test(site_id: str, body: SiteTestIn | None = None):
+    """시험 수집 — 최대 3쪽만 훑어 찾은 제목을 돌려준다(수집함에 넣지 않음). 브라우저·Apify는 수십 초 걸릴 수 있다."""
+    body = body or SiteTestIn()
+    return _crawler_call(_crawler_fn("test_crawl"), site_id, body.query.strip(), body.max_pages)

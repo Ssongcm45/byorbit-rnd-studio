@@ -89,13 +89,39 @@ def init(seed: bool = True) -> dict:
     return {"data_home": str(config.data_home()), "tables": len(table_names()), "seeded_concepts": seeded}
 
 
+# 기록(.shipped.json)이 생기기 전에 배포한 지침의 해시(줄바꿈 LF 기준) — 이 사본은 손대지 않은 것으로 본다
+_SHIPPED_BEFORE = {"labeler.md": {"24188c13c9f7007e33847eec38f392e4cf2ce4a57f0f6519ffd2ca4ea0a8f3b5"}}
+
+
 def _copy_agents() -> None:
+    """에이전트 지침을 데이터 폴더로 복사한다. 앱의 지침이 새로 바뀌었을 때,
+    사용자가 고치지 않은 사본(지난번에 복사한 그대로)이면 새 버전으로 바꾸고, 고친 사본은 그대로 둔다."""
+    import hashlib
     src = config.APP_ROOT / "agents"
     dst = config.path("agents")
+    ledger_f = dst / ".shipped.json"
+    try:
+        ledger = json.loads(ledger_f.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        ledger = {}
+    h = lambda b: hashlib.sha256(b.replace(b"\r\n", b"\n")).hexdigest()  # noqa: E731 — 줄바꿈 차이는 무시
+    changed = False
     for f in src.glob("*.md"):
+        new = f.read_bytes()
         target = dst / f.name
         if not target.exists():
-            target.write_text(f.read_text(encoding="utf-8"), encoding="utf-8")
+            target.write_bytes(new)
+        else:
+            cur = target.read_bytes()
+            old_ok = h(cur) == ledger.get(f.name) or h(cur) in _SHIPPED_BEFORE.get(f.name, ())
+            if h(cur) != h(new) and old_ok:  # 사용자가 손대지 않은 옛 사본 → 갱신
+                target.write_bytes(new)
+            elif h(cur) != h(new):
+                continue  # 사용자가 고친 사본은 건드리지 않는다
+        ledger[f.name] = h(new)
+        changed = True
+    if changed:
+        ledger_f.write_text(json.dumps(ledger, indent=1), encoding="utf-8")
 
 
 def ensure_project(name: str, description: str = "") -> str:

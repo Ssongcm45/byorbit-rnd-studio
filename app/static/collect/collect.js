@@ -33,7 +33,7 @@ export function mountCollect(el, opts = {}) {
   const id = 'co' + (++uid);
   const st = {sources: [], groups: GROUPS, chosen: null, status: 'new', page: 1, filters: {q: '', source: '', doc_type: '', oa: false},
     items: [], counts: {}, total: 0, pages: 1, sel: new Set(), job: null, timers: new Set(), disposed: false,
-    project: opts.project, queries: [], sched: null, sites: null, sitesErr: null, last: null};
+    project: opts.project, queries: [], sched: null, sites: null, sitesErr: null, backends: null, last: null};
   const project = () => (typeof st.project === 'function' ? st.project() : st.project) || '';
   const inBv = !!el.closest('.bv');
 
@@ -396,12 +396,52 @@ export function mountCollect(el, opts = {}) {
   });
 
   // ---------------------------------------------------------------- 크롤러 사이트 (app.collect.crawler에 위임)
+  // 가져오기 방식: direct(이 PC, HTTP) · browser(이 PC, 헤드리스 Chrome) · apify(클라우드, 유료). 규칙(robots·간격·쪽수)은 같다.
+  const BACKENDS = [['direct', '기본(HTTP)'], ['browser', '브라우저(Chrome)'], ['apify', 'Apify(클라우드·유료)']];
+  const APIFY_NOTICE = 'Apify를 쓰면 사이트 주소와 크롤 설정이 Apify 클라우드로 나가고 크레딧(유료)이 듭니다. 검색어는 보내지 않고, 받은 페이지에서 이 PC가 거릅니다.';
+  const notReadyLabel = k => k === 'apify' ? '키 없음' : '미설치';
+
   async function loadSites() {
-    try {
-      const r = await json(`${BASE}/sites`);
-      st.sites = r.sites || []; st.sitesErr = null;
-    } catch (e) { st.sites = null; st.sitesErr = e.message }
+    const [sr, br] = await Promise.allSettled([json(`${BASE}/sites`), json(`${BASE}/sites/backends`)]);
+    if (sr.status === 'fulfilled') { st.sites = sr.value.sites || []; st.sitesErr = null } else { st.sites = null; st.sitesErr = sr.reason?.message || '' }
+    st.backends = br.status === 'fulfilled' ? (br.value.backends || null) : null;
     if (!st.disposed) renderSites();
+  }
+
+  const bReady = k => k === 'direct' || !st.backends || !!st.backends[k]?.ready;
+  const bMsg = k => st.backends?.[k]?.message || '';
+
+  function backendOptions(cur) {
+    return BACKENDS.map(([k, label]) => {
+      const ok = bReady(k);
+      return `<option value="${k}"${k === cur ? ' selected' : ''}${!ok && k !== cur ? ' disabled' : ''}>${esc(label)}${ok ? '' : ` — ${notReadyLabel(k)}`}</option>`;
+    }).join('');
+  }
+
+  function backendBadge(k) {
+    if (k === 'direct') return '';
+    const label = BACKENDS.find(b => b[0] === k)?.[1] || k;
+    return bReady(k) ? `<span class="pill type" title="${esc(bMsg(k))}">${esc(label)}</span>` : `<span class="pill warn" title="${esc(bMsg(k))}">${esc(label)} · ${notReadyLabel(k)}</span>`;
+  }
+
+  // 방식별 옵션 칸(브라우저: 기다릴 요소·대기, Apify: 안내·비용 상한). prefix는 폼 이름 앞머리.
+  function backendFields(k, s = {}) {
+    const hint = !bReady(k) ? `<p class="co-bhint">${esc(bMsg(k))}</p>` : '';
+    if (k === 'browser') return `${hint}<div class="two"><label>기다릴 요소(CSS, 선택)<input class="inp" name="wait_for" value="${esc(s.wait_for || '')}" placeholder="table tbody tr, #list li"></label>
+      <label>대기 상한(ms)<input class="inp" name="wait_ms" type="number" min="0" max="15000" step="500" value="${esc(s.wait_ms ?? '')}" placeholder="8000"></label></div>
+      <p class="small muted">이 PC에서 헤드리스 Chrome으로 그린 뒤 읽습니다. http/https 주소만 열고, 이미지·글꼴·영상은 받지 않습니다.</p>`;
+    if (k === 'apify') return `${hint}<p class="co-notice">${esc(APIFY_NOTICE)}</p>
+      <div class="two"><label>실행 1회 비용 상한(USD)<input class="inp" name="max_charge_usd" type="number" min="0.05" max="5" step="0.05" value="${esc(s.max_charge_usd ?? 0.5)}"></label>
+      <label>기다릴 요소(CSS, 선택)<input class="inp" name="wait_for" value="${esc(s.wait_for || '')}" placeholder="table tbody tr"></label></div>`;
+    return '<p class="small muted">이 PC에서 HTML을 바로 받습니다(자바스크립트로 그리는 목록은 못 읽음 → 브라우저 방식).</p>';
+  }
+
+  function readBackend(form) {
+    const g = n => form.querySelector(`[name=${n}]`)?.value?.trim() ?? '';
+    const backend = form.querySelector('[name=backend]').value;
+    const out = {backend, wait_for: g('wait_for') || null, wait_ms: g('wait_ms') === '' ? null : Number(g('wait_ms'))};
+    if (backend === 'apify') out.max_charge_usd = Number(g('max_charge_usd')) || 0.5;
+    return out;
   }
 
   function renderSites() {
@@ -414,16 +454,34 @@ export function mountCollect(el, opts = {}) {
     if (!st.sites.length) { box.innerHTML = "<div class=\"empty\">등록된 사이트가 없습니다. '사이트 추가'로 공개 자료 페이지를 넣으세요.</div>"; return }
     box.innerHTML = '';
     for (const s of st.sites) {
+      const bk = s.backend || 'direct';
       const el = h(`<div class="co-site">
-        <div class="row"><span class="nm grow">${esc(s.name || s.id)}</span>${s.default ? '<span class="pill off">기본</span>' : '<span class="pill src">내가 추가</span>'}
+        <div class="row"><span class="nm grow">${esc(s.name || s.id)}</span>${backendBadge(bk)}${s.default ? '<span class="pill off">기본</span>' : '<span class="pill src">내가 추가</span>'}
           ${s.enabled ? '<span class="pill ok">켜짐</span>' : '<span class="pill off">꺼짐</span>'}</div>
         <div class="muted">${esc(s.group || '')}${s.group ? ' · ' : ''}${(s.start_urls || []).slice(0, 2).map(esc).join(', ')}${(s.start_urls || []).length > 2 ? ' …' : ''}</div>
         <div class="muted small co-chk"></div>
         <div class="row">
           <label class="co-switch"><input type="checkbox" class="se"${s.enabled ? ' checked' : ''}> 사용</label><span class="grow"></span>
+          <button class="btn sm" type="button" data-s="test" title="최대 3쪽만 훑어 찾은 제목을 보여 줍니다(수집함에 넣지 않음)">시험 수집</button>
           <button class="btn sm" type="button" data-s="check">robots 확인</button>
           <button class="btn sm" type="button" data-s="del">${s.default ? '끄기' : '지우기'}</button>
-        </div></div>`);
+        </div>
+        <details class="co-bk"${bk !== 'direct' ? ' open' : ''}><summary>가져오기 방식: ${esc(BACKENDS.find(b => b[0] === bk)?.[1] || bk)}</summary>
+          <form class="co-form co-bform" autocomplete="off">
+            <label>방식<select class="inp" name="backend" aria-label="가져오기 방식">${backendOptions(bk)}</select></label>
+            <div class="co-bopts">${backendFields(bk, s)}</div>
+            <div class="row"><span class="grow"></span><button class="btn sm primary" type="submit">방식 저장</button></div>
+          </form></details>
+        <div class="co-test" hidden></div></div>`);
+      const bform = el.querySelector('.co-bform');
+      bform.querySelector('[name=backend]').addEventListener('change', e => { bform.querySelector('.co-bopts').innerHTML = backendFields(e.target.value, s) });
+      bform.addEventListener('submit', async e => {
+        e.preventDefault();
+        const b = readBackend(bform);
+        if (!bReady(b.backend)) return toast(`${notReadyLabel(b.backend)}: ${bMsg(b.backend)}`);
+        if (b.backend === 'apify' && b.backend !== bk && !confirm(APIFY_NOTICE + '\n\n이 사이트를 Apify 방식으로 바꿀까요?')) return;
+        try { await json(`${BASE}/sites`, {method: 'POST', body: {...s, ...b}}); toast('가져오기 방식을 저장했습니다.'); loadSites() } catch (err) { toast('저장하지 못했습니다: ' + err.message) }
+      });
       el.querySelector('.se').addEventListener('change', async e => {
         try { await json(`${BASE}/sites`, {method: 'POST', body: {...s, enabled: e.target.checked}}); loadSites() } catch (err) { toast('바꾸지 못했습니다: ' + err.message); e.target.checked = !e.target.checked }
       });
@@ -433,8 +491,24 @@ export function mountCollect(el, opts = {}) {
         out.textContent = '확인 중…';
         try {
           const r = await json(`${BASE}/sites/${encodeURIComponent(s.id)}/check`, {method: 'POST'});
-          out.innerHTML = `${r.robots_ok ? '<span class="pill ok">robots 허용</span>' : '<span class="pill bad">robots 막힘</span>'} ${esc(r.message || '')}${r.terms_url ? ` · <a href="${esc(r.terms_url)}" target="_blank" rel="noopener noreferrer">이용약관</a>` : ''}`;
+          out.innerHTML = `${r.robots_ok ? '<span class="pill ok">robots 허용</span>' : '<span class="pill bad">robots 막힘</span>'}${r.backend && r.backend !== 'direct' ? (r.backend_ready ? ' <span class="pill ok">방식 준비됨</span>' : ` <span class="pill warn">${notReadyLabel(r.backend)}</span>`) : ''} ${esc(r.message || '')}${r.terms_url ? ` · <a href="${esc(r.terms_url)}" target="_blank" rel="noopener noreferrer">이용약관</a>` : ''}`;
         } catch (err) { out.textContent = '확인하지 못했습니다: ' + err.message } finally { e.target.disabled = false }
+      });
+      el.querySelector('[data-s=test]').addEventListener('click', async e => {
+        const out = el.querySelector('.co-test');
+        if (!bReady(bk)) { out.hidden = false; out.innerHTML = `<p class="co-bhint">${notReadyLabel(bk)} — ${esc(bMsg(bk))}</p>`; return }
+        if (bk === 'apify' && !confirm(APIFY_NOTICE + '\n\n시험 수집(최대 3쪽)도 크레딧이 듭니다. 실행할까요?')) return;
+        e.target.disabled = true; out.hidden = false;
+        out.innerHTML = `<div class="muted">시험 수집 중… (최대 3쪽${bk === 'direct' ? '' : bk === 'browser' ? ', 브라우저라 수십 초 걸릴 수 있음' : ', Apify 실행이라 몇 분 걸릴 수 있음'})</div>`;
+        try {
+          const q = (root.querySelector('.co-q')?.value || '').trim();
+          const r = await json(`${BASE}/sites/${encodeURIComponent(s.id)}/test`, {method: 'POST', body: {query: q, max_pages: 3}});
+          const list = (r.items || []).slice(0, 12).map(i => `<li><a href="${esc(i.url || '#')}" target="_blank" rel="noopener noreferrer">${esc(i.title)}</a>${i.date || i.year ? ` <span class="muted">${esc(i.date || i.year)}</span>` : ''}</li>`).join('');
+          out.innerHTML = `<div class="row"><b class="grow">시험 수집 ${r.pages}쪽 · ${(r.items || []).length}건${r.query ? ` · "${esc(r.query)}"` : ''}</b><button class="btn sm" type="button" data-t="close">닫기</button></div>
+            ${list ? `<ol>${list}</ol>` : '<p class="muted">찾은 항목이 없습니다. 링크 패턴·허용 경로를 확인하거나, 목록이 자바스크립트로 그려지면 브라우저 방식을 고르세요.</p>'}
+            ${(r.messages || []).length ? `<details><summary>메시지 ${r.messages.length}개</summary><ul>${r.messages.map(m => `<li>${esc(m)}</li>`).join('')}</ul></details>` : ''}`;
+          out.querySelector('[data-t=close]').addEventListener('click', () => { out.hidden = true });
+        } catch (err) { out.innerHTML = `<p class="err">시험 수집 실패: ${esc(err.message)}</p>` } finally { e.target.disabled = false }
       });
       el.querySelector('[data-s=del]').addEventListener('click', async () => {
         if (!s.default && !confirm(`사이트 '${s.name}'을 지울까요?`)) return;
@@ -445,9 +519,9 @@ export function mountCollect(el, opts = {}) {
   }
 
   $('.co-addsite').addEventListener('click', () => {
-    if (root.querySelector('.co-form')) return root.querySelector('.co-form [name=name]').focus();
+    if (root.querySelector('.co-form.co-add')) return root.querySelector('.co-form.co-add [name=name]').focus();
     const groups = st.groups.filter(g => g !== '크롤러');
-    const f = h(`<form class="co-form" autocomplete="off">
+    const f = h(`<form class="co-form co-add" autocomplete="off">
       <label>이름<input class="inp" name="name" required placeholder="예: 농촌진흥청 연구보고서"></label>
       <label>묶음<select class="inp" name="group">${groups.map(g => `<option>${esc(g)}</option>`).join('')}<option>기타</option></select></label>
       <label>시작 주소(한 줄에 하나)<textarea class="inp" name="start_urls" required placeholder="https://..."></textarea></label>
@@ -457,19 +531,25 @@ export function mountCollect(el, opts = {}) {
         <label>날짜 패턴(선택)<input class="inp" name="date_pattern" placeholder="\\d{4}-\\d{2}-\\d{2}"></label></div>
       <div class="two"><label>PDF 링크 패턴(선택)<input class="inp" name="pdf_pattern" placeholder="\\.pdf$"></label>
         <label>요청 간격(초)<input class="inp" name="interval_s" type="number" min="1" value="5"></label></div>
+      <label>가져오기 방식<select class="inp" name="backend">${backendOptions('direct')}</select></label>
+      <div class="co-bopts">${backendFields('direct')}</div>
       <div class="row"><label class="co-switch"><input type="checkbox" name="enabled" checked> 바로 사용</label><span class="grow"></span>
         <button class="btn sm" type="button" data-c="cancel">취소</button><button class="btn sm primary" type="submit">추가</button></div>
       <p class="small muted" style="margin:0">추가하면 robots.txt를 확인합니다. 막힌 사이트는 검색에서 빠집니다.</p>
     </form>`);
     const lines = v => v.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+    f.querySelector('[name=backend]').addEventListener('change', e => { f.querySelector('.co-bopts').innerHTML = backendFields(e.target.value) });
     f.querySelector('[data-c=cancel]').addEventListener('click', () => f.remove());
     f.addEventListener('submit', async e => {
       e.preventDefault();
       const d = Object.fromEntries(new FormData(f));
       try { new RegExp(d.link_pattern) } catch { return toast('자료 링크 패턴이 올바른 정규식이 아닙니다. 다시 확인하세요.') }
+      const b = readBackend(f);
+      if (!bReady(b.backend)) return toast(`${notReadyLabel(b.backend)}: ${bMsg(b.backend)}`);
+      if (b.backend === 'apify' && !confirm(APIFY_NOTICE + '\n\n이 사이트를 Apify 방식으로 추가할까요?')) return;
       const site = {name: d.name.trim(), group: d.group, start_urls: lines(d.start_urls), allow_prefixes: lines(d.allow_prefixes),
         link_pattern: d.link_pattern, title_hint: d.title_hint || null, date_pattern: d.date_pattern || null, pdf_pattern: d.pdf_pattern || null,
-        interval_s: Number(d.interval_s) || 5, enabled: !!f.querySelector('[name=enabled]').checked, default: false};
+        interval_s: Number(d.interval_s) || 5, enabled: !!f.querySelector('[name=enabled]').checked, default: false, ...b};
       if (!site.start_urls.every(u => /^https?:\/\//.test(u))) return toast('시작 주소는 http:// 또는 https://로 시작해야 합니다.');
       try {
         const saved = await json(`${BASE}/sites`, {method: 'POST', body: site});

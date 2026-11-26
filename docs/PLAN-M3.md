@@ -37,3 +37,16 @@
 - A: `app/static/collect/collect.js` → `export function mountCollect(el, {api, toast, project})`, 확인용 `app/static/collect/dev.html`.
 - C: `app/static/exp/exp.js` → `export function mountExperiment(el, {api, toast, project, openDrying})`, 확인용 `app/static/exp/dev.html`.
 - 스타일은 index.html의 CSS 변수와 app/static/viz/viz.css의 모양을 따른다(라이트·다크·모바일).
+
+## M3-2 문서 작업대 (2026-11-25 확정)
+사용자 요청: 파싱 툴 선택 / 청킹 검사 및 수정보완학습 / 라벨링 auto + 개별 라벨링 수동 처리.
+결정: 파서 = 로컬 기본(PyMuPDF·pdfplumber·RapidOCR) + Docling(선택 설치) + kordoc(HWP·HWPX, Node) + 클라우드(Upstage Document Parse 등, '기밀' 문서 자동 차단·키 필요). 학습 = 규칙·사례 학습(모델 미세조정 없음): 청킹 수정에서 규칙을 뽑아 비슷한 문서에 적용, 라벨 수정은 동의어 사전과 AI 라벨러 예시(few-shot)로. 배운 것은 목록으로 보고 끌 수 있다.
+
+테이블(메인 고정): parse_result(파서별 결과·선택), chunk_rule(학습·수동 규칙), label_example(라벨 사례, 기밀 등급 포함). 표 39개.
+
+| 묶음 | 소유 파일 |
+|---|---|
+| P. 파서 도구 | `app/ingest/parsers.py`, `app/ingest/parser_tools/*`(신규), `app/ingest/pipeline.py`(reparse·파서 선택 부분), `app/routes_parse.py`(신규), `app/static/doc/parse.js`(신규), `install-docling.bat`·`install-kordoc.bat`·`requirements-docling.txt`(신규), `tests/test_parsers.py`(신규), `docs/PARSERS.md`(신규) |
+| L. 청킹·라벨 작업대 | `app/ingest/chunker.py`, `app/chunk_rules.py`(신규), `app/labeling.py`, `app/thesaurus.py`(학습 동의어 반영), `app/tools.py`(save_annotations 외 라벨 예시 제공만), `agents/labeler.md`, `app/routes_workbench.py`(신규), `app/static/doc/*`(parse.js 제외), `app/static/index.html`(자료함에서 작업대 열기·라벨 검토 연결), `tests/test_workbench.py`(신규), `docs/WORKBENCH.md`(신규) |
+
+P↔L 계약: `parse.js`는 `export function mountParse(el, {api, docId, toast, onReparsed})`. 작업대(L)가 '파싱' 탭에서 지연 로드한다. 다시 파싱해 청크가 바뀌면 L의 규칙 적용 함수 `chunk_rules.apply(doc_id)`가 pipeline 안에서 불린다(L이 제공, 없으면 건너뜀). 다시 파싱은 기존 라벨·측정값에 영향을 주므로 화면에서 먼저 경고하고, pipeline은 사용자 라벨(method='manual')을 새 청크로 옮길 수 있으면 옮기고 못 옮기면 보고한다.

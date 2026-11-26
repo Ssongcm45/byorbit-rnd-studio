@@ -31,7 +31,7 @@
 | `datagokr_foodnutri` | 공공데이터 | 식약처 식품영양성분DB(dataset) — 원물 영양성분 | `BYORBIT_DATAGOKR_KEY` | 명세(swagger) + 오류 응답 / **실제 키로 미검증** |
 | `datagokr_hffunc` | 공공데이터 | 식약처 건강기능식품 기능성 원료 인정현황 I-0040(dataset) | `BYORBIT_FOODSAFETY_KEY` | **공개 sample 키로 실제 호출해 해석 확인**(2026-11-25) |
 | `datagokr_byprod` | 공공데이터 | 농사로 농식품부산물 영양정보(dataset) — 사료용 부산물 성분 | `BYORBIT_NONGSARO_KEY` | 매뉴얼(HWP) + 오류 응답 / **실제 키로 미검증** |
-| `crawler` | 크롤러 | 공개 자료 목록 페이지(report·web) | 없음 | 기본 사이트 실제 크롤링 확인(아래) |
+| `crawler` | 크롤러 | 공개 자료 목록 페이지(report·web) — 가져오기 방식 direct·browser·apify | 없음(Apify 방식만 `BYORBIT_APIFY_TOKEN`) | 기본 사이트 실제 크롤링 확인(direct·browser) / Apify는 **실제 토큰으로 미검증** |
 
 "실제 키로 미검증"인 출처는 공식 문서의 필드 이름(또는 문서 예시를 충실히 재구성한 응답)으로 시험했다. 키를 받으면 첫 검색 결과를 꼭 눈으로 확인하고, 이상하면 해당 모듈 머리 주석의 "확인 필요" 항목부터 본다.
 
@@ -135,6 +135,52 @@
 
 사용자 사이트와 기본 사이트 변경(켜기/끄기 등)은 데이터 폴더 `config/crawl_sites.json`에 저장된다(`sites` = 사용자 사이트, `overrides` = 기본 사이트 덮어쓰기). 기본 사이트는 지우면 꺼질 뿐이며, 기본 간격보다 짧게 줄일 수 없다.
 
+### 가져오기 방식 (backend, 2026-11-25 추가)
+
+사이트마다 페이지를 **어떻게 받아 올지**를 고른다. 위 규칙(robots.txt·간격·허용 경로·같은 호스트·쪽수·깊이·검색어)은 방식과 상관없이 `app/collect/crawler.py`의 한 크롤 루프가 지킨다. 방식 코드는 `app/collect/backends/`.
+
+| 방식 (`backend`) | 어디서 | 준비 | PC 밖으로 나가는 것 | 쓰는 때 |
+|---|---|---|---|---|
+| `direct` (기본) | 이 PC — 표준 라이브러리 HTTP | 없음 | 목록·상세 주소, 검색어(사이트 검색 주소에 넣을 때) → **그 사이트로만** | 서버가 HTML로 목록을 그리는 사이트(기본 5곳 모두) |
+| `browser` | 이 PC — Playwright 파이썬 라이브러리 + 헤드리스 Chrome | `install-browser.bat` | direct와 같음 + 그 페이지가 화면을 그리려고 부르는 스크립트·데이터 요청(그 사이트·CDN) | 자바스크립트로 목록을 그리는 사이트 |
+| `apify` (선택·유료) | **Apify 클라우드**(Website Content Crawler) | 환경 변수 `BYORBIT_APIFY_TOKEN` | **사이트 시작 주소와 크롤 설정(허용 경로·쪽수·깊이·기다릴 요소)이 Apify로**. 검색어는 보내지 않는다(받은 페이지에서 이 PC가 거름). Apify 크레딧이 든다 | 이 PC에서 막히거나 브라우저를 깔 수 없을 때 |
+
+어떤 방식이든 자료함·CoA·시료·실험 데이터는 보내지 않는다. 화면(수집 → 크롤러 사이트)의 사이트 카드에서 '가져오기 방식'을 고르고, **시험 수집**(최대 3쪽, 수집함에 넣지 않음)으로 찾은 제목을 바로 확인한다. 준비되지 않은 방식은 '미설치'·'키 없음'으로 흐리게 보이고 할 일을 알려 준다. 상태는 `GET /api/collect/sites/backends`, 시험 수집은 `POST /api/collect/sites/{id}/test`.
+
+사이트 필드(모두 선택): `backend`(없으면 `direct` — 예전 `crawl_sites.json`은 그대로 동작), `wait_for`(CSS 선택자 — 이 요소가 나타날 때까지 기다림), `wait_ms`(대기 상한, 최대 15000ms), `actor`(Apify 액터 바꾸기, 기본 `apify~website-content-crawler`), `max_charge_usd`(Apify 실행 1회 비용 상한, 기본 0.5, 0.05–5).
+
+#### 브라우저 방식 (`browser`)
+
+- **설치**: `install-browser.bat` → `requirements-browser.txt`(playwright 1.65.2 고정)를 `.venv`에 설치 → 설치된 Chrome을 찾으면 그것을 쓴다(브라우저 추가 다운로드 없음). Chrome이 없을 때만 `python -m playwright install chromium`(약 150MB)을 물어본 뒤 받는다 → 자가 점검으로 `https://example.com`을 헤드리스 Chrome으로 열어 제목("Example Domain")을 출력한다.
+- **안전장치**
+  - http/https가 아닌 주소(`file:///C:/…`, `data:`, `javascript:`, `chrome:`, `about:` 등)로는 **이동하지 않는다**. 페이지 안의 모든 요청을 가로채(route) http/https가 아니면 끊는다 — 웹 페이지가 이 PC의 파일을 읽게 하지 못한다(로컬 서버로 실제 확인: `file://` fetch·이동 모두 막힘).
+  - 이미지·글꼴·영상은 받지 않는다. 다운로드·서비스 워커는 끈다. 크롤 한 번마다 새 컨텍스트(쿠키·저장소 없음)를 열고 끝나면 닫는다. 동시에 띄우는 브라우저는 2개까지.
+  - 리디렉션 뒤 주소가 다른 사이트이거나 robots.txt가 막은 곳이면 버린다. 이동마다 direct와 같은 호스트별 간격(≥3초·Crawl-delay)을 둔다.
+  - User-Agent는 일반 Chrome 문자열 + `ByOrbit-RD-Studio/0.3 (local research tool)`(개인 정보 없음).
+- 크롤러 백그라운드 스레드에서 sync API를 그대로 쓴다(Windows에서 주 스레드가 아닌 스레드에서도 동작 확인).
+
+#### 왜 Playwright MCP가 아닌가
+
+Playwright MCP는 **AI가 브라우저를 직접 조종**하는 통로다. 앱 안의 Claude에 브라우저 MCP를 붙이면 AI가 `file://` 주소로 이 PC의 파일(기밀 자료 포함)을 열어 읽을 수 있어, 앱이 AI에 보내기 전에 하는 기밀 가림(masking)을 우회하게 된다. 그래서 브라우저는 **크롤러 코드만** 정해진 규칙(http/https만, 사이트 허용 경로만, robots·간격 준수)으로 쓰고, AI에게는 도구로 주지 않는다.
+
+#### Apify 방식 (`apify`) — 유료, 선택
+
+- **토큰**: Apify 가입 → Console → Settings → API & Integrations(https://console.apify.com/settings/integrations)에서 API 토큰을 복사 → 환경 변수 `BYORBIT_APIFY_TOKEN`에 넣고 앱을 다시 켠다. 토큰은 설정 파일·DB·로그에 쓰지 않고 `Authorization: Bearer` 헤더로만 보낸다(주소에 넣지 않음). 오류 문구에서는 가린다(`***`).
+  ```powershell
+  [Environment]::SetEnvironmentVariable("BYORBIT_APIFY_TOKEN", "발급받은토큰", "User")
+  ```
+- **비용**: Apify 크레딧이 든다. 실행마다 `maxTotalChargeUsd`(사이트의 `max_charge_usd`, 기본 0.5 USD, 최대 5)로 상한을 걸고, 실행 시간 300초·메모리 4096MB로 묶는다. 이 PC는 최대 360초 기다리고, 넘으면 실행을 **중단(abort)** 한다. 끝나면 결과 메시지에 실제 비용(`usageTotalUsd`)을 적는다. 시험 수집도 크레딧이 든다(화면에서 한 번 더 묻는다).
+- **호출 흐름**(공식 문서 https://docs.apify.com/api/v2, 2026-11-25 확인): `POST /v2/actors/apify~website-content-crawler/runs?timeout=300&memory=4096&maxTotalChargeUsd=…` → `GET /v2/actor-runs/{id}?waitForFinish=60`(끝날 때까지 반복) → `GET /v2/datasets/{datasetId}/items?format=json&clean=true`. 동기 호출(run-sync-get-dataset-items)은 300초를 넘으면 408이고 연결이 끊기면 상태를 모른다고 문서가 경고해 쓰지 않았다.
+- **보내는 입력**(액터 입력 스키마 version-0 0.3.108 기준): `startUrls`(사이트 시작 주소만), `crawlerType: playwright:adaptive`(자바스크립트 있으면 브라우저), `includeUrlGlobs`(허용 경로 → `https://호스트/경로**`), `excludeUrlGlobs`(첨부 파일 확장자), `maxCrawlPages`·`maxResults`(쪽수 제한), `maxCrawlDepth`(깊이), **`respectRobotsTxtFile: true`**(액터 기본값은 false라 반드시 켬), `maxConcurrency: 1`, `saveHtml: true` + `htmlTransformer: none`(링크·표를 이 PC에서 다시 읽기 위해), `blockMedia: true`, `wait_for`가 있으면 `softWaitForSelector`.
+- **받은 뒤**: Apify가 더 많이·다른 곳을 가져와도 이 PC가 다시 거른다 — 같은 호스트·허용 경로·깊이·robots.txt(이 PC가 직접 받아 판정)·쪽수 제한에 맞는 페이지만 쓰고 나머지는 버린 수를 메시지로 남긴다. `file:` 같은 주소는 버린다.
+- **한계**: Apify는 robots `Crawl-delay`를 지원하지 않는다(한 번에 한 쪽씩만 요청하도록 설정, `robots 확인`에서 경고). `link_pattern` 정규식은 glob으로 옮길 수 없어 Apify가 목록의 다른 링크에 쪽수를 쓸 수 있다. **실제 토큰으로는 아직 확인하지 못했다(가짜 응답으로만 시험)** — 처음 쓸 때 `max_charge_usd`를 작게 두고 시험 수집 결과·비용 메시지를 확인한다.
+
+#### 기본 사이트와 방식 (2026-11-25 확인)
+
+기본 사이트 5곳은 모두 서버가 HTML로 목록을 그리므로 `backend: "direct"`로 둔다. 브라우저 방식으로 농촌진흥청 보도자료를 '부산물'로 5쪽 훑은 결과가 direct와 같았다(아래). 자바스크립트로만 그리는 공개 목록을 찾으려고 국립축산과학원 보도자료, 농림축산식품부, 농업기술실용화재단(그린바이오 소재 원료 정보), KATI 농식품수출정보 보고서, 한국농촌경제연구원 보고서 목록을 direct·브라우저로 비교했지만 모두 direct로 같은 내용이 나와 **브라우저 전용 기본 사이트는 추가하지 않았다**(이용약관 검토는 하지 않음 — 넣고 싶으면 사이트 추가로). 한국식품연구원 두 곳은 같은 날 다시 확인해도 저작권 정책·이용약관 페이지가 없어(`/web/policy/00001`~`00005` 중 개인정보·영상정보 방침만) 계속 꺼 둔다.
+
+브라우저 방식 실제 크롤링(2026-11-25, 설치된 Chrome 헤드리스, 크롤러 백그라운드 스레드, 사이트당 5쪽 이하, 검색어 "부산물"): 농촌진흥청 보도자료 5쪽·10건·26.9초, 국립농업과학원 시험연구보고서 5쪽·10건·48.8초 — 제목·날짜·상세 주소가 direct 결과와 같았다(예: "농촌진흥청, 농식품부산물로 사료비 줄인 한우농가 방문", "발효기술을 통한 약선 소재 발굴 및 배 가공부산물 이용기술 개발"). 간격 5초를 이동마다 지켰다.
+
 ### 기본 사이트 (2026-11-25 확인)
 
 | id | 사이트 | 켜짐 | robots.txt (2026-11-25) | 이용 조건 (2026-11-25) | 비고 |
@@ -173,5 +219,6 @@
 
 - 키 필요 API 7종은 키가 없어 **실제 성공 응답으로 검증하지 못했다**(I-0040만 공개 sample 키로 확인). 오류 형식은 키 없이 실제 호출해 맞췄다.
 - NTIS 매뉴얼의 매개변수 이름이 표와 예제에서 달라 예제 이름을 썼다. ScienceON의 Base64 종류(URL-safe/표준)는 문서와 샘플이 달라 둘 다 시도한다. KIPRIS 랜딩 주소(DOI 10.8080)는 추정이다.
-- 크롤러는 자바스크립트로 그리는 목록, POST로만 열리는 상세, 로그인 페이지는 읽지 못한다(GET으로 열리는 상세는 `link_template`로 처리).
+- 기본(direct) 방식은 자바스크립트로 그리는 목록을 읽지 못한다 → 사이트의 가져오기 방식을 `browser`로(`install-browser.bat`). 어떤 방식이든 POST로만 열리는 상세와 로그인 페이지는 읽지 않는다(GET으로 열리는 상세는 `link_template`로 처리).
+- Apify 방식은 실제 토큰으로 확인하지 못했다(공식 문서·액터 입력 스키마와 가짜 응답으로만 시험). Crawl-delay를 지원하지 않는다.
 - 문자 인코딩은 응답 헤더(charset)를 따른다. 헤더 없이 EUC-KR로 주는 사이트는 글자가 깨질 수 있다(기본 사이트는 모두 UTF-8).

@@ -237,3 +237,25 @@ CREATE TABLE IF NOT EXISTS experiment_value (
   kind TEXT NOT NULL DEFAULT 'measured' CHECK (kind IN ('measured','predicted')),
   created_at TEXT DEFAULT (datetime('now'))
 );
+
+-- I. 문서 작업대: 파서 선택·청킹 규칙 학습·라벨 사례 — M3 ------------------
+CREATE TABLE IF NOT EXISTS parse_result (
+  result_id TEXT PRIMARY KEY, doc_id TEXT NOT NULL REFERENCES document(doc_id) ON DELETE CASCADE,
+  tool TEXT NOT NULL, tool_ver TEXT, status TEXT NOT NULL DEFAULT 'ok', blocks_path TEXT,
+  stats_json TEXT, error TEXT, chosen INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS chunk_rule (
+  rule_id TEXT PRIMARY KEY, kind TEXT NOT NULL, scope_json TEXT NOT NULL DEFAULT '{}',
+  pattern TEXT, params_json TEXT NOT NULL DEFAULT '{}', origin TEXT NOT NULL DEFAULT 'learned',
+  enabled INTEGER NOT NULL DEFAULT 1, hits INTEGER NOT NULL DEFAULT 0, note TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+CREATE TABLE IF NOT EXISTS label_example (
+  ex_id TEXT PRIMARY KEY, ann_id TEXT REFERENCES annotation(ann_id) ON DELETE SET NULL,
+  chunk_id TEXT REFERENCES chunk(chunk_id) ON DELETE SET NULL, label_type TEXT NOT NULL,
+  surface TEXT NOT NULL, context TEXT, concept_id TEXT REFERENCES concept(concept_id),
+  value_json TEXT, kind TEXT NOT NULL DEFAULT 'positive' CHECK (kind IN ('positive','negative')),
+  confidentiality TEXT NOT NULL DEFAULT '내부', enabled INTEGER NOT NULL DEFAULT 1, note TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);

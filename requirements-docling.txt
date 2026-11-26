@@ -1,0 +1,4 @@
+# 선택 설치: Docling(IBM, MIT) — 레이아웃 모델로 읽기 순서·제목 단계·표 구조를 복원하는 로컬 PDF 파서.
+# install-docling.bat으로 설치합니다. 패키지 약 1.5GB(PyTorch CPU 포함, 2026-11-25 확인),
+# 처음 변환할 때 레이아웃·표 모델 약 500MB를 Hugging Face에서 내려받습니다(문서 파일은 PC 밖으로 나가지 않음).
+docling==2.152.0

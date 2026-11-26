@@ -1,6 +1,7 @@
 // 내 실험 — 공정 흐름을 고치고, 내 조건·결과를 넣고, 예측과 비교·보정한다.
 //   import {mountExperiment} from '/static/exp/exp.js';
-//   mountExperiment(el, {api, toast, project, openDrying})  → {open(expId), select(tab), refresh(), setProject(p), dispose()}
+//   mountExperiment(el, {api, toast, project, openDrying, openStats})  → {open(expId), select(tab), refresh(), setProject(p), dispose()}
+//   openStats(expId): '통계 분석' 단추. 없으면 window에 'byorbit:open-stats' 이벤트(detail.expId, preventDefault로 받음), 받는 곳이 없으면 단독 페이지를 연다.
 // 계산은 모두 서버(/api/exp — 시험된 기준)가 한다. 이 파일은 입력·표시만. 밖으로 보내는 요청은 없다.
 import {esc, fmt, h, makeApi, METHOD_COLOR, reducedMotion} from '../viz/common.js';
 
@@ -46,6 +47,7 @@ export function mountExperiment(el, opts = {}) {
         <button class="btn sm xp-newbtn" type="button" aria-expanded="false">새 실험</button>
         <button class="btn sm xp-edit" type="button">이름·등급</button>
         <button class="btn sm xp-del" type="button">지우기</button>
+        <button class="btn sm xp-stats" type="button" title="이 실험의 런으로 회귀분석·t검정·논문용 표와 그림 만들기">통계 분석</button>
       </div>
     </div>
     <form class="card xp-new" hidden aria-label="새 실험 만들기">
@@ -104,6 +106,16 @@ export function mountExperiment(el, opts = {}) {
     if (!confirm(`'${st.exp.name}' 실험과 런 ${st.exp.runs.length}개를 지울까요? (지운 기록은 변경 기록에 남습니다)`)) return;
     try { await json(`${B}/experiments/${st.exp.exp_id}`, {method: 'DELETE'}); toast('실험을 지웠습니다.'); st.exp = null; await loadList(); open(st.list[0]?.exp_id) }
     catch (ex) { fail(ex) }
+  });
+
+  // 통계 분석 열기: 호스트가 openStats를 주면 그것을, 아니면 'byorbit:open-stats' 이벤트(호스트가 preventDefault로 받음),
+  // 아무도 받지 않으면(단독 페이지) 통계 분석 단독 페이지를 새 탭으로 연다.
+  $('.xp-stats').addEventListener('click', () => {
+    const expId = st.exp?.exp_id;
+    if (!expId) { toast('먼저 실험을 고르거나 만드세요.'); return }
+    if (opts.openStats) { opts.openStats(expId); return }
+    const ev = new CustomEvent('byorbit:open-stats', {detail: {expId}, cancelable: true});
+    if (window.dispatchEvent(ev)) window.open(new URL(`../stats/dev.html?exp=${encodeURIComponent(expId)}`, import.meta.url), '_blank', 'noopener');
   });
 
   async function loadList() {

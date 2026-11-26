@@ -1,6 +1,7 @@
 {
   "version": 1,
   "checked": "2026-11-25",
+  "backends_checked": "2026-11-25: 기본 사이트 5곳은 모두 서버가 HTML로 목록을 그려 기본 방식(direct)으로 충분하다. 브라우저 방식으로 그린 결과(rda-press, '부산물' 5쪽)와 direct 결과가 같았다. 자바스크립트로만 그리는 공개 목록 후보(국립축산과학원 보도자료, 농림축산식품부, 농업기술실용화재단 그린바이오 소재, KATI 보고서, 농촌경제연구원 보고서)도 direct로 같은 내용이 나와 브라우저 전용 기본 사이트는 추가하지 않았다.",
   "about": "기본 크롤러 사이트. robots.txt와 저작권 정책을 2026-11-25에 직접 확인했다. 목록·상세 페이지(서지·요약·공개 첨부 링크)만 읽고, robots.txt가 막은 다운로드 주소는 따라가지 않는다. 사용자 변경은 데이터 폴더 config/crawl_sites.json의 overrides로 저장된다.",
   "sites": [
     {
@@ -22,6 +23,7 @@
       "max_pages": 10,
       "max_depth": 1,
       "enabled": true,
+      "backend": "direct",
       "terms_url": "https://www.rda.go.kr/datacprprot.do",
       "robots_checked": "2026-11-25: User-agent * — Disallow /search, /fileDownLoadDw.do, /fileDownLoad.do / Allow / (목록·상세 허용, 첨부 다운로드는 막힘 → 첨부는 기록하지 않음)",
       "terms_checked": "2026-11-25: 저작권정책 — 공공누리(KOGL) 1~4유형 표시 저작물은 유형 조건대로 자유 이용. 상세 페이지의 공공누리 유형을 license로 기록",
@@ -46,6 +48,7 @@
       "max_pages": 10,
       "max_depth": 1,
       "enabled": true,
+      "backend": "direct",
       "terms_url": "https://www.naas.go.kr/05_etc/Etc_List.do?menu_code=6&tg=1&mmode=3",
       "robots_checked": "2026-11-25: User-agent * — Allow / , Disallow /search/, /mem/, /dis/, /evl/, /bips/ 등(목록 /02_research/ 허용). Amazonbot·coccoc만 전체 차단",
       "terms_checked": "2026-11-25: 저작권정책 — 공공누리 부착 저작물 유형별 자유 이용, 미부착 자료는 담당자 협의. 이 크롤러는 제목·요약·주소만 기록",
@@ -70,6 +73,7 @@
       "max_pages": 10,
       "max_depth": 1,
       "enabled": true,
+      "backend": "direct",
       "terms_url": "https://www.nihhs.go.kr/usr/extras/datacprprot.do?mc=MN0000000194",
       "robots_checked": "2026-11-25: User-agent * — Allow / , Disallow는 /common/, /css/, /js/, /images/ 등 자원 폴더뿐(/usr/farmer/ 허용)",
       "terms_checked": "2026-11-25: 저작권정책 — 공공누리 제1유형(출처표시) 부착 저작물은 자유 이용",
@@ -93,9 +97,10 @@
       "max_pages": 10,
       "max_depth": 1,
       "enabled": false,
+      "backend": "direct",
       "terms_url": null,
       "robots_checked": "2026-11-25: User-agent * — Allow / (전체 허용)",
-      "terms_checked": "2026-11-25: 저작권 정책·이용약관 페이지를 찾지 못함(하단은 개인정보처리방침·영상정보처리기기 방침과 'All Rights Reserved'뿐)",
+      "terms_checked": "2026-11-25: 저작권 정책·이용약관 페이지를 찾지 못함(하단은 개인정보처리방침·영상정보처리기기 방침과 'All Rights Reserved'뿐). 같은 날 다시 확인(/web/policy/00001~00005) — 여전히 없음",
       "note": "이용 조건이 확인되지 않아 기본은 꺼 둠. 사이트 이용 조건을 직접 확인한 뒤 켜세요."
     },
     {
@@ -115,6 +120,7 @@
       "max_pages": 3,
       "max_depth": 1,
       "enabled": false,
+      "backend": "direct",
       "terms_url": null,
       "robots_checked": "2026-11-25: User-agent * — Allow / (전체 허용). 발간자료 PDF는 목록에서 공개 링크로 바로 배포",
       "terms_checked": "2026-11-25: 저작권 정책·이용약관 페이지를 찾지 못함",
