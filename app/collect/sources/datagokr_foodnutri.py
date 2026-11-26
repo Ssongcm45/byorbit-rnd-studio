@@ -43,7 +43,7 @@ def gateway_error(e: http.HttpError, key: str, service: str) -> SourceError:
     hint = {401: "인증키가 올바르지 않습니다", 403: "등록되지 않은 서비스키이거나 이 서비스의 활용신청이 승인되지 않았습니다",
             429: "호출 한도를 넘었습니다(내일 다시 시도)"}.get(e.status or 0, "호출에 실패했습니다")
     return SourceError(mask(f"{service}: {hint}. 공공데이터포털 마이페이지에서 활용신청 상태와 "
-                            f"환경 변수 BYORBIT_DATAGOKR_KEY를 확인하세요. ({e})", key, service_key(key)))
+                            f"설정 → API 키 관리의 BYORBIT_DATAGOKR_KEY를 확인하세요. ({e})", key, service_key(key)))
 
 
 def service_key(raw: str) -> str:
@@ -120,7 +120,7 @@ class FoodNutri(Source):
     needs_env = (ENV_KEY,)
     key_help = ("공공데이터포털(https://www.data.go.kr) 로그인 → '식품의약품안전처_식품영양성분DB정보'"
                 "(https://www.data.go.kr/data/15127578/openapi.do) '활용신청'(개발계정은 대개 자동 승인) → "
-                "마이페이지 > 개발계정에서 일반 인증키(Decoding)를 복사해 환경 변수 BYORBIT_DATAGOKR_KEY에 넣고 앱을 다시 켜세요.")
+                "마이페이지 > 개발계정에서 일반 인증키(Decoding)를 복사해 설정 → API 키 관리의 BYORBIT_DATAGOKR_KEY에 넣으세요(또는 같은 이름의 환경 변수).")
     doc_types = ("dataset",)
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:

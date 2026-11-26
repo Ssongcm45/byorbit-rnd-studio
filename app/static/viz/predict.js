@@ -19,8 +19,8 @@ export function mountPredict(el, opts = {}) {
   const inBv = !!el.closest('.bv');
   const root = h(`<section class="pr" aria-labelledby="${id}-t">
     <div class="pr-top">
-      <div class="grow"><h2 id="${id}-t">건조 결과 예측</h2>
-        <p class="sub">조건을 바꾸면 예상 결과가 바로 바뀝니다. 결과마다 '근거 보기'에서 식·파라미터·출처를 확인하세요.</p></div>
+      <div class="grow"><h2 id="${id}-t" data-help="viz.predict">건조 결과 예측</h2>
+        <p class="sub">조건을 바꾸면 예상 결과가 바로 바뀝니다. 결과마다 '근거 보기'에서 식·파라미터·출처를 확인하세요. <span data-help-chips="viz.evidence"></span></p></div>
       <label class="small muted">부산물 <select class="inp pr-bp" aria-label="부산물"></select></label>
     </div>
     <div class="seg pr-methods" role="group" aria-label="건조 방식"${opts.showMethod === false ? ' hidden' : ''}></div>

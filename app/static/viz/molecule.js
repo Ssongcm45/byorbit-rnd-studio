@@ -9,7 +9,7 @@ export function mountMolecule(el, ctx){
   el.innerHTML = `
   <div class="card">
     <div class="row">
-      <h2 class="grow">분자 구조</h2>
+      <h2 class="grow" data-help="viz.molecule">분자 구조</h2>
       <input class="inp" data-q list="bvMolList" placeholder="예: 클로로겐산 · chlorogenic acid · 총폴리페놀" aria-label="성분명 검색" style="width:min(340px,100%)" autocomplete="off">
       <datalist id="bvMolList"></datalist>
       <button class="btn primary" data-go>보기</button>

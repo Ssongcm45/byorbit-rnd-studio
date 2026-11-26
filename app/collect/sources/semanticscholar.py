@@ -60,6 +60,9 @@ class SemanticScholar(Source):
     terms_url = "https://www.semanticscholar.org/product/api/license"
     description = "AI2의 학술 그래프. 오픈 액세스 PDF 위치를 잘 찾지만, 키 없이 쓰면 혼잡할 때 잠시 막힙니다."
     doc_types = ("article", "dataset")
+    optional_env = ("SEMANTIC_SCHOLAR_API_KEY",)
+    optional_key_help = ("키 없이도 쓸 수 있지만 혼잡할 때 자주 막힙니다. Semantic Scholar API 신청 양식"
+                         "(https://www.semanticscholar.org/product/api#api-key-form)으로 무료 키를 신청해 받은 값을 넣으세요.")
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:
         params = {"query": query, "limit": max(1, min(int(limit), 100)), "fields": FIELDS}
@@ -72,7 +75,7 @@ class SemanticScholar(Source):
         except http.HttpError as e:
             if e.status == 429:
                 raise SourceError("Semantic Scholar가 혼잡해 잠시 막혔습니다(키 없는 공용 한도). 1분쯤 뒤 다시 하거나, "
-                                  "무료 키를 받아 환경 변수 SEMANTIC_SCHOLAR_API_KEY에 넣으세요"
+                                  "무료 키를 받아 설정 → API 키 관리의 SEMANTIC_SCHOLAR_API_KEY에 넣으세요"
                                   "(https://www.semanticscholar.org/product/api#api-key-form).") from e
             raise SourceError(f"Semantic Scholar 검색 실패: {e}. 잠시 뒤 다시 시도하세요.") from e
         return parse(data)

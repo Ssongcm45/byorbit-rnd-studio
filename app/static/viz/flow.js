@@ -51,7 +51,7 @@ function midpoint(pts, key){
 export function mountFlow(el, ctx){
   el.innerHTML = `
   <div class="card">
-    <div class="row"><h2 class="grow">두 시스템을 묶은 구조</h2>
+    <div class="row"><h2 class="grow" data-help="viz.flow">두 시스템을 묶은 구조</h2>
       <span class="pill local">■ 이 PC</span><span class="pill cloud">■ 클라우드</span><span class="pill external">■ 외부(선택)</span>
       <button class="btn sm" data-act="refresh">새로고침</button></div>
     <p class="sub">R&amp;D Studio(이 PC)와 ByOrbit Food MCP가 Claude Code를 가운데 두고 어떻게 이어지는지, 각 경계를 무엇이 넘는지 보여줍니다. 상자나 선을 누르면 자세히 봅니다.</p>
@@ -62,7 +62,7 @@ export function mountFlow(el, ctx){
     <div class="card"><h2>PC 밖으로 나가는 것</h2><div data-out class="small"></div></div>
   </div>
   <div class="card">
-    <div class="row"><h2 class="grow">자료 처리 파이프라인</h2>
+    <div class="row"><h2 class="grow" data-help="viz.pipeline">자료 처리 파이프라인</h2>
       <label class="small muted">프로젝트 <select class="inp" data-proj aria-label="프로젝트"><option value="">전체</option></select></label></div>
     <p class="sub">투입한 자료가 청크 → 라벨 → 측정값 → 리포트로 이어지는 개수입니다.</p>
     <div data-pipe><div class="empty">불러오는 중…</div></div>

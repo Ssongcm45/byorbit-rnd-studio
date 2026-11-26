@@ -71,6 +71,9 @@ class OpenAlex(Source):
     terms_url = "https://openalex.org/terms"   # 데이터는 CC0
     description = "전 세계 논문·보고서 2억 건 이상의 공개 색인. 초록과 오픈 액세스 원문 위치를 함께 줍니다(키 없이 하루 약 100회)."
     doc_types = ("article", "report", "thesis", "dataset")
+    optional_env = ("OPENALEX_API_KEY",)
+    optional_key_help = ("키 없이도 쓸 수 있습니다(하루 약 100회). 더 쓰려면 OpenAlex에 가입 → Settings → API"
+                         "(https://openalex.org/settings/api)에서 무료 키를 만들어 넣으세요.")
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:
         params = {"search": query, "per_page": max(1, min(int(limit), 100)), "select": SELECT}
@@ -84,7 +87,7 @@ class OpenAlex(Source):
         except http.HttpError as e:
             if e.status == 429:
                 raise SourceError("OpenAlex 하루 무료 한도를 다 썼습니다. 내일 다시 하거나, 무료 키를 받아 "
-                                  "환경 변수 OPENALEX_API_KEY에 넣으세요(https://openalex.org/settings/api).") from e
+                                  "설정 → API 키 관리의 OPENALEX_API_KEY에 넣으세요(https://openalex.org/settings/api).") from e
             raise SourceError(f"OpenAlex 검색 실패: {e}. 잠시 뒤 다시 시도하세요.") from e
         return parse(data)
 

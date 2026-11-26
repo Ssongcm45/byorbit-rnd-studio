@@ -142,7 +142,7 @@ class NTIS(Source):
     needs_env = (ENV_KEY,)
     key_help = ("NTIS(https://www.ntis.go.kr) 회원 가입·로그인 → '국가R&D 개방' > 'Open API'(https://www.ntis.go.kr/rndopen/api/mng/apiMain.do)에서 "
                 "'국가R&D 과제검색'과 '연구보고서 검색' 활용 신청(소속기관 등록 필요) → 승인되면 마이페이지에서 승인키(apprvKey) 확인. "
-                "키를 환경 변수 BYORBIT_NTIS_KEY에 넣고 앱을 다시 켜세요.")
+                "키를 설정 → API 키 관리의 BYORBIT_NTIS_KEY에 넣으세요(또는 같은 이름의 환경 변수).")
     doc_types = ("project", "report")
     last_warning: str | None = None
 

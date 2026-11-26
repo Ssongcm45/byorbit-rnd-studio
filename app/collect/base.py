@@ -5,7 +5,8 @@ registry가 이 폴더를 자동으로 훑어 등록하므로 다른 파일을 �
 
 원칙
 - 밖으로 나가는 것은 검색어(와 그 출처가 요구하는 API 키)뿐이다. 기밀 자료·CoA·시료 정보는 절대 보내지 않는다.
-- API 키는 환경 변수로만 받는다(needs_env). 설정 파일·DB·로그에 키를 쓰지 않는다.
+- API 키는 os.environ으로만 읽는다(needs_env). 값은 실제 환경 변수 또는 설정 → API 키 관리(OS 자격 증명 저장소,
+  app/keys.py가 앱 시작 때 os.environ에 올림)에서 온다. 설정 파일·DB·로그에 키를 쓰지 않는다.
 - 원문 PDF는 오픈 액세스(합법적으로 무료 공개된 것)만 pdf_url로 넘긴다. 유료 원문을 우회해 받지 않는다.
 """
 from __future__ import annotations
@@ -66,20 +67,27 @@ class Source:
     terms_url: str = ""             # 이용약관·API 정책
     needs_env: tuple[str, ...] = () # 필요한 API 키 환경 변수 이름
     key_help: str = ""              # 키 발급 안내(어디서·어떻게)
+    optional_env: tuple[str, ...] = ()  # 없어도 되지만 넣으면 한도가 늘어나는 키(설정 → API 키 관리에 '선택'으로 보인다)
+    optional_key_help: str = ""
+    env_labels: dict = {}           # 키가 여럿일 때 화면 이름(예: ScienceON client_id·인증키·MAC)
     doc_types: tuple[str, ...] = ("article",)
 
     def status(self) -> dict:
         missing = [e for e in self.needs_env if not os.environ.get(e)]
         if missing:
             return {"ready": False, "missing_env": missing,
-                    "message": f"API 키가 필요합니다: 환경 변수 {', '.join(missing)}를 지정하세요. {self.key_help}".strip()}
+                    "message": f"API 키가 필요합니다: 설정 → API 키 관리에서 {', '.join(missing)}를 넣으세요"
+                               f"(또는 같은 이름의 환경 변수). {self.key_help}".strip()}
         return {"ready": True, "missing_env": [], "message": "사용 가능"}
 
     def env(self, name: str) -> str:
         v = os.environ.get(name, "")
         if not v:
-            raise MissingKey(f"{self.name}: 환경 변수 {name}가 없습니다. {self.key_help}".strip())
+            raise MissingKey(f"{self.name}: 키 {name}가 없습니다. 설정 → API 키 관리에서 넣으세요. {self.key_help}".strip())
         return v
+
+    def reset(self) -> None:
+        """키가 바뀌면 부른다(메모리에 둔 토큰 등을 버린다). 기본은 할 일 없음."""
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:
         raise NotImplementedError

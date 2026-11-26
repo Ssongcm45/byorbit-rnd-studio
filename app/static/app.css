@@ -402,3 +402,42 @@ dialog::backdrop{background:var(--scrim)}
 .bv .row > h2.grow,.bv .row > h3.grow,.card-h h2{min-width:min(100%,200px)}
 .page .bv select.inp{max-width:100%}
 .page .bv label.small:has(> select){flex-wrap:wrap;max-width:100%}
+
+/* ---------------------------------------------------------------- 설정 → API 키 관리 */
+.keys .keys-why{margin-bottom:var(--sp-3)}
+.keys .keys-why p + p{margin-top:var(--sp-1)}
+.keys #keysStore:not(:empty){margin-bottom:var(--sp-3)}
+.keys-list{display:grid;gap:var(--sp-4)}
+.kgrp h3{margin:0 0 var(--sp-2);font-size:var(--fs-sm);font-weight:700;color:var(--muted);letter-spacing:.02em}
+.kgrp{display:grid;gap:var(--sp-2)}
+.kset{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:var(--sp-3) var(--sp-3) var(--sp-2);scroll-margin-top:var(--sp-4)}
+.kset.flash{border-color:var(--accent);box-shadow:var(--focus);transition:box-shadow .3s ease}
+.kset-h{display:flex;align-items:flex-start;gap:var(--sp-2);justify-content:space-between;flex-wrap:wrap}
+.kset-t{display:flex;align-items:center;gap:6px var(--sp-2);flex-wrap:wrap;min-width:0;flex:1 1 280px}
+.kset-t .kuse{flex-basis:100%}
+.krows{list-style:none;margin:var(--sp-2) 0 0;padding:0;display:grid}
+.krow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1.4fr) auto;gap:var(--sp-1) var(--sp-3);align-items:center;padding:var(--sp-2) 0;border-top:1px solid var(--line)}
+.krow .kname{display:grid;min-width:0}
+.krow .kname code{justify-self:start;max-width:100%;font-family:var(--mono);font-size:var(--fs-sm);overflow-wrap:anywhere}
+.krow .kname small,.krow .kstat small{color:var(--muted);font-size:var(--fs-xs)}
+.krow .kstat{display:flex;align-items:center;gap:var(--sp-2);flex-wrap:wrap;min-width:0}
+.krow .kstat .pill{font-family:var(--mono);font-size:var(--fs-xs)}
+.krow .kact{display:flex;gap:var(--sp-1);justify-content:flex-end;flex-wrap:wrap}
+.krow .kenv{grid-column:1/-1;font-family:var(--mono);font-size:var(--fs-xs);background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:var(--sp-1) var(--sp-2);overflow-wrap:anywhere}
+.khelp{margin-top:var(--sp-1);font-size:var(--fs-sm)}
+.khelp summary{cursor:pointer;color:var(--accent);font-weight:600;padding:var(--sp-1) 0;width:max-content;max-width:100%}
+.khelp p{margin:var(--sp-1) 0;color:var(--ink);overflow-wrap:anywhere}
+.khelp a{display:inline-flex;align-items:center;gap:4px}
+.ktest{margin:var(--sp-1) 0 0;overflow-wrap:anywhere}
+.ktest:empty{display:none}
+.keys-cfg{margin-top:var(--sp-4);font-size:var(--fs-sm)}
+.keys-cfg summary{cursor:pointer;color:var(--muted);font-weight:600;padding:var(--sp-1) 0}
+.keys-cfg .kv{margin-top:var(--sp-2);grid-template-columns:260px minmax(0,1fr)}
+.field > .keyin{display:flex;gap:var(--sp-2);font-weight:400}
+.keyin .inp{flex:1 1 auto;font-family:var(--mono)}
+@media (max-width:700px){
+  .krow{grid-template-columns:minmax(0,1fr)}
+  .krow .kact{justify-content:flex-start}
+  .kset-h > .btn{width:100%}
+  .keys-cfg .kv{grid-template-columns:minmax(0,1fr)}
+}

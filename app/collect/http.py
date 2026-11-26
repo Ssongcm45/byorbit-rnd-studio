@@ -25,11 +25,33 @@ _lock = threading.Lock()
 _opener = None                      # 테스트용 대체 opener: callable(Request, timeout) -> response-like
 
 
-def redact(msg: str) -> str:
-    """오류 메시지에서 API 키(BYORBIT_* 환경 변수 값)를 가린다 — 키가 주소 경로에 들어가는 출처가 있다."""
+# 키로 쓰이는 환경 변수 이름. app.keys가 키 자리 목록(수집 출처 needs_env·optional_env, Apify·Upstage)으로 채운다.
+# BYORBIT_*가 아닌 이름(OPENALEX_API_KEY 등)도 여기 있어야 가려진다. 앱 전체를 안 띄운 경우(CLI)를 위해 기본값을 둔다.
+_SECRET_NAMES: set[str] = {"OPENALEX_API_KEY", "SEMANTIC_SCHOLAR_API_KEY"}
+_SECRETISH = re.compile(r"(?:_KEY|_TOKEN|_SECRET|_PASSWORD|_MAC|_CLIENT_ID)$")
+
+
+def set_secret_names(names) -> None:
+    _SECRET_NAMES.update(n for n in names if n)
+
+
+def _secret_values() -> list[str]:
+    vals = set()
     for k, v in os.environ.items():
-        if k.startswith("BYORBIT_") and v and len(v) >= 8 and v in msg:
-            msg = msg.replace(v, "***")
+        if v and len(v) >= 8 and (k.startswith("BYORBIT_") or k in _SECRET_NAMES or _SECRETISH.search(k)):
+            vals.add(v)
+    return sorted(vals, key=len, reverse=True)     # 긴 값부터(한 값이 다른 값의 일부일 때)
+
+
+def redact(msg: str) -> str:
+    """메시지에서 API 키를 가린다 — 키가 주소 경로·쿼리에 들어가는 출처가 있다.
+    대상: BYORBIT_* 값, 등록된 키 이름(OPENALEX_API_KEY 등, 보관소에서 올린 값 포함), 이름이 *_KEY·*_TOKEN 등인 값.
+    주소에 들어갈 때 바뀌는 꼴(퍼센트 인코딩)도 함께 가린다."""
+    msg = str(msg)
+    for v in _secret_values():
+        for form in {v, urllib.parse.quote(v, safe=""), urllib.parse.quote_plus(v), urllib.parse.quote(v)}:
+            if form and form in msg:
+                msg = msg.replace(form, "***")
     return msg
 
 

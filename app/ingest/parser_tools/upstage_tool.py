@@ -33,7 +33,7 @@ PRICE_USD = {"standard": 0.01, "enhanced": 0.03, "auto": 0.03}   # 쪽당, 부�
 SYNC_MAX_PAGES = 100
 MAX_MB = 50
 TIMEOUT_SEC = 300
-HINT = (f"Upstage 콘솔(https://console.upstage.ai)에서 API 키를 만든 뒤 환경 변수 {KEY_ENV}에 넣고 앱을 다시 켜세요. "
+HINT = (f"Upstage 콘솔(https://console.upstage.ai)에서 API 키를 만든 뒤 설정 → API 키 관리의 {KEY_ENV}에 넣으세요(또는 같은 이름의 환경 변수). "
         "쪽당 요금이 듭니다.")
 BLOCK_MSG = ("'기밀' 문서는 클라우드 파서(Upstage)로 보낼 수 없습니다. 로컬 도구(PyMuPDF·pdfplumber·RapidOCR·"
              "Docling·kordoc)를 쓰세요. 꼭 보내야 하면 먼저 자료의 보안 등급을 바꾸세요.")

@@ -41,7 +41,7 @@ export function mountCollect(el, opts = {}) {
     <div class="wrap" style="padding-top:0">
       <div class="info co-notice"><b>외부로 나가는 것: 검색어(와 API 키)만.</b> 자료함·CoA·시료·실험 데이터는 보내지 않습니다. 원문 PDF는 오픈 액세스일 때만 받습니다.</div>
       <div class="card co-top">
-        <div><h2 id="${id}-t">자료 찾기</h2>
+        <div><h2 id="${id}-t" data-help="collect.search">자료 찾기</h2>
           <p class="sub">공식 API와 크롤러에서 찾은 결과는 바로 자료함에 들어가지 않고 <b>수집함</b>에 모입니다. 검토한 뒤 자료함에 넣으세요. 같은 자료는 DOI·출처 ID·제목으로 하나로 합칩니다.</p></div>
         <form class="co-search" autocomplete="off">
           <input class="inp co-q" type="search" placeholder="예: apple pomace drying, 사과박 식이섬유" aria-label="검색어" required>
@@ -55,7 +55,7 @@ export function mountCollect(el, opts = {}) {
       </div>
       <div class="co-main">
         <div class="card co-inbox">
-          <div class="row"><h2 class="grow">수집함</h2><button class="btn sm co-reload" type="button">새로 고침</button></div>
+          <div class="row"><h2 class="grow" data-help="collect.inbox">수집함</h2><button class="btn sm co-reload" type="button">새로 고침</button></div>
           <p class="sub">제목을 누르면 원문 페이지가 새 창으로 열립니다. '자료함에 넣기'는 오픈 액세스 PDF가 있으면 원문을, 없으면 서지·초록을 넣습니다.</p>
           <div class="co-tabs" role="group" aria-label="상태"></div>
           <div class="co-filters">
@@ -77,14 +77,15 @@ export function mountCollect(el, opts = {}) {
           <div class="co-pages"></div>
         </div>
         <div class="co-side">
-          <div class="card co-queries"><div class="row"><h2 class="grow">저장 검색</h2>
+          <div class="card co-queries"><div class="row"><h2 class="grow" data-help="collect.saved">저장 검색</h2>
             <label class="small co-switch" title="모든 자동 검색을 잠시 멈춥니다"><input type="checkbox" class="co-pause"> 자동 실행 멈춤</label></div>
             <p class="sub">자동으로 켠 검색은 앱이 켜져 있는 동안 정한 간격마다 돌고, 새 결과는 수집함에 쌓입니다.</p>
             <div class="co-q-list"></div></div>
-          <div class="card co-crawl"><div class="row"><h2 class="grow">크롤러 사이트</h2><button class="btn sm co-addsite" type="button">사이트 추가</button></div>
+          <div class="card co-crawl"><div class="row"><h2 class="grow" data-help="collect.sites">크롤러 사이트</h2><button class="btn sm co-addsite" type="button">사이트 추가</button></div>
             <p class="sub">API가 없는 공개 자료 페이지를 훑습니다. robots.txt와 이용약관을 지키고, 막힌 곳은 자동으로 뺍니다.</p>
+            <span class="co-hq" data-help-chips="collect.backend,collect.robots,collect.test" style="margin:-4px 0 8px"></span>
             <div class="co-sites"></div></div>
-          <div class="card"><h2>최근 수집 기록</h2><div class="co-jobs"></div></div>
+          <div class="card"><h2 data-help="collect.jobs">최근 수집 기록</h2><div class="co-jobs"></div></div>
         </div>
       </div>
     </div>
@@ -122,7 +123,7 @@ export function mountCollect(el, opts = {}) {
       const on = ready.filter(s => st.chosen.has(s.key)).length;
       const gid = `${id}-g${st.groups.indexOf(g)}`;
       const card = h(`<div class="co-group" role="group" aria-labelledby="${gid}">
-        <div class="gh" id="${gid}"><label class="co-switch"><input type="checkbox" class="co-gall"${ready.length ? '' : ' disabled'}${ready.length && on === ready.length ? ' checked' : ''}> ${esc(g)}</label>
+        <div class="gh" id="${gid}" data-help="group.${esc(g)}"><label class="co-switch"><input type="checkbox" class="co-gall"${ready.length ? '' : ' disabled'}${ready.length && on === ready.length ? ' checked' : ''}> ${esc(g)}</label>
           <span class="cnt">${ready.length ? `${on}/${ready.length}` : ''}</span></div></div>`);
       const all = card.querySelector('.co-gall');
       all.indeterminate = on > 0 && on < ready.length;
@@ -133,10 +134,13 @@ export function mountCollect(el, opts = {}) {
         const hint = s.ready ? (s.description || '') :
           (s.missing_env?.length ? `키 필요: ${s.missing_env.join(', ')}` : (s.message || '사용할 준비가 되지 않았습니다'));
         const help = !s.ready && s.key_help ? `<details class="co-keyhelp"><summary>키 발급 안내</summary><small>${esc(s.key_help)}</small></details>` : '';
+        // 키가 빠진 출처: 설정 → API 키 관리의 그 출처 칸으로 바로 간다(index.html의 window.openKeys)
+        const keyLink = !s.ready && s.missing_env?.length ? `<a class="co-keylink" href="#settings" data-keyset="${esc(s.key)}">설정에서 키 넣기</a>` : '';
         const row = h(`<label class="co-src${s.ready ? '' : ' off'}" title="${esc(s.ready ? (s.homepage || '') : (s.message || ''))}">
           <input type="checkbox" value="${esc(s.key)}"${s.ready ? '' : ' disabled'}${s.ready && st.chosen.has(s.key) ? ' checked' : ''}>
-          <span><span class="nm">${esc(s.name)}</span>${hint ? `<small class="${s.ready ? '' : 'key'}">${esc(hint)}</small>` : ''}${help}</span></label>`);
+          <span><span class="nm">${esc(s.name)}</span>${hint ? `<small class="${s.ready ? '' : 'key'}">${esc(hint)}</small>` : ''}${keyLink}${help}</span></label>`);
         row.querySelector('input').addEventListener('change', e => { e.target.checked ? st.chosen.add(s.key) : st.chosen.delete(s.key); renderSources() });
+        row.querySelector('.co-keylink')?.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); window.openKeys ? window.openKeys(s.key) : (location.hash = 'settings') });
         card.appendChild(row);
       }
       box.appendChild(card);

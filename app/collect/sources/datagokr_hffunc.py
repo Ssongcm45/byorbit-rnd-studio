@@ -84,7 +84,7 @@ class HealthFuncMaterial(Source):
     needs_env = (ENV_KEY,)
     key_help = ("식품안전나라(https://www.foodsafetykorea.go.kr) 회원 가입 → '데이터활용서비스' > 'OpenAPI' > '이용신청'에서 "
                 "인증키 발급 → I-0040(건강기능식품 기능성 원료인정현황) 이용 신청. 인증키 관리 화면의 키를 "
-                "환경 변수 BYORBIT_FOODSAFETY_KEY에 넣고 앱을 다시 켜세요(공공데이터포털 키와 다릅니다).")
+                "설정 → API 키 관리의 BYORBIT_FOODSAFETY_KEY에 넣으세요(공공데이터포털 키와 다릅니다).")
     doc_types = ("dataset",)
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:

@@ -89,7 +89,7 @@ class KIPRIS(Source):
     key_help = ("KIPRIS Plus(https://plus.kipris.or.kr) 회원 가입 → '데이터 신청' > '특허·실용 공개·등록공보' "
                 "Open API 신청(https://plus.kipris.or.kr/portal/data/request/apiFsmtmList.do?menuNo=290005) → 승인 후 마이페이지에서 "
                 "키 확인(월 1,000건 무료). "
-                "키를 환경 변수 BYORBIT_KIPRIS_KEY에 넣고 앱을 다시 켜세요.")
+                "키를 설정 → API 키 관리의 BYORBIT_KIPRIS_KEY에 넣으세요(또는 같은 이름의 환경 변수).")
     doc_types = ("patent",)
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:

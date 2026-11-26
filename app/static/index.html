@@ -7,6 +7,7 @@
 <title>R&amp;D Studio V0.5</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%238a5a34%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22700%22%3ER%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="/static/help/help.css">
 </head>
 <body>
 <a class="skip" href="#main">본문으로 건너뛰기</a>
@@ -61,6 +62,7 @@
   <div class="tr">
     <a class="spill" id="engPill" href="#settings" title="AI 엔진 상태 — 누르면 설정에서 연결 점검"><span class="dot" id="engDot"></span><span class="lbl" id="engTxt">AI 엔진 확인 중</span></a>
     <a class="spill warn" id="pendPill" href="#review" hidden title="검토를 기다리는 라벨"><svg class="ic sm" aria-hidden="true"><use href="#i-tag"/></svg><span class="lbl">라벨 대기</span><b id="pendN">0</b></a>
+    <button class="spill hq-toggle" id="helpToggle" type="button" role="switch" aria-checked="true" aria-label="(?) 도움말 표시" title="(?) 도움말 단추 숨기기"><span class="hq-sw" aria-hidden="true"><i>?</i></span><span class="lbl">도움말 표시</span></button>
     <button class="iconbtn bordered" id="helpBtn" type="button" aria-label="도움말과 단축키" aria-keyshortcuts="?" title="도움말과 단축키 (?)"><svg class="ic"><use href="#i-help"/></svg></button>
   </div>
 </header>
@@ -68,30 +70,30 @@
 <aside class="sidebar" id="sidebar" aria-label="화면 메뉴">
   <nav id="nav" aria-label="화면">
     <div class="navgroup">시작</div>
-    <a class="ni" href="#home" data-v="home" title="시작"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">시작</span></a>
+    <a class="ni" href="#home" data-v="home" data-help="home" title="시작"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">시작</span></a>
     <div class="navsep"></div>
     <div class="navgroup">자료</div>
-    <a class="ni" href="#library" data-v="library" title="자료함"><svg class="ic"><use href="#i-folder"/></svg><span class="lbl">자료함</span></a>
-    <a class="ni" href="#collect" data-v="collect" title="자료 수집"><svg class="ic"><use href="#i-globe"/></svg><span class="lbl">자료 수집</span></a>
-    <a class="ni" href="#search" data-v="search" title="검색"><svg class="ic"><use href="#i-search"/></svg><span class="lbl">검색</span></a>
-    <a class="ni" href="#onto" data-v="onto" title="개념 사전"><svg class="ic"><use href="#i-book"/></svg><span class="lbl">개념 사전</span></a>
-    <a class="ni" href="#kg" data-v="kg" title="지식그래프"><svg class="ic"><use href="#i-graph"/></svg><span class="lbl">지식그래프</span></a>
+    <a class="ni" href="#library" data-v="library" data-help="library" title="자료함"><svg class="ic"><use href="#i-folder"/></svg><span class="lbl">자료함</span></a>
+    <a class="ni" href="#collect" data-v="collect" data-help="collect" title="자료 수집"><svg class="ic"><use href="#i-globe"/></svg><span class="lbl">자료 수집</span></a>
+    <a class="ni" href="#search" data-v="search" data-help="search" title="검색"><svg class="ic"><use href="#i-search"/></svg><span class="lbl">검색</span></a>
+    <a class="ni" href="#onto" data-v="onto" data-help="onto" title="개념 사전"><svg class="ic"><use href="#i-book"/></svg><span class="lbl">개념 사전</span></a>
+    <a class="ni" href="#kg" data-v="kg" data-help="kg" title="지식그래프"><svg class="ic"><use href="#i-graph"/></svg><span class="lbl">지식그래프</span></a>
     <div class="navsep"></div>
     <div class="navgroup">라벨</div>
-    <a class="ni" href="#review" data-v="review" title="라벨 검토"><svg class="ic"><use href="#i-tag"/></svg><span class="lbl">라벨 검토</span><span class="badge" id="pendingCount" hidden aria-label="검토 대기">0</span></a>
+    <a class="ni" href="#review" data-v="review" data-help="review" title="라벨 검토"><svg class="ic"><use href="#i-tag"/></svg><span class="lbl">라벨 검토</span><span class="badge" id="pendingCount" hidden aria-label="검토 대기">0</span></a>
     <div class="navsep"></div>
     <div class="navgroup">실험·분석</div>
-    <a class="ni" href="#meas" data-v="meas" title="측정값"><svg class="ic"><use href="#i-table"/></svg><span class="lbl">측정값</span></a>
-    <a class="ni" href="#exp" data-v="exp" title="내 실험"><svg class="ic"><use href="#i-flask"/></svg><span class="lbl">내 실험</span></a>
-    <a class="ni" href="#stats" data-v="stats" title="통계 분석"><svg class="ic"><use href="#i-chart"/></svg><span class="lbl">통계 분석</span></a>
+    <a class="ni" href="#meas" data-v="meas" data-help="meas" title="측정값"><svg class="ic"><use href="#i-table"/></svg><span class="lbl">측정값</span></a>
+    <a class="ni" href="#exp" data-v="exp" data-help="exp" title="내 실험"><svg class="ic"><use href="#i-flask"/></svg><span class="lbl">내 실험</span></a>
+    <a class="ni" href="#stats" data-v="stats" data-help="stats" title="통계 분석"><svg class="ic"><use href="#i-chart"/></svg><span class="lbl">통계 분석</span></a>
     <div class="navsep"></div>
     <div class="navgroup">보기·AI</div>
-    <a class="ni" href="#viz" data-v="viz" title="시각화"><svg class="ic"><use href="#i-cube"/></svg><span class="lbl">시각화</span></a>
-    <a class="ni" href="#ask" data-v="ask" title="AI에 묻기"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">AI에 묻기</span></a>
+    <a class="ni" href="#viz" data-v="viz" data-help="viz" title="시각화"><svg class="ic"><use href="#i-cube"/></svg><span class="lbl">시각화</span></a>
+    <a class="ni" href="#ask" data-v="ask" data-help="ask" title="AI에 묻기"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">AI에 묻기</span></a>
   </nav>
   <div class="sb-foot">
     <div class="sb-proj"><label>프로젝트<select id="projM"></select></label></div>
-    <nav aria-label="설정"><a class="ni" href="#settings" data-v="settings" title="설정"><svg class="ic"><use href="#i-sliders"/></svg><span class="lbl">설정</span></a></nav>
+    <nav aria-label="설정"><a class="ni" href="#settings" data-v="settings" data-help="settings" title="설정"><svg class="ic"><use href="#i-sliders"/></svg><span class="lbl">설정</span></a></nav>
     <p class="sb-note"><b>내 PC 전용</b> · 자료와 DB는 이 PC의 데이터 폴더에만 있습니다.</p>
   </div>
 </aside>
@@ -101,25 +103,26 @@
 <!-- 시작 -->
 <section class="view" id="v-home" aria-labelledby="hTitle"><div class="page">
   <div class="hero">
-    <div><h1 id="hTitle">R&amp;D Studio에 오신 걸 환영합니다</h1>
+    <div><h1 id="hTitle" data-help="home">R&amp;D Studio에 오신 걸 환영합니다</h1>
       <p id="hSub">부산물 연구 자료를 이 PC에 모으고, 찾고, AI에게 근거 있는 답을 받는 작업실입니다. 처음이라면 아래 순서대로 해 보세요.</p></div>
     <div class="ph-a"><a class="btn" href="#library"><svg class="ic sm"><use href="#i-upload"/></svg>파일 올리기</a>
       <a class="btn primary" href="#ask"><svg class="ic sm"><use href="#i-chat"/></svg>AI에 묻기</a></div>
   </div>
   <div class="split split-wide">
     <div class="card">
-      <div class="card-h"><h2><svg class="ic"><use href="#i-check"/></svg>처음 사용 체크리스트</h2><span class="small muted" id="hProgTxt"></span></div>
+      <div class="card-h"><h2 data-help="home.checklist"><svg class="ic"><use href="#i-check"/></svg>처음 사용 체크리스트</h2><span class="small muted" id="hProgTxt"></span></div>
       <div class="progress" style="margin-bottom:12px"><i id="hProg" style="width:0"></i></div>
       <ol class="steps" id="hSteps"><li class="skel"><i></i><i></i><i></i></li></ol>
     </div>
     <div class="card">
-      <div class="card-h"><h2><svg class="ic"><use href="#i-shield"/></svg>안전 상태</h2></div>
+      <div class="card-h"><h2 data-help="home.safety"><svg class="ic"><use href="#i-shield"/></svg>안전 상태</h2></div>
       <p class="sub">무엇이 이 PC 밖으로 나가는지 한눈에 봅니다.</p>
       <div class="safe" id="hSafe"><div class="skel"><i></i><i></i><i></i></div></div>
       <div class="row" style="margin-top:14px"><button class="btn sm" type="button" onclick="openOutbound()"><svg class="ic sm"><use href="#i-info"/></svg>외부로 나가는 것 자세히</button>
         <a class="btn sm ghost" href="#settings">설정 바꾸기</a></div>
     </div>
   </div>
+  <div class="hq-line" data-help="home.stats">주요 숫자</div>
   <div class="stats" id="hStats" aria-label="주요 숫자"></div>
   <div class="grid2">
     <div class="card"><div class="card-h"><h2>최근 자료</h2><a class="btn sm ghost" href="#library">자료함 열기<svg class="ic sm"><use href="#i-arrow"/></svg></a></div>
@@ -140,24 +143,24 @@
 
 <!-- 자료함 -->
 <section class="view" id="v-library" aria-labelledby="libTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="libTitle">자료함</h1>
+  <header class="ph"><div class="ph-t"><h1 id="libTitle" data-help="library">자료함</h1>
     <p>논문·보고서·CoA를 넣으면 자동으로 읽고(파싱) 잘게 나눈 뒤(청크) 개념 라벨을 붙입니다. 원본 파일은 그대로 둡니다.</p></div>
     <div class="ph-a"><button class="btn" id="scanInbox" type="button"><svg class="ic sm"><use href="#i-refresh"/></svg>받은편지함 다시 확인</button></div></header>
   <div class="drop" id="drop">
     <div class="di" aria-hidden="true"><svg class="ic lg"><use href="#i-upload"/></svg></div>
-    <div style="flex:1 1 320px;min-width:0"><h2>파일을 여기에 끌어다 놓으세요</h2>
+    <div style="flex:1 1 320px;min-width:0"><h2 data-help="library.drop">파일을 여기에 끌어다 놓으세요</h2>
       <p>PDF · HWPX · XLSX(CoA 자동 인식) · TXT · MD · CSV. 파일은 이 PC의 데이터 폴더 <code>library</code>로 복사되고 원본은 그대로 둡니다.</p>
       <details><summary>폴더에 넣어도 됩니다 (받은편지함)</summary>
         <p>받은편지함 폴더 <code id="inboxPath">inbox</code>에 파일을 넣으면 자동으로 처리됩니다. 그 안에 <code>프로젝트 이름</code> 폴더를 만들어 넣으면 그 프로젝트로 들어갑니다.</p></details></div>
     <div class="acts">
-      <label class="field" style="width:120px"><span>보안 등급</span>
+      <label class="field" style="width:132px"><span data-help="library.conf">보안 등급</span>
         <select class="inp" id="upConf" aria-describedby="upConfHelp"><option>일반</option><option selected>내부</option><option>기밀</option></select></label>
       <label class="btn primary"><svg class="ic sm"><use href="#i-upload"/></svg>파일 선택<input type="file" id="fileIn" multiple hidden accept=".pdf,.hwpx,.xlsx,.xlsm,.txt,.md,.csv"></label>
       <p class="small muted" id="upConfHelp" style="flex-basis:100%;margin:0">기밀: AI에 보낼 때 파일명·식별 정보를 가립니다.</p>
     </div>
   </div>
   <div class="card" id="lblCard" hidden aria-live="polite">
-    <div class="card-h"><h2>AI 라벨 <span class="muted small" id="lblDoc"></span></h2>
+    <div class="card-h"><h2 data-help="library.ailabel">AI 라벨 <span class="muted small" id="lblDoc"></span></h2>
       <span class="pill" id="lblState"></span>
       <button class="btn sm" id="lblCancel" type="button" hidden>취소</button>
       <button class="btn sm" id="lblResume" type="button" hidden title="오류·대기 청크만 다시 처리">재시도</button>
@@ -167,6 +170,7 @@
   </div>
   <div class="card">
     <div class="card-h"><h2>자료 목록 <span class="muted small" id="docSum"></span></h2>
+      <span data-help-chips="library.stages,library.actions"></span>
       <label class="check"><input type="checkbox" id="allProj"> 모든 프로젝트</label>
       <button class="btn sm" id="refreshDocs" type="button"><svg class="ic sm"><use href="#i-refresh"/></svg>새로고침</button></div>
     <div class="tbl stack-sm"><table><thead><tr><th>파일</th><th>종류</th><th>등급</th><th>처리 단계</th><th class="num">청크</th><th class="num">라벨</th><th class="num">측정값</th><th><span class="sr-only">할 일</span></th></tr></thead>
@@ -176,11 +180,12 @@
 
 <!-- 검색 -->
 <section class="view" id="v-search" aria-labelledby="sTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="sTitle">검색</h1>
+  <header class="ph"><div class="ph-t"><h1 id="sTitle" data-help="search">검색</h1>
     <p>검색어를 동의어까지 넓혀 찾습니다. 예: “사과 포마스 TDF” → 사과박·apple pomace … 그리고 식이섬유·총식이섬유 …</p></div></header>
   <form class="card" id="qForm" role="search" autocomplete="off">
     <div class="row"><input class="inp grow" id="q" type="search" placeholder="예: 사과 포마스 식이섬유 · 굴 패각 소성 · TPC" aria-label="검색어" style="height:40px;font-size:14px;min-width:200px">
       <label class="check"><input type="checkbox" id="qAll"> 모든 프로젝트</label>
+      <span data-help-chips="search.expand"></span>
       <button class="btn primary" id="qBtn" type="submit" style="height:40px"><svg class="ic sm"><use href="#i-search"/></svg>검색</button></div>
     <div class="chips" id="qExp" style="margin-top:8px" aria-label="넓힌 검색어"></div>
   </form>
@@ -191,23 +196,23 @@
         <button class="btn sm" id="chWb" type="button" title="이 청크를 문서 작업대의 라벨 탭에서 엽니다"><svg class="ic sm"><use href="#i-wrench"/></svg>작업대에서 열기</button></div>
       <p class="small muted" id="chMeta" style="margin:0 0 8px"></p>
       <div class="chunktext" id="chText" tabindex="0"></div>
-      <p class="small muted" style="margin:8px 0 0">밑줄: 붙은 라벨 (실선 확정 · 점선 검토 대기 · 주황 수치). 글자에 마우스를 올리면 라벨 내용이 보입니다.</p>
+      <p class="small muted" style="margin:8px 0 0" data-help="search.chunk">밑줄: 붙은 라벨 (실선 확정 · 점선 검토 대기 · 주황 수치). 글자에 마우스를 올리면 라벨 내용이 보입니다.</p>
     </div>
   </div>
 </div></section>
 
 <!-- 라벨 검토 -->
 <section class="view" id="v-review" aria-labelledby="rTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="rTitle">라벨 검토</h1>
+  <header class="ph"><div class="ph-t"><h1 id="rTitle" data-help="review">라벨 검토</h1>
     <p>AI가 제안한 수치 라벨과 신뢰도 0.9 미만 라벨을 사람이 확인합니다. 승인한 수치는 측정값 표로 올라갑니다.</p></div>
     <div class="ph-a"><button class="btn" type="button" onclick="openHelp('review')"><svg class="ic sm"><use href="#i-keyboard"/></svg>단축키</button></div></header>
   <div class="card">
     <div class="row" style="align-items:flex-end;margin-bottom:12px;gap:16px">
       <label class="field" style="width:160px"><span>보기</span>
         <select class="inp" id="rvStatus"><option value="pending">검토 대기</option><option value="auto">자동 확정</option><option value="accepted">승인함</option><option value="rejected">거절함</option></select></label>
-      <div class="field" style="flex:1 1 300px"><label class="check" style="color:var(--ink);font-weight:600"><input type="checkbox" id="rvLearn"> 거절을 학습 (다음부터 같은 표기 건너뛰기)</label>
+      <div class="field" style="flex:1 1 300px"><span class="row" style="gap:2px;flex-wrap:nowrap"><label class="check" style="color:var(--ink);font-weight:600;white-space:normal"><input type="checkbox" id="rvLearn"> 거절을 학습 (다음부터 같은 표기 건너뛰기)</label><span data-help-chips="review.learn" data-help-bare></span></span>
         <span class="help">사전 라벨을 거절할 때 같은 앞뒤 낱말의 같은 표기를 다음부터 라벨하지 않습니다. 작업대의 ‘배운 것’에서 끌 수 있고, 되돌리기(U)를 하면 배운 것도 꺼집니다.</span></div>
-      <p class="small muted" style="margin:0"><kbd>J</kbd>/<kbd>K</kbd> 이동 · <kbd>A</kbd> 승인 · <kbd>R</kbd> 거절 · <kbd>U</kbd> 되돌리기</p>
+      <p class="small muted" style="margin:0" data-help="review.keys"><kbd>J</kbd>/<kbd>K</kbd> 이동 · <kbd>A</kbd> 승인 · <kbd>R</kbd> 거절 · <kbd>U</kbd> 되돌리기</p>
     </div>
     <div class="tbl stack-sm tall"><table><thead><tr><th>문맥</th><th>라벨</th><th>개념·값</th><th class="num">신뢰도</th><th>출처</th><th><span class="sr-only">결정</span></th></tr></thead><tbody id="rvRows"></tbody></table></div>
   </div>
@@ -215,7 +220,7 @@
 
 <!-- 측정값 -->
 <section class="view" id="v-meas" aria-labelledby="mTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="mTitle">측정값</h1>
+  <header class="ph"><div class="ph-t"><h1 id="mTitle" data-help="meas">측정값</h1>
     <p>CoA에서 읽은 값과 라벨 검토에서 승인한 추출값입니다. 이 화면은 내 PC 전용이라 로트·공급처가 보이지만, AI에 넘길 때는 가려집니다.</p></div>
     <div class="ph-a"><button class="btn" id="mCsv" type="button"><svg class="ic sm"><use href="#i-download"/></svg>CSV 저장</button></div></header>
   <div class="card">
@@ -224,6 +229,7 @@
       <label class="field" style="flex:1 1 180px"><span>항목</span><input class="inp" id="mTg" placeholder="예: 식이섬유"></label>
       <label class="check" style="height:34px"><input type="checkbox" id="mAll" checked> 모든 프로젝트</label>
       <button class="btn primary" id="mBtn" type="submit">조회</button>
+      <span data-help-chips="meas.evidence" style="margin-left:auto;align-self:center"></span>
     </form>
     <div class="tbl stack-sm tall"><table><thead><tr><th>부산물</th><th>항목</th><th class="num">값</th><th>단위</th><th>기준</th><th>전처리</th><th>시험법</th><th>시료</th><th>입력</th><th>근거</th></tr></thead><tbody id="mRows"></tbody></table></div>
   </div>
@@ -231,18 +237,18 @@
 
 <!-- 개념·지식그래프 -->
 <section class="view" id="v-onto" aria-labelledby="oTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="oTitle">개념 사전 · 지식그래프</h1>
+  <header class="ph"><div class="ph-t"><h1 id="oTitle" data-help="onto">개념 사전 · 지식그래프</h1>
     <p>부산물·성분·공정 같은 개념과 동의어를 모은 사전입니다. 지식그래프에서는 개념(점)과 관계(선), 그 개념이 나온 자료를 지도로 봅니다.</p></div>
-    <div class="ph-a" id="ontoActs"><button class="btn primary" id="cAdd" type="button"><svg class="ic sm"><use href="#i-plus"/></svg>개념 추가</button></div></header>
+    <div class="ph-a" id="ontoActs"><button class="btn primary" id="cAdd" type="button"><svg class="ic sm"><use href="#i-plus"/></svg>개념 추가</button><span data-help-chips="onto.add" data-help-bare></span></div></header>
   <div class="ontotabs" role="tablist" aria-label="개념 보기 방식">
     <button type="button" role="tab" id="ontoTabList" aria-controls="ontoList" aria-selected="true"><svg class="ic sm"><use href="#i-book"/></svg>분류·목록</button>
     <button type="button" role="tab" id="ontoTabKG" aria-controls="ontoKG" aria-selected="false" tabindex="-1"><svg class="ic sm"><use href="#i-graph"/></svg>지식그래프</button>
   </div>
   <div id="ontoKG" role="tabpanel" aria-labelledby="ontoTabKG" hidden></div>
   <div class="split split-narrow" id="ontoList" role="tabpanel" aria-labelledby="ontoTabList">
-    <div class="card"><h2>부산물 분류</h2><p class="sub">표준 시드: 농업·임업·수산(+축산 자리). 이름을 누르면 오른쪽에서 동의어를 봅니다.</p><div class="tree" id="tree"></div></div>
+    <div class="card"><h2 data-help="onto.tree">부산물 분류</h2><p class="sub">표준 시드: 농업·임업·수산(+축산 자리). 이름을 누르면 오른쪽에서 동의어를 봅니다.</p><div class="tree" id="tree"></div></div>
     <div class="card">
-      <h2>개념·동의어</h2>
+      <h2 data-help="onto.concepts">개념·동의어</h2>
       <div class="row" style="margin:8px 0 12px;align-items:flex-end">
         <label class="field" style="flex:2 1 200px"><span>표기로 찾기</span><input class="inp" id="cQ" type="search" placeholder="예: 포마스, FD"></label>
         <label class="field" style="flex:1 1 120px"><span>체계</span><select class="inp" id="cScheme"><option value="">전체 체계</option></select></label>
@@ -254,30 +260,30 @@
 
 <!-- AI에 묻기 -->
 <section class="view" id="v-ask" aria-labelledby="aTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="aTitle">AI에 묻기 <span class="pill accent">Claude Code</span></h1>
+  <header class="ph"><div class="ph-t"><h1 id="aTitle" data-help="ask">AI에 묻기 <span class="pill accent">Claude Code</span></h1>
     <p>이 PC의 Claude Code가 자료 서버(byorbit-rd) 도구로 자료를 찾아 출처와 함께 답합니다. 답의 출처 표시를 누르면 원문을 엽니다.</p></div></header>
   <form class="card" id="askForm" autocomplete="off">
     <label class="field"><span>질문</span>
       <textarea class="inp" id="askQ" placeholder="예: 동결건조와 열풍건조 사과박의 식이섬유·폴리페놀 차이를 근거와 함께 정리해줘" aria-describedby="askHelp"></textarea>
       <span class="help" id="askHelp">Ctrl+Enter로 보냅니다.</span></label>
     <div class="row" style="margin-top:12px;align-items:flex-end">
-      <label class="field" style="width:220px"><span>역할</span>
+      <label class="field" style="width:220px"><span data-help="ask.role">역할</span>
         <select class="inp" id="askRole"><option value="librarian">자료 사서</option><option value="composition_analyst">성분 분석가</option><option value="report_writer">리포트 작성자(초안 저장)</option></select></label>
       <div class="callout warn grow" style="min-width:240px" id="askNotice"><svg class="ic sm" aria-hidden="true"><use href="#i-shield"/></svg>
-        <p><b>질문과 가려진 본문 일부가 Anthropic으로 전송됩니다.</b> CoA 식별 정보(로트·공급처·시료번호)는 가립니다. <a href="#" onclick="event.preventDefault();openOutbound()">자세히</a></p></div>
+        <p><b>질문과 가려진 본문 일부가 Anthropic으로 전송됩니다.</b> CoA 식별 정보(로트·공급처·시료번호)는 가립니다. <a href="#" onclick="event.preventDefault();openOutbound()">자세히</a><span data-help-chips="ask.send" data-help-bare></span></p></div>
       <button class="btn primary" id="askBtn" type="submit" style="height:40px"><svg class="ic sm"><use href="#i-send"/></svg>묻기</button>
     </div>
     <p class="small muted" id="askState" role="status" style="margin:8px 0 0;display:flex;gap:8px;align-items:center"></p>
   </form>
   <div class="card" id="askOut" hidden><div class="card-h"><h2>답변</h2><span class="small muted" id="askMeta"></span></div>
     <div class="answer" id="askAns"></div><div id="askCites"></div></div>
-  <div class="card"><div class="card-h"><h2>리포트 초안</h2></div><p class="sub">리포트 작성자가 저장한 초안입니다. 파일은 데이터 폴더 <code>reports</code>에도 있습니다.</p>
+  <div class="card"><div class="card-h"><h2 data-help="ask.write">리포트 초안</h2></div><p class="sub">리포트 작성자가 저장한 초안입니다. 파일은 데이터 폴더 <code>reports</code>에도 있습니다.</p>
     <div class="tbl"><table><thead><tr><th>제목</th><th class="num">근거</th><th>상태</th><th>만든 때</th></tr></thead><tbody id="rpRows"></tbody></table></div></div>
 </div></section>
 
 <!-- 자료 수집 (app/static/collect) — 공식 API·크롤러 → 수집함 -->
 <section class="view" id="v-collect" aria-labelledby="coTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="coTitle">자료 수집</h1>
+  <header class="ph"><div class="ph-t"><h1 id="coTitle" data-help="collect">자료 수집</h1>
     <p>공식 API와 크롤러로 논문·보고서·특허를 찾아 수집함에 모읍니다. 검토한 뒤 자료함에 넣으세요.</p></div></header>
   <div id="collectRoot"></div></div></section>
 <!-- 내 실험 (app/static/exp) — 공정 흐름·내 데이터·예측 비교·보정 -->
@@ -288,33 +294,33 @@
   <div id="statsRoot"></div></div></section>
 <!-- 시각화 (app/static/viz) — 흐름·건조 방식·분자 구조 -->
 <section class="view" id="v-viz" aria-labelledby="vTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="vTitle">시각화</h1>
+  <header class="ph"><div class="ph-t"><h1 id="vTitle" data-help="viz">시각화</h1>
     <p>자료가 어디로 흐르는지(흐름), 건조 방식과 설비(3D·P&amp;ID), 성분의 분자 구조를 그림으로 봅니다.</p></div></header>
   <div id="vizRoot"></div></div></section>
 <!-- 문서 작업대 (app/static/doc) — 파싱·청크 검사·고치기·규칙 배우기·사람 라벨 -->
 <section class="view" id="v-wb" aria-labelledby="wbTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="wbTitle">문서 작업대</h1>
+  <header class="ph"><div class="ph-t"><h1 id="wbTitle" data-help="wb">문서 작업대</h1>
     <p>자료 하나를 열어 파싱 결과와 청크를 검사·고치고, 라벨을 직접 붙이고, 고친 규칙을 배웁니다. ‘닫기’를 누르면 자료함으로 돌아갑니다.</p></div></header>
   <div id="wbRoot"></div></div></section>
 
 <!-- 설정 -->
 <section class="view" id="v-settings" aria-labelledby="setTitle"><div class="page">
-  <header class="ph"><div class="ph-t"><h1 id="setTitle">설정</h1>
-    <p>AI 엔진 연결, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더, 식품 영양 DB 연결을 다룹니다.</p></div></header>
+  <header class="ph"><div class="ph-t"><h1 id="setTitle" data-help="settings">설정</h1>
+    <p>AI 엔진 연결, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더, API 키, 식품 영양 DB 연결을 다룹니다.</p></div></header>
   <div class="grid2">
     <div class="card">
-      <h2>AI 엔진</h2><p class="sub">기본 엔진은 이 PC에 설치·로그인된 Claude Code입니다. Codex는 보조 엔진입니다.</p>
+      <h2 data-help="settings.engine">AI 엔진</h2><p class="sub">기본 엔진은 이 PC에 설치·로그인된 Claude Code입니다. Codex는 보조 엔진입니다.</p>
       <div class="kv" id="engInfo"><b>상태</b><span class="row"><span class="spin"></span>확인 중…</span></div>
       <div class="row" style="margin-top:12px"><button class="btn" id="engCheck" type="button">설치 확인</button><button class="btn primary" id="engSmoke" type="button">연결 점검 (실제 호출)</button></div>
       <p class="small muted" id="smokeOut" role="status" style="margin:8px 0 0"></p>
     </div>
     <div class="card">
-      <h2>CoA 전송 규칙</h2><p class="sub">AI 엔진에 CoA(기밀) 자료를 어떻게 넘길지 정합니다. 바꾸면 바로 저장됩니다.</p>
+      <h2 data-help="settings.coa">CoA 전송 규칙</h2><p class="sub">AI 엔진에 CoA(기밀) 자료를 어떻게 넘길지 정합니다. 바꾸면 바로 저장됩니다.</p>
       <label class="radio"><input type="radio" name="coa" value="mask"><span><b>필요한 값만, 식별 정보는 가림</b><small>측정값은 넘기되 로트번호·공급처·시료번호는 [가림]으로 바꿉니다.</small></span></label>
       <label class="radio"><input type="radio" name="coa" value="block"><span><b>보내지 않기</b><small>CoA 본문과 측정값을 AI에 전혀 넘기지 않습니다. 논문·보고서만 씁니다.</small></span></label>
     </div>
     <div class="card">
-      <h2>기본값</h2><p class="sub">앱을 열 때 고를 프로젝트와 받은편지함 감시 등을 정합니다.</p>
+      <h2 data-help="settings.defaults">기본값</h2><p class="sub">앱을 열 때 고를 프로젝트와 받은편지함 감시 등을 정합니다.</p>
       <div class="stack" style="gap:12px">
         <label class="field"><span>기본 프로젝트</span><select class="inp" id="setProj"></select></label>
         <div class="field"><span class="lab">받은편지함 감시</span><label class="check" style="color:var(--ink)"><input type="checkbox" id="setWatch"> 켜기</label><span class="help">앱을 다시 시작하면 적용됩니다.</span></div>
@@ -323,11 +329,23 @@
       <div class="row" style="margin-top:14px"><button class="btn primary" id="setSave" type="button">저장</button><button class="btn" id="newProj" type="button"><svg class="ic sm"><use href="#i-plus"/></svg>새 프로젝트</button></div>
     </div>
     <div class="card">
-      <h2>데이터 폴더</h2><p class="sub">모든 자료와 DB는 이 PC의 이 폴더에만 있습니다. 백업은 폴더째 복사하면 됩니다.</p>
+      <h2 data-help="settings.paths">데이터 폴더</h2><p class="sub">모든 자료와 DB는 이 PC의 이 폴더에만 있습니다. 백업은 폴더째 복사하면 됩니다.</p>
       <div class="kv" id="paths"></div>
     </div>
+    <div class="card keys" id="keysCard" style="grid-column:1/-1" aria-labelledby="keysTitle">
+      <div class="card-h"><h2 id="keysTitle" data-help="settings.keys"><svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>API 키 관리</h2>
+        <button class="btn sm ghost" id="keysReload" type="button"><svg class="ic sm" aria-hidden="true"><use href="#i-refresh"/></svg>새로고침</button></div>
+      <p class="sub">자료 수집 출처와 클라우드 크롤러·파서가 쓰는 키를 발급받아 여기에 저장합니다. 저장하면 앱을 다시 켜지 않아도 바로 쓰입니다.</p>
+      <div class="callout info keys-why"><svg class="ic sm" aria-hidden="true"><use href="#i-info"/></svg><div>
+        <p><b>키는 어디에 저장되나</b> — 이 PC의 <b>Windows 자격 증명 관리자</b>(지금 로그인한 Windows 계정으로 암호화)에만 둡니다. 설정 파일·DB·로그·내보내기에는 쓰지 않고, 화면에도 끝 4자리만 보입니다.</p>
+        <p><b>무엇이 밖으로 나가나</b> — 각 키는 그 키를 발급한 서비스로만 갑니다(검색·호출할 때 함께). 같은 이름의 환경 변수가 있으면 그 값이 먼저 쓰입니다.</p></div></div>
+      <div id="keysStore" role="status"></div>
+      <div id="keysList" class="keys-list"><div class="skel"><i></i><i></i><i></i></div></div>
+      <details class="keys-cfg"><summary>설정 값(비밀 아님) — 환경 변수로만 바꿉니다</summary>
+        <div class="kv" id="keysCfg"></div></details>
+    </div>
     <div class="card" style="grid-column:1/-1">
-      <h2>식품 영양 DB 연결 (ByOrbit Food MCP)</h2><p class="sub">켜면 AI가 농진청 원물·식약처 식품 성분 DB를 참고 기준값으로 함께 조회합니다. 읽기 전용 도구 12개만 허용합니다.</p>
+      <h2 data-help="settings.food">식품 영양 DB 연결 (ByOrbit Food MCP)</h2><p class="sub">켜면 AI가 농진청 원물·식약처 식품 성분 DB를 참고 기준값으로 함께 조회합니다. 읽기 전용 도구 12개만 허용합니다.</p>
       <div class="grid2" style="gap:12px 24px">
         <div class="stack" style="gap:12px">
           <div class="field"><span class="lab">식품 DB 쓰기</span><label class="check" style="color:var(--ink)"><input type="checkbox" id="foodOn"> 켜기</label></div>
@@ -356,7 +374,8 @@
   <div class="dbody">
     <div class="help-grid">
       <div><h4>어디서나</h4><div class="kv"><b><kbd>Ctrl</kbd>+<kbd>K</kbd> · <kbd>/</kbd></b><span>머리줄 검색칸으로</span><b><kbd>?</kbd></b><span>이 도움말</span><b><kbd>Esc</kbd></b><span>대화상자·메뉴 닫기</span></div>
-        <p class="small muted">입력칸에 글을 쓰는 동안에는 <kbd>/</kbd>·<kbd>?</kbd>와 아래 단축키가 동작하지 않습니다.</p></div>
+        <p class="small muted">입력칸에 글을 쓰는 동안에는 <kbd>/</kbd>·<kbd>?</kbd>와 아래 단축키가 동작하지 않습니다.</p>
+        <h4 style="margin-top:12px">(?) 도움말 단추</h4><p class="small" style="margin:0">메뉴 이름·화면 제목·카드 제목 옆의 <b>(?)</b>를 누르거나(또는 초점을 두고 <kbd>Enter</kbd>) 마우스를 잠시 올리면, 그 기능이 <b>무엇을 하는지·언제 쓰는지·어떻게 쓰는지·PC 밖으로 무엇이 나가는지</b>와 안내서 장 번호가 나옵니다. <kbd>Esc</kbd>나 바깥을 누르면 닫힙니다. 머리줄의 <b>도움말 표시</b>로 모두 숨기거나 다시 보일 수 있습니다.</p></div>
       <div id="helpReview"><h4>라벨 검토</h4><div class="kv"><b><kbd>J</kbd> / <kbd>↓</kbd></b><span>다음 라벨</span><b><kbd>K</kbd> / <kbd>↑</kbd></b><span>이전 라벨</span>
         <b><kbd>A</kbd></b><span>승인 (수치는 측정값으로)</span><b><kbd>R</kbd></b><span>거절</span><b><kbd>U</kbd></b><span>마지막 결정 되돌리기</span></div></div>
       <div style="grid-column:1/-1"><h4>처음이라면</h4>
@@ -502,7 +521,7 @@ $('#scrim').addEventListener('click', () => { drawer(false); $('#menuBtn').focus
 $('#sidebar').addEventListener('keydown', e => {   // 서랍이 열려 있으면 Tab이 메뉴 안에서만 돈다
   if(e.key === 'Escape' && document.body.classList.contains('sb-open')){ drawer(false); $('#menuBtn').focus(); return }
   if(e.key !== 'Tab' || !document.body.classList.contains('sb-open')) return;
-  const f = [...$('#sidebar').querySelectorAll('a,select')].filter(x => x.offsetParent);
+  const f = [...$('#sidebar').querySelectorAll('a,select,button')].filter(x => x.offsetParent && getComputedStyle(x).visibility !== 'hidden');
   if(e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f[f.length-1].focus() }
   else if(!e.shiftKey && document.activeElement === f[f.length-1]){ e.preventDefault(); f[0].focus() }
 });
@@ -1050,6 +1069,7 @@ async function openReport(id){
 
 // ---------- 설정
 async function loadSettings(){
+  S.keysP = loadKeys();
   S.settings = await api('/api/settings');
   $$('input[name=coa]').forEach(r => r.checked = r.value===S.settings.coa_rule);
   $('#setWatch').checked = !!S.settings.watch_inbox; $('#setTimeout').value = S.settings.claude_timeout_sec;
@@ -1075,6 +1095,108 @@ function renderFood(f){
     <b>서버 파일</b><span>${yn(f.script_exists,'있음','없음')} <span class="mono small">mcp/food-db-server.mjs</span></span>
     <b>.env.local</b><span>${yn(f.env_local_exists,'있음','없음')} <span class="small muted">DATABASE_URL — 내용은 이 앱이 읽지 않습니다</span></span>`;
 }
+// ---------- API 키 관리 (값은 서버가 돌려주지 않는다: 있는지·어디서·끝 4자리만)
+const keyDomId = n => 'key-' + n.replace(/[^A-Za-z0-9_]/g, '');
+function keyPill(k){
+  if(k.source === 'env') return `<span class="pill accent">환경 변수 ${esc(k.mask||'')}</span>`;
+  if(k.source === 'keyring') return `<span class="pill ok">보관소 ${esc(k.mask||'')}</span>`;
+  return `<span class="pill ${k.required ? 'warn' : ''}">없음</span>`;
+}
+function keyNote(k){
+  if(k.shadowed) return `보관소에도 ${esc(k.stored_mask||'')} 이 있지만 환경 변수가 먼저 쓰입니다`;
+  if(k.source === 'keyring' && k.saved_at) return '저장 ' + esc(k.saved_at.replace('T', ' ').slice(0, 16));
+  if(k.source === 'env') return '환경 변수는 이 앱에서 바꾸거나 지우지 않습니다';
+  return k.required ? '' : esc(k.note || '선택');
+}
+async function loadKeys(){
+  let d;
+  try{ d = await api('/api/keys') }catch(e){ $('#keysList').innerHTML = errHTML(e); return }
+  S.keys = d;
+  const st = d.store || {};
+  $('#keysStore').innerHTML = st.available ? '' :
+    `<div class="callout warn">${ICON('alert')}<div><p><b>자격 증명 저장소를 쓸 수 없습니다.</b> ${esc(st.message||'')}</p>
+      <p>대신 환경 변수로 넣으세요: PowerShell에서 <code>[Environment]::SetEnvironmentVariable("이름","값","User")</code> 를 실행하고 start.bat으로 앱을 다시 켭니다. 파일에 적어 두는 방법은 쓰지 않습니다.</p></div></div>`;
+  const sets = [];
+  for(const k of d.slots){ let s = sets.find(x => x.set === k.set); if(!s) sets.push(s = {set:k.set, name:k.set_name, group:k.group, consumer:k.consumer, required:k.required, help:k.help, url:k.url, terms:k.terms_url, keys:[]}); s.keys.push(k) }
+  $('#keysList').innerHTML = d.groups.map(g => {
+    const gs = sets.filter(s => s.group === g); if(!gs.length) return '';
+    return `<section class="kgrp" aria-labelledby="kg-${esc(gs[0].set)}"><h3 id="kg-${esc(gs[0].set)}" data-help="group.${esc(g)}">${esc(g)}</h3>${gs.map(s => {
+      const have = s.keys.filter(k => k.present).length;
+      return `<div class="kset" id="kset-${esc(s.set)}">
+        <div class="kset-h"><div class="kset-t"><b>${esc(s.name)}</b> <span class="pill ${s.required ? '' : 'seed'}">${s.required ? '필수' : '선택'}</span>
+          ${s.keys.length > 1 ? `<span class="small muted">값 ${s.keys.length}개가 모두 있어야 합니다 (${have}/${s.keys.length})</span>` : ''}
+          <span class="kuse small muted">쓰는 곳: ${esc(s.consumer)}</span></div>
+          <button class="btn sm" type="button" data-ktest="${esc(s.keys[0].name)}" data-kset="${esc(s.set)}"${have ? '' : ' disabled'}>${ICON('send')}연결 시험</button></div>
+        <ul class="krows">${s.keys.map(k => `<li class="krow" id="${keyDomId(k.name)}">
+          <div class="kname"><code>${esc(k.name)}</code><small>${esc(k.label)}</small></div>
+          <div class="kstat">${keyPill(k)}<small>${keyNote(k)}</small></div>
+          <div class="kact"><button class="btn sm${k.stored ? '' : ' primary'}" type="button" data-ksave="${esc(k.name)}"${st.available ? '' : ' disabled'}>${k.stored ? '바꾸기' : '저장'}</button>
+            ${k.stored ? `<button class="btn sm bad" type="button" data-kdel="${esc(k.name)}"${st.available ? '' : ' disabled'}>${ICON('trash')}삭제</button>` : ''}</div>
+          ${st.available ? '' : `<code class="kenv">[Environment]::SetEnvironmentVariable("${esc(k.name)}","값","User")</code>`}</li>`).join('')}</ul>
+        <details class="khelp"><summary>발급 안내</summary><p>${esc(s.help)}</p>
+          <p class="row">${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener noreferrer">발급 페이지 열기 ${ICON('ext')}</a>` : ''}${s.terms ? `<a href="${esc(s.terms)}" target="_blank" rel="noopener noreferrer">이용약관·요금 ${ICON('ext')}</a>` : ''}</p></details>
+        <p class="ktest small" id="ktest-${esc(s.set)}" role="status" aria-live="polite"></p>
+      </div>`}).join('')}</section>`}).join('');
+  $('#keysCfg').innerHTML = (d.config||[]).map(c => `<b><code>${esc(c.name)}</code></b><span>${c.set ? '<span class="pill">지정됨</span>' : '<span class="small muted">기본값</span>'} <span class="small">${esc(c.desc)}</span></span>`).join('');
+}
+async function keySave(name){
+  const k = S.keys?.slots.find(x => x.name === name); if(!k) return;
+  const ok = await uiDialog({title: `${k.set_name} — ${k.label} ${k.stored ? '바꾸기' : '저장'}`, ok: '저장', focus: '#keyIn',
+    html: `<label class="field"><span>${esc(k.name)}</span>
+      <span class="keyin"><input class="inp" id="keyIn" type="password" autocomplete="new-password" autocapitalize="off" spellcheck="false" maxlength="1024" aria-describedby="keyInHelp keyErr">
+      <button class="btn" type="button" id="keyShow" aria-pressed="false" aria-controls="keyIn">${ICON('eye')}보기</button></span>
+      <span class="help" id="keyInHelp">발급받은 값을 붙여 넣으세요. Windows 자격 증명 관리자에만 저장되고, 화면에는 끝 4자리만 보입니다.${k.env_set ? ' 같은 이름의 환경 변수가 있어 그 값이 먼저 쓰입니다.' : ''}</span>
+      <span class="help" id="keyErr" style="color:var(--bad)" role="alert" hidden></span></label>`,
+    validate: () => {
+      const v = $('#keyIn').value.trim(), err = $('#keyErr');
+      const m = !v ? '키를 붙여 넣으세요.' : v.length < 4 ? '키가 너무 짧습니다.' : /[\s\u0000-\u001f\u007f]/.test(v) ? '키 안에 띄어쓰기·줄바꿈이 있습니다. 키만 한 줄로 붙여 넣으세요.' : '';
+      err.textContent = m; err.hidden = !m; if(m) $('#keyIn').focus(); return !m;
+    }});
+  const inp = $('#keyIn'), value = ok && inp ? inp.value.trim() : '';
+  $('#cdlgB').innerHTML = '';   // 값이 화면(DOM)에 남지 않게
+  if(!ok) return;
+  try{ const r = await api('/api/keys/' + encodeURIComponent(name), {method:'POST', body:{value}}); toast(r.message, 'ok') }
+  catch(e){ toast('저장하지 못했습니다: ' + e.message, 'bad') }
+  await loadKeys(); $('#' + keyDomId(name) + ' [data-ksave]')?.focus();
+}
+async function keyDel(name){
+  const k = S.keys?.slots.find(x => x.name === name); if(!k) return;
+  if(!await uiConfirm('키 삭제', `${k.set_name}의 ${k.name}을(를) Windows 자격 증명 관리자에서 지웁니다.\n지우면 이 키가 필요한 기능은 다시 넣을 때까지 쓸 수 없습니다.`, {ok:'삭제', danger:true})) return;
+  try{ const r = await api('/api/keys/' + encodeURIComponent(name), {method:'DELETE'}); toast(r.message, 'ok') }
+  catch(e){ toast('지우지 못했습니다: ' + e.message, 'bad') }
+  await loadKeys(); $('#' + keyDomId(name) + ' [data-ksave]')?.focus();
+}
+async function keyTest(btn){
+  const out = $('#ktest-' + btn.dataset.kset); btn.disabled = true;
+  out.innerHTML = '<span class="spin"></span> 시험하는 중… (최대 30초)';
+  try{
+    const r = await api('/api/keys/' + encodeURIComponent(btn.dataset.ktest) + '/test', {method:'POST'});
+    out.innerHTML = `<span class="pill ${r.ok === true ? 'ok' : r.ok === false ? 'bad' : ''}">${r.ok === true ? '통과' : r.ok === false ? '실패' : '저장됨'}</span> ${esc(r.message)}`;
+  }catch(e){ out.innerHTML = `<span class="pill bad">실패</span> ${esc(e.message)}` }
+  finally{ btn.disabled = false }
+}
+$('#keysList').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.ksave) keySave(b.dataset.ksave);
+  else if(b.dataset.kdel) keyDel(b.dataset.kdel);
+  else if(b.dataset.ktest) keyTest(b);
+});
+// 보기·숨기기 (대화상자 안)
+$('#cdlgB').addEventListener('click', e => {
+  const b = e.target.closest('#keyShow'); if(!b) return;
+  const i = $('#keyIn'), show = i.type === 'password';
+  i.type = show ? 'text' : 'password'; b.setAttribute('aria-pressed', String(show));
+  b.innerHTML = ICON('eye') + (show ? '숨기기' : '보기'); i.focus();
+});
+$('#keysReload').onclick = () => { S.keysP = loadKeys() };
+// 자료 수집의 '설정에서 키 넣기' → 이 카드의 그 출처 칸으로
+window.openKeys = async set => {
+  show('settings'); await (S.keysP || loadKeys());
+  const el = $('#kset-' + set) || $('#keysCard');
+  el.scrollIntoView({block:'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+  el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2000);
+  (el.querySelector('[data-ksave]') || el).focus({preventScroll:true});
+};
 $$('input[name=coa]').forEach(r => r.onchange = async () => { try{ S.settings = await api('/api/settings',{method:'POST', body:{coa_rule:r.value}}); toast('CoA 규칙을 바꿨습니다', 'ok') }catch(e){ toast(e.message, 'bad') } });
 $('#engCheck').onclick = loadSettings;
 $('#engSmoke').onclick = async () => {
@@ -1118,6 +1240,11 @@ $('#newProj').onclick = async () => {
 searchEmpty();
 boot().catch(e => { toast('서버에 연결하지 못했습니다: '+e.message+' — start.bat 창이 켜져 있는지 확인하세요', 'bad'); show(location.hash.slice(1) || 'home') });
 setInterval(() => { if(S.route==='library' && !document.hidden && !MENU && !document.querySelector('dialog[open]')) loadDocs().catch(()=>{}) }, 8000);
+</script>
+<script type="module">
+// (?) 도움말 — 따로 붙인다(이 파일이 실패해도 아래 화면 모듈은 그대로 돈다)
+import {initHelp} from '/static/help/help.js';
+initHelp();
 </script>
 <script type="module">
 // 모듈 화면(시각화·수집·실험·분석·작업대·지식그래프)은 처음 열 때 붙인다(무거운 라이브러리를 미리 읽지 않도록)

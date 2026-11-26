@@ -56,7 +56,7 @@ export function mountEquipment(host, {api, onStage} = {}){
       </aside>
     </div>
     <div class="eq-play">
-      <button type="button" class="btn sm" data-play aria-pressed="false">재생</button>
+      <button type="button" class="btn sm" data-play aria-pressed="false">재생</button><span data-help-chips="viz.play" data-help-bare></span>
       <label class="small"><span class="muted">단계</span> <select class="inp" data-stagesel aria-label="공정 단계"></select></label>
       <div class="eq-prog" aria-hidden="true"><i data-prog></i></div>
       <span class="small muted" data-elapsed></span>

@@ -5,19 +5,23 @@
 ## 0. 공통 원칙
 
 - **PC 밖으로 나가는 것**: 검색어와 그 출처가 요구하는 API 키뿐이다. 자료함 문서·CoA·시료·실험 데이터는 어떤 출처에도 보내지 않는다. User-Agent는 `RD-Studio/0.5 (local research tool)`이고 이메일·이름 같은 개인 정보는 넣지 않는다.
-- **API 키는 환경 변수로만** 받는다. 설정 파일·DB·로그에 쓰지 않는다. 오류 메시지에 키가 섞일 수 있는 곳(요청 주소를 되돌려 주는 서버 등)은 `***`로 가린다. 원래 예외를 잇지 않으므로(`raise … from None`) 추적 정보에도 키가 붙은 주소가 남지 않는다.
-- **키가 없으면** 출처 상태가 `ready: false`이고 빠진 환경 변수 이름과 발급 방법(아래 각 절)을 보여 준다. 그 상태에서 검색을 부르면 `MissingKey`가 난다.
+- **API 키는 설정 → API 키 관리(Windows 자격 증명 관리자) 또는 환경 변수로만** 받는다(`app/keys.py`가 앱 시작·저장 때 보관소 값을 `os.environ`에 올리고, 출처는 `os.environ`만 읽는다). 설정 파일·DB·로그에 쓰지 않는다. 오류 메시지에 키가 섞일 수 있는 곳(요청 주소를 되돌려 주는 서버 등)은 `***`로 가린다. 원래 예외를 잇지 않으므로(`raise … from None`) 추적 정보에도 키가 붙은 주소가 남지 않는다.
+- **키가 없으면** 출처 상태가 `ready: false`이고 빠진 키 이름과 발급 방법(아래 각 절)을 보여 준다(수집 화면의 **설정에서 키 넣기** → API 키 관리의 그 칸). 그 상태에서 검색을 부르면 `MissingKey`가 난다.
 - **원문 PDF는 오픈 액세스만** `pdf_url`로 넘긴다. 국내 API 대부분은 무료 원문 직접 주소를 주지 않으므로 서지·초록·랜딩 주소만 수집하고, 원문은 해당 사이트에서 직접 연다.
 - 수집 결과는 수집함(검토 대기)으로 들어가며, 승인해야 자료함에 들어간다.
 
-### 환경 변수 지정 방법(Windows)
+### 키 넣는 방법
+
+**기본: 설정 → API 키 관리.** 출처마다 **저장**을 눌러 키를 붙여 넣는다. 키는 이 PC의 Windows 자격 증명 관리자(서비스 이름 `RD-Studio-V0.5`, 사용자 이름 = 아래 표의 변수 이름)에만 저장되고 바로 쓰인다(재시작 불필요). 화면·API에는 있는지·출처(환경 변수/보관소)·끝 4자리·저장 시각만 나온다. **연결 시험**은 1건짜리 시험 검색이다. API: `GET /api/keys`, `POST /api/keys/{이름}` `{"value": …}`, `DELETE /api/keys/{이름}`, `POST /api/keys/{이름}/test`(이 PC에서만, 값은 돌려주지 않음).
+
+**대안: 환경 변수.** 같은 이름의 환경 변수가 있으면 보관소 값보다 먼저 쓰인다. 자격 증명 저장소를 못 쓰는 PC는 이 방법만 쓴다(평문 파일 대체 저장 없음).
 
 ```powershell
 # 현재 사용자에 영구 지정 — 지정 후 start.bat으로 앱을 다시 켠다
 [Environment]::SetEnvironmentVariable("BYORBIT_KCI_KEY", "발급받은키", "User")
 ```
 
-키 값은 이 문서·설정 파일·메모에 적지 않는다(보안 원칙).
+키 값은 이 문서·설정 파일·메모에 적지 않는다(보안 원칙). 오류 문구의 키 가리기(`http.redact`)는 `BYORBIT_*` 값뿐 아니라 등록된 모든 키 이름(`OPENALEX_API_KEY` 등)의 값과 그 퍼센트 인코딩 꼴까지 가린다.
 
 ## 한눈에 보기
 
@@ -165,7 +169,7 @@ Playwright MCP(`@playwright/mcp`, Apache-2.0)는 **AI가 브라우저를 직접 
 
 #### Apify 방식 (`apify`) — 유료, 선택
 
-- **토큰**: Apify 가입 → Console → Settings → API & Integrations(https://console.apify.com/settings/integrations)에서 API 토큰을 복사 → 환경 변수 `BYORBIT_APIFY_TOKEN`에 넣고 앱을 다시 켠다. 토큰은 설정 파일·DB·로그에 쓰지 않고 `Authorization: Bearer` 헤더로만 보낸다(주소에 넣지 않음). 오류 문구에서는 가린다(`***`).
+- **토큰**: Apify 가입 → Console → Settings → API & Integrations(https://console.apify.com/settings/integrations)에서 API 토큰을 복사 → **설정 → API 키 관리**의 `BYORBIT_APIFY_TOKEN`에 저장한다(**연결 시험**은 요금이 들지 않는 계정 조회 `GET /v2/users/me`). 대안으로 환경 변수: 토큰은 설정 파일·DB·로그에 쓰지 않고 `Authorization: Bearer` 헤더로만 보낸다(주소에 넣지 않음). 오류 문구에서는 가린다(`***`).
   ```powershell
   [Environment]::SetEnvironmentVariable("BYORBIT_APIFY_TOKEN", "발급받은토큰", "User")
   ```

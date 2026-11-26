@@ -43,7 +43,9 @@ API: `/api/parse` (`app/routes_parse.py`). 코드: `app/ingest/parser_tools/`.
   `tools\node\.gitignore`가 함께 생겨 저장소에 올라가지 않습니다. 찾는 순서: 환경 변수 `BYORBIT_KORDOC_DIR`(node_modules가 있는 폴더)
   → `tools\node` → 옆 폴더 `04_byorbit-agent`(이미 설치된 것을 읽기 전용으로 사용, 이 경우 pdfjs-dist가 없어 HWP·HWPX만).
   Node 경로는 `BYORBIT_NODE`로 바꿀 수 있습니다.
-- **Upstage**: 콘솔(https://console.upstage.ai)에서 키를 만들어 환경 변수에 넣습니다(설정 파일·DB에 저장하지 않음):
+- **Upstage**: 콘솔(https://console.upstage.ai)에서 키를 만들어 **설정 → API 키 관리**의 `BYORBIT_UPSTAGE_KEY`에 저장합니다.
+  키는 Windows 자격 증명 관리자에만 저장되고(설정 파일·DB에는 저장하지 않음) 화면에는 끝 4자리만 보입니다. 그 카드의 '연결 시험'은
+  요금 없이 키만 확인하는 방법이 없어 호출하지 않습니다(실제로 파싱할 때 확인). 대안으로 환경 변수(있으면 이쪽이 먼저 쓰임):
   ```powershell
   [Environment]::SetEnvironmentVariable("BYORBIT_UPSTAGE_KEY", "<키>", "User")   # 지정 후 start.bat으로 앱을 다시 켠다
   ```

@@ -15,8 +15,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import config, db, engines, labeling, search as _search, thesaurus, tools
-from . import routes_collect, routes_experiment, routes_kg, routes_parse, routes_predict, routes_stats, routes_viz, routes_workbench
+from . import config, db, engines, keys, labeling, search as _search, thesaurus, tools
+from . import routes_collect, routes_experiment, routes_keys, routes_kg, routes_parse, routes_predict, routes_stats, routes_viz, routes_workbench
+from .collect import http as collect_http
 from .collect import scheduler as collect_scheduler
 from .engines import claude_code, food_mcp
 from .ingest import parsers, pipeline, watcher
@@ -26,6 +27,10 @@ STATIC = Path(__file__).with_name("static")
 
 @asynccontextmanager
 async def _lifespan(app: FastAPI):
+    try:  # 설정 → API 키 관리에 저장한 키를 os.environ에 올린다(실제 환경 변수가 있는 이름은 건너뜀)
+        keys.load_into_env()
+    except Exception:  # noqa: BLE001 — 보관소를 못 열어도 앱은 켠다(화면에 '보관소 사용 불가'로 보인다)
+        pass
     db.init(seed=True)
     claude_code.write_mcp_config()
     labeling.mark_interrupted()  # 지난번에 끝나지 못한 AI 라벨 실행 → '중단됨' (이어하기 가능)
@@ -109,7 +114,7 @@ def _job(kind: str, fn, *args, **kw) -> dict:
             JOBS[jid]["status"] = "done"
         except Exception as e:  # noqa: BLE001
             JOBS[jid]["status"] = "error"
-            JOBS[jid]["error"] = str(e)
+            JOBS[jid]["error"] = collect_http.redact(str(e))
         JOBS[jid]["finished"] = time.time()
 
     threading.Thread(target=go, daemon=True).start()
@@ -584,7 +589,7 @@ def schema():
 
 @app.exception_handler(Exception)
 async def _err(request, exc):
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+    return JSONResponse(status_code=500, content={"detail": collect_http.redact(str(exc))})
 
 
 @app.get("/")
@@ -600,4 +605,5 @@ app.include_router(routes_workbench.router)  # /api/wb — 문서 작업대(청�
 app.include_router(routes_stats.router)  # /api/stats — 통계 분석(회귀·t검정·논문용 표·그림)
 app.include_router(routes_predict.router)  # /api/viz/predict — 건조 조건 → 예상 결과(근거 포함)
 app.include_router(routes_kg.router)  # /api/kg — 지식그래프(개념·관계·언급 자료·측정값)
+app.include_router(routes_keys.router)  # /api/keys — API 키 관리(OS 자격 증명 저장소, 값은 돌려주지 않음)
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

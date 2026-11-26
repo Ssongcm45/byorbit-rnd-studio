@@ -125,12 +125,12 @@ export function mountParse(el, opts = {}) {
       <div class="card"><div class="pz-head"><div class="grow"><h2 id="${id}-t">파서 선택</h2><div class="pz-docline small muted"></div></div>
         <button class="btn sm pz-reload" type="button">새로 고침</button></div>
         <p class="pz-notice" style="margin:10px 0 0">로컬 도구는 문서를 이 PC 안에서만 읽습니다. <b>클라우드 도구(Upstage)만 문서 파일을 밖으로 보냅니다</b> — '기밀' 문서는 보낼 수 없습니다.</p></div>
-      <div class="card"><h2>도구</h2><p class="sub">도구를 골라 실행하면 결과가 아래 표에 쌓입니다. 실행만으로는 청크·라벨이 바뀌지 않습니다 — 결과를 비교한 뒤 '이 결과로 다시 청킹'을 누를 때만 바뀝니다.</p>
+      <div class="card"><h2 data-help="wb.tools">도구</h2><p class="sub">도구를 골라 실행하면 결과가 아래 표에 쌓입니다. 실행만으로는 청크·라벨이 바뀌지 않습니다 — 결과를 비교한 뒤 '이 결과로 다시 청킹'을 누를 때만 바뀝니다.</p>
         <div class="pz-tools" aria-live="polite"></div><details class="pz-other" hidden><summary class="small muted"></summary><div class="pz-tools pz-tools-other" style="margin-top:8px"></div></details></div>
-      <div class="card"><div class="row"><h2 class="grow">결과</h2></div>
+      <div class="card"><div class="row"><h2 class="grow" data-help="wb.rechunk">결과</h2></div>
         <p class="sub">같은 도구를 다시 실행하면 이전 결과(선택 안 된 것)를 바꿉니다. 초록색 줄이 지금 청크를 만든 결과입니다.</p>
         <div class="pz-results" style="overflow-x:auto"></div></div>
-      <div class="card"><h2>나란히 비교</h2><p class="sub">두 결과를 같은 쪽끼리 맞춰 봅니다. 막대는 쪽별 글자 수(파랑 A · 갈색 B)입니다. 표는 표로 그립니다.</p>
+      <div class="card"><h2 data-help="wb.compare">나란히 비교</h2><p class="sub">두 결과를 같은 쪽끼리 맞춰 봅니다. 막대는 쪽별 글자 수(파랑 A · 갈색 B)입니다. 표는 표로 그립니다.</p>
         <div class="pz-cmpbar">
           <label>A <select class="inp pz-a" aria-label="비교 A"></select></label>
           <label>B <select class="inp pz-b" aria-label="비교 B"></select></label>

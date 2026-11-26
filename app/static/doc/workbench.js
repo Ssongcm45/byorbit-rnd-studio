@@ -109,7 +109,7 @@ export function mountWorkbench(el, opts = {}){
     if (!S.sel || !S.chunks.find(c => c.chunk_id === S.sel)) S.sel = (S.chunks.find(c => c.flags.length) || S.chunks[0] || {}).chunk_id;
     const sum = Object.entries(r.summary).map(([k,n]) => `<span class="flag ${k==='broken'||k==='table_split'?'info':''}">${FLAG_KO[k]||k} ${n}</span>`).join(' ');
     p.innerHTML = `
-      <div class="card"><div class="row"><h2 class="grow">청크 ${S.chunks.length}개 <span class="small muted">· 문제 표시 ${r.flagged_chunks}개 · 짧음 &lt;${r.min_len}자 · 김 &gt;${r.max_len}자</span></h2>
+      <div class="card"><div class="row"><h2 class="grow" data-help="wb.chunks">청크 ${S.chunks.length}개 <span class="small muted">· 문제 표시 ${r.flagged_chunks}개 · 짧음 &lt;${r.min_len}자 · 김 &gt;${r.max_len}자</span></h2>
         <label class="small"><input type="checkbox" id="wbOnlyFlag" ${S.filter?'checked':''}> 문제 있는 것만</label></div>
         <div class="flags">${sum || '<span class="small muted">눈에 띄는 문제가 없습니다.</span>'}</div></div>
       <div class="cgrid">
@@ -207,7 +207,7 @@ export function mountWorkbench(el, opts = {}){
     const scopes = pr.scopes;
     const scopeSel = (i, def) => `<select class="inp" data-scope="${i}">${scopes.map((s,k) => `<option value="${k}" ${s.type===def?'selected':''}>${esc(s.label)}</option>`).join('')}</select>`;
     const defScope = p => p.kind === 'noise' ? 'file_pattern' : p.kind === 'heading' ? 'title_prefix' : 'format';
-    box.innerHTML = `<h2>규칙 배우기</h2><p class="sub">이 자료에서 고친 것(잡음 줄·제목·합치기·나누기)으로 규칙을 제안합니다. 범위를 골라 저장하면 비슷한 자료에도 쓸 수 있습니다. 모델을 다시 학습시키지 않습니다.</p>
+    box.innerHTML = `<h2 data-help="wb.rules">규칙 배우기</h2><p class="sub">이 자료에서 고친 것(잡음 줄·제목·합치기·나누기)으로 규칙을 제안합니다. 범위를 골라 저장하면 비슷한 자료에도 쓸 수 있습니다. 모델을 다시 학습시키지 않습니다.</p>
       <div style="display:grid;gap:8px">${pr.proposals.length ? pr.proposals.map((p,i) => `<div class="prop">
         <div class="row"><span class="pill acc">${esc(p.kind_label)}</span><b class="grow">${esc(p.note)}</b></div>
         ${p.pattern?`<div class="small">줄 모양 <code>${esc(p.pattern)}</code></div>`:''}${Object.keys(p.params||{}).length?`<div class="small">값 <code>${esc(JSON.stringify(p.params))}</code></div>`:''}
@@ -253,7 +253,7 @@ export function mountWorkbench(el, opts = {}){
     if (!S.chunks.length){ try { S.chunks = (await api(`/api/wb/docs/${S.docId}/chunks`)).chunks } catch(e){ p.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return } }
     if (!S.lab.chunk || !S.chunks.find(c => c.chunk_id === S.lab.chunk)) S.lab.chunk = (S.chunks.find(c => c.chunk_id === S.sel) || S.chunks[0] || {}).chunk_id;
     p.innerHTML = `
-      <div class="card"><div class="row"><h2 class="grow">자동 라벨</h2>
+      <div class="card"><div class="row"><h2 class="grow" data-help="wb.autolabel">자동 라벨</h2>
         <button class="btn sm" id="wbDictDoc" title="배운 동의어·부정 사례를 반영해 사전 라벨을 다시 붙입니다(승인·거절한 것은 그대로)">사전 라벨 다시 (자료 전체)</button>
         <button class="btn sm" id="wbDictOne">사전 라벨 다시 (이 청크)</button>
         <button class="btn sm primary" id="wbAiDoc">AI 라벨 (자료 전체)</button><button class="btn sm" id="wbAiOne">AI 라벨 (이 청크)</button>
@@ -268,7 +268,7 @@ export function mountWorkbench(el, opts = {}){
           <div class="legend" style="margin:8px 0">${LT_ORDER.map(t => `<span><i style="--c:var(--lt-${t})"></i>${LT_KO[t]}</span>`).join('')}<span class="muted">· 점선 = 검토 대기·자동</span></div>
           <div class="ltext" id="wbLText" tabindex="0" aria-label="청크 본문 — 글을 선택한 뒤 L 키 또는 '선택에 라벨'"></div>
           <div class="row" style="margin-top:8px">
-            <button class="btn sm primary" id="wbLabelSel">선택에 라벨 (L)</button>
+            <button class="btn sm primary" id="wbLabelSel">선택에 라벨 (L)</button><span data-help-chips="wb.manual" data-help-bare></span>
             <span class="grow"></span>
             <label class="small" for="wbSurf">표기로 붙이기</label><input class="inp" id="wbSurf" placeholder="본문 글자 그대로" style="width:180px">
             <input class="inp" id="wbOcc" type="number" min="1" value="1" style="width:60px" title="같은 표기가 여러 번이면 몇 번째">
@@ -465,7 +465,7 @@ export function mountWorkbench(el, opts = {}){
   function offer(o, annId){
     const box = $('#wbOffer'); if (!box) return;
     if (!o){ box.innerHTML = ''; return }
-    box.innerHTML = `<div class="offer"><span class="grow">${esc(o.message)}</span><button class="btn sm primary" id="wbLearnSyn">동의어로 배우기</button><button class="btn sm" id="wbNoSyn">아니요</button></div>`;
+    box.innerHTML = `<div class="offer"><span class="grow">${esc(o.message)}</span><button class="btn sm primary" id="wbLearnSyn">동의어로 배우기</button><span data-help-chips="wb.synonym" data-help-bare></span><button class="btn sm" id="wbNoSyn">아니요</button></div>`;
     box.querySelector('#wbNoSyn').onclick = () => box.innerHTML = '';
     box.querySelector('#wbLearnSyn').onclick = async () => {
       if (!confirm(`'${o.surface}'을(를) '${o.pref_label}'의 동의어로 배울까요?\n사전 라벨·검색이 이 표기도 찾게 됩니다. “배운 것” 탭에서 지울 수 있습니다.`)) return;
@@ -511,7 +511,7 @@ export function mountWorkbench(el, opts = {}){
     let L; try { L = await api('/api/wb/learned') } catch(e){ p.innerHTML = `<div class="card empty">${esc(e.message)}</div>`; return }
     const tog = (k, id, on) => `<label class="small"><input type="checkbox" data-tog="${k}" data-id="${id}" ${on?'checked':''}> 켜짐</label>`;
     p.innerHTML = `
-      <div class="info">작업대에서 배운 것은 모두 이 PC에만 있습니다. 모델을 다시 학습시키지 않고, 규칙·동의어·사례로만 씁니다. 끄면 바로 쓰이지 않습니다.</div>
+      <div class="info" data-help="wb.learned">작업대에서 배운 것은 모두 이 PC에만 있습니다. 모델을 다시 학습시키지 않고, 규칙·동의어·사례로만 씁니다. 끄면 바로 쓰이지 않습니다.</div>
       <div class="card"><h2>청크 규칙 ${L.rules.length}개</h2><p class="sub">켜진 규칙은 범위가 맞는 자료를 다시 파싱하거나 “이 자료에 적용”할 때 쓰입니다.</p>
         ${L.rules.length ? `<table><thead><tr><th>규칙</th><th>범위</th><th>적용</th><th>적용한 자료</th><th></th></tr></thead><tbody>${L.rules.map(r => `<tr>
           <td><span class="pill ${r.origin==='learned'?'earth':''}">${r.origin==='learned'?'배움':'직접'}</span> <b>${esc(r.kind_label)}</b>${r.pattern?`<div><code class="small mono" style="word-break:break-all">${esc(r.pattern)}</code></div>`:''}${Object.keys(r.params||{}).length?`<div class="small mono">${esc(JSON.stringify(r.params))}</div>`:''}${r.note?`<div class="small muted">${esc(r.note)}</div>`:''}</td>
@@ -523,7 +523,7 @@ export function mountWorkbench(el, opts = {}){
             <input class="inp grow" id="nrPat" placeholder="줄 모양(정규식) 예: ^-\\s*\\d+\\s*-$"><input class="inp" id="nrParams" placeholder='값 예: {"min_len":120}' style="width:200px">
             <select class="inp" id="nrScope">${(S.doc?.scopes||[{type:'global',value:null,label:'모든 자료'}]).map((s,i) => `<option value="${i}" ${s.type==='global'?'selected':''}>${esc(s.label)}</option>`).join('')}</select>
             <button class="btn sm primary" id="nrGo">만들기</button></div></details></div>
-      <div class="card"><h2>배운 동의어 ${L.synonyms.length}개</h2><p class="sub">사전 라벨·검색이 이 표기도 개념으로 찾습니다.</p>
+      <div class="card"><h2 data-help="wb.synonym">배운 동의어 ${L.synonyms.length}개</h2><p class="sub">사전 라벨·검색이 이 표기도 개념으로 찾습니다.</p>
         ${L.synonyms.length ? `<table><thead><tr><th>표기</th><th>개념</th><th>배운 때</th><th></th></tr></thead><tbody>${L.synonyms.map(s => `<tr><td><b>${esc(s.label)}</b></td><td>${esc(s.pref_label_ko)} <span class="pill">${esc(s.scheme||'')}</span></td><td class="small muted">${esc(s.at)}</td>
           <td><button class="btn sm bad" data-del-syn="${s.label_id}">지우기</button></td></tr>`).join('')}</tbody></table>` : '<p class="small muted">아직 없습니다. 라벨 탭에서 사전이 모르는 표기에 개념을 붙이면 “동의어로 배우기”를 권합니다.</p>'}</div>
       <div class="card"><h2>부정 사례 ${L.negatives.length}개</h2><p class="sub">거절한 사전 라벨입니다. 사전 라벨링이 같은 문맥(앞이나 뒤 낱말이 같을 때)에서 이 표기에 그 개념을 다시 붙이지 않습니다.</p>

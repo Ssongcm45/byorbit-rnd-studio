@@ -36,10 +36,10 @@ export function mountStats(el, opts = {}) {
     zero: 'auto', test: 'welch', alpha: 0.05, datasets: null, busy: false, disposed: false};
   const inBv = !!el.closest('.bv');
   const root = h(`<section class="sx" aria-labelledby="${id}-t">
-    <div class="sx-top"><div class="grow"><h2 id="${id}-t">통계 분석</h2>
+    <div class="sx-top"><div class="grow"><h2 id="${id}-t" data-help="stats">통계 분석</h2>
       <p class="sub small muted">수율에 온도·시간·산 종류가 주는 영향을 회귀분석하고, 산 종류별 차이를 t검정합니다. 가정 점검, 논문용 표 1개·그림 1장·해석 세 문장, Python·R·Stata 재현 파일을 만듭니다. 모든 계산은 이 PC 안에서만 합니다.</p></div></div>
     <ol class="sx-steps">
-      <li class="card sx-s1"><h3><span class="sx-n">1</span>데이터 고르기 · 변수 역할</h3><div class="sx-src"></div><div class="sx-prev"></div><div class="sx-roles"></div></li>
+      <li class="card sx-s1"><h3 data-help="stats.source"><span class="sx-n">1</span>데이터 고르기 · 변수 역할</h3><div class="sx-src"></div><div class="sx-prev"></div><div class="sx-roles"></div></li>
       <li class="card sx-s2"><h3><span class="sx-n">2</span>분석 실행</h3><div class="sx-runbox"></div></li>
       <li class="card sx-s3"><h3><span class="sx-n">3</span>결과</h3><div class="sx-res"><p class="empty">분석을 실행하면 가정 점검·표 1·그림 1·해석이 여기에 나옵니다.</p></div></li>
       <li class="card sx-s4"><h3><span class="sx-n">4</span>내보내기</h3><div class="sx-exp"><p class="empty">분석을 실행한 뒤 내려받을 수 있습니다.</p></div></li>
@@ -172,7 +172,7 @@ export function mountStats(el, opts = {}) {
     const catSel = sp.categorical[0]?.name || '';
     const catVar = cats.find(v => v.name === catSel);
     $('.sx-roles').innerHTML = `<div class="sx-rolegrid">
-      <label><span>결과 변수 <span class="muted">(연속)</span></span><select class="inp sx-out">${cont.map(v => `<option value="${v.name}"${v.name === sp.outcome ? ' selected' : ''}>${esc(v.label_ko)} — ${esc(v.name)}</option>`).join('')}</select></label>
+      <label><span data-help="stats.roles">결과 변수 <span class="muted">(연속)</span></span><select class="inp sx-out">${cont.map(v => `<option value="${v.name}"${v.name === sp.outcome ? ' selected' : ''}>${esc(v.label_ko)} — ${esc(v.name)}</option>`).join('')}</select></label>
       <fieldset><legend>연속 설명 변수</legend><div class="chips">${cont.filter(v => v.name !== sp.outcome).map(v => `<label class="chip"><input type="checkbox" value="${v.name}"${sp.continuous.includes(v.name) ? ' checked' : ''}> ${lab(v)}</label>`).join('') || '<span class="small muted">없음</span>'}</div></fieldset>
       <label><span>범주 설명 변수</span><select class="inp sx-cat"><option value="">없음</option>${cats.map(v => `<option value="${v.name}"${v.name === catSel ? ' selected' : ''}>${esc(v.label_ko)} — ${esc(v.name)} (${(v.levels || []).length}수준)</option>`).join('')}</select></label>
       <label><span>기준 수준</span><select class="inp sx-ref"${catVar ? '' : ' disabled'}>${(catVar?.levels || []).map(l => `<option value="${esc(l.value)}"${l.value === sp.categorical[0]?.reference ? ' selected' : ''}>${esc(l.label_ko)} (${esc(l.value)})</option>`).join('')}</select></label>
@@ -193,7 +193,7 @@ export function mountStats(el, opts = {}) {
       for (let i = 0; i < preds.length; i++) for (let j = i + 1; j < preds.length; j++) pairs.push([preds[i], preds[j]]);
       const has = p => sp.interactions.some(q => (q[0] === p[0] && q[1] === p[1]) || (q[0] === p[1] && q[1] === p[0]));
       const xdef = sp.continuous.find(c => c.startsWith('temp')) || sp.continuous[0];
-      return `<fieldset class="sx-terms"><legend>모형 항 (선택 — 기본은 주효과만)</legend><div class="chips">
+      return `<fieldset class="sx-terms"><legend data-help="stats.terms">모형 항 (선택 — 기본은 주효과만)</legend><div class="chips">
           ${pairs.map(p => `<label class="chip"><input type="checkbox" class="sx-ix" value="${esc(p.join(':'))}"${has(p) ? ' checked' : ''}> ${nm(p[0])} × ${nm(p[1])}</label>`).join('')}
           ${sp.continuous.map(c => `<label class="chip"><input type="checkbox" class="sx-sq" value="${esc(c)}"${sp.quadratic.includes(c) ? ' checked' : ''}> ${nm(c)}² <span class="muted">2차항</span></label>`).join('')}
           ${!pairs.length && !sp.continuous.length ? '<span class="small muted">설명 변수를 두 개 이상 고르면 교호작용을, 연속 변수를 고르면 2차항을 넣을 수 있습니다.</span>' : ''}</div>
@@ -286,15 +286,15 @@ export function mountStats(el, opts = {}) {
         <span class="small">분석 n = <b>${r.dataset.n_used}</b> / 전체 ${r.dataset.n_total}${dropped.length ? ` · 목록별 삭제 ${dropped.length}개` : ''}</span>
         <span class="small">표준오차: <b>${r.primary_se === 'HC3' ? 'HC3 강건(이분산 확인)' : '일반 OLS'}</b></span></div>
       ${dropped.length ? `<details class="small"><summary>뺀 런 ${dropped.length}개와 이유</summary><ul>${dropped.map(d => `<li>${esc(d.run)} — ${esc(Object.entries(d.reasons).map(([k, v]) => `${k}: ${v}`).join(', '))}</li>`).join('')}</ul></details>` : ''}
-      <h4>해석 세 문장 <span class="small muted">— 숫자로만 만든 틀 문장(AI 생성 아님)</span>
+      <h4><span data-help="stats.interp">해석 세 문장</span> <span class="small muted">— 숫자로만 만든 틀 문장(AI 생성 아님)</span>
         <span class="seg sx-lt" role="group" aria-label="해석 언어"><button type="button" data-l="ko" aria-pressed="${!en}">한국어</button><button type="button" data-l="en" aria-pressed="${en}">English</button></span>
         <button type="button" class="btn sm sx-copy">복사</button></h4>
       <ol class="sx-interp">${sentences.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
-      <h4>표 1 <span class="small muted">— 학술지 형식 미리보기(위·머리글 아래·맨 아래 가로줄만)</span></h4>
+      <h4 data-help="stats.table1">표 1 <span class="small muted">— 학술지 형식 미리보기(위·머리글 아래·맨 아래 가로줄만)</span></h4>
       <div class="sx-paper">${r.table1[st.lang]}</div>
-      <h4>그림 1 <span class="small muted">— ${st.width === 'single' ? '1단 85 mm' : '2단 175 mm'}, 300 dpi</span></h4>
+      <h4 data-help="stats.fig1">그림 1 <span class="small muted">— ${st.width === 'single' ? '1단 85 mm' : '2단 175 mm'}, 300 dpi</span></h4>
       <div class="sx-paper sx-fig"><img alt="${esc(en ? 'Figure 1' : '그림 1')}" src="${fileUrl('figure1.png', {download: 'false'})}"><p class="sx-cap">${esc(r.caption[st.lang])}</p></div>
-      <h4>가정 점검</h4>
+      <h4 data-help="stats.checks">가정 점검</h4>
       <p class="small muted">'통과'는 위반의 근거가 없다는 뜻이지 가정이 맞다는 증명이 아닙니다(특히 n이 작을 때). 기준값과 검정 이름을 함께 봅니다.</p>
       <div class="sx-checks">${checks}</div>
       ${r.t_test_note ? `<div class="info small"><b>3수준 이상에서의 t검정:</b> ${esc(r.t_test_note[st.lang])}</div>` : ''}
@@ -318,7 +318,7 @@ export function mountStats(el, opts = {}) {
         <div><b>그림 1</b> ${a('figure1.png', 'PNG 300 dpi')} ${a('figure1.svg', 'SVG')} ${a('figure1.pdf', 'PDF')} ${a('caption.txt', '그림 설명')}</div>
         <div><b>글</b> ${a('interpretation.txt', '해석 세 문장')} ${a('methods.txt', '방법 문장')}</div>
         <div><b>가정 점검</b> ${a('assumptions.docx', 'DOCX')} ${a('assumptions.html', 'HTML')} ${st.res.regression ? a('diagnostics.png', '진단 그림') : ''}</div>
-        <div><b>Python·R·Stata 재현 파일</b> ${a('reproduce.zip', '재현 패키지 ZIP')} ${a('data.csv', 'data.csv')} ${a('codebook.csv', 'codebook.csv')} ${a('analysis.py', 'analysis.py')} ${a('analysis.R', 'analysis.R')} ${a('analysis.do', 'analysis.do')}</div>
+        <div><b data-help="stats.repro">Python·R·Stata 재현 파일</b>${a('reproduce.zip', '재현 패키지 ZIP')} ${a('data.csv', 'data.csv')} ${a('codebook.csv', 'codebook.csv')} ${a('analysis.py', 'analysis.py')} ${a('analysis.R', 'analysis.R')} ${a('analysis.do', 'analysis.do')}</div>
       </div>
       <p class="small muted">analysis.py는 이 앱과 같은 계산 코드라 같은 숫자가 나옵니다(시험으로 확인). analysis.R·analysis.do는 표준 명령만 썼지만 이 PC에 R·Stata가 없어 <b>실행해 보지 않았습니다</b> — 처음 돌릴 때 app_results.json과 비교하세요.</p>
       ${st.res.dataset.confidentiality === '기밀' ? '<div class="notice small"><b>기밀 실험</b> — 내려받은 파일을 PC 밖으로 보낼 때 등급에 맞게 다루세요.</div>' : ''}`;

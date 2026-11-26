@@ -79,6 +79,7 @@
 .bv .co-src small{overflow-wrap:anywhere}
 .bv .co-keyhelp summary{font-size:11.5px;color:var(--v-accent,#2b5fa8);cursor:pointer;margin-top:2px}
 .bv .co-keyhelp small{color:var(--v-muted)}
+.bv .co-keylink{display:inline-block;font-size:11.5px;font-weight:600;color:var(--v-accent,#2b5fa8);margin-top:2px;text-decoration:underline;text-underline-offset:2px}
 
 /* 크롤러 가져오기 방식(direct·browser·apify)과 시험 수집 */
 .bv .co-site .row .pill{margin-left:4px}

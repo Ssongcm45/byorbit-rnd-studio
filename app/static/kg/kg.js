@@ -56,21 +56,21 @@ export function mountKG(el, opts = {}) {
           placeholder="개념 찾기 — 표준명·동의어 (예: 사과 포마스, TPC, FD)">
         <ul class="kg-sugg" id="${id}-sugg" role="listbox" aria-label="찾은 개념" hidden></ul>
       </div>
-      <span class="seg-l">깊이</span>
+      <span class="seg-l" data-help="kg.depth">깊이</span>
       <div class="seg" role="group" aria-label="깊이">
         <button type="button" data-depth="1" title="가운데 개념과 바로 이어진 점만">1단계</button>
         <button type="button" data-depth="2" title="이웃의 이웃까지">2단계</button></div>
-      <span class="seg-l">배치</span>
+      <span class="seg-l" data-help="kg.layout">배치</span>
       <div class="seg" role="group" aria-label="배치">
         <button type="button" data-layout="cose" title="서로 당기고 밀어 자연스럽게 퍼지는 배치(cose)">그물</button>
         <button type="button" data-layout="concentric" title="가운데 개념에서 1단계·2단계 이웃을 둥근 띠로 나눠 놓는 배치(너비 우선 단계별 동심원)">단계</button></div>
       <button type="button" class="btn sm" data-act="back" disabled title="앞에 보던 개념으로">← 이전</button>
       <span class="grow"></span>
       <a class="btn sm" href="${base}${B}/export.ttl" download="rd-studio-ontology.ttl" title="표준 시드 + 내 확장 개념을 SKOS Turtle로 (Protégé 등)">TTL 내보내기</a>
-      <a class="btn sm" href="${base}${B}/export.json" download="rd-studio-knowledge-graph.json" title="점·선 목록 JSON (기밀 자료 이름은 가림, 기밀 측정값은 뺌)">JSON 내보내기</a>
+      <a class="btn sm" href="${base}${B}/export.json" download="rd-studio-knowledge-graph.json" title="점·선 목록 JSON (기밀 자료 이름은 가림, 기밀 측정값은 뺌)">JSON 내보내기</a><span data-help-chips="kg.export" data-help-bare></span>
     </div>
     <div class="kg-chips" role="group" aria-label="선 종류 거르기">
-      <span class="seg-l">선</span>
+      <span class="seg-l" data-help="kg.edges">선</span>
       ${REL.map(([k, l]) => `<button type="button" class="kg-chip" data-type="${k}" style="--sw:var(--kg-e-${k})" aria-pressed="true">
         <span class="sw${k === 'mentions' ? ' dash' : ''}" aria-hidden="true"></span>${esc(l)} <span class="n" data-n="${k}"></span></button>`).join('')}
     </div>

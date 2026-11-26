@@ -97,7 +97,7 @@ class FoodByproductNutri(Source):
     needs_env = (ENV_KEY,)
     key_help = ("농사로(https://www.nongsaro.go.kr) 회원 가입·본인 확인 → 'Open API' 신청"
                 "(https://www.nongsaro.go.kr/portal/ps/psz/psza/contentMain.ps?menuId=PS00191)에서 '농식품부산물 영양정보' 선택, "
-                "서비스 도메인 입력 → 승인되면 신청 내역에서 키 확인. 환경 변수 BYORBIT_NONGSARO_KEY에 넣고 앱을 다시 켜세요.")
+                "서비스 도메인 입력 → 승인되면 신청 내역에서 키 확인. 설정 → API 키 관리의 BYORBIT_NONGSARO_KEY에 넣으세요(또는 같은 이름의 환경 변수).")
     doc_types = ("dataset",)
 
     def _get(self, op: str, params: dict, key: str) -> str:

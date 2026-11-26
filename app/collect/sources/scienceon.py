@@ -135,7 +135,7 @@ def make_accounts(auth_key: str, mac: str, now: datetime | None = None, urlsafe:
                         "mac_address": mac.strip().upper().replace(":", "-")}, separators=(",", ":"))
     key = auth_key.encode("utf-8")
     if len(key) != 32:
-        raise SourceError("ScienceON 인증키는 32자여야 합니다. 환경 변수 BYORBIT_SCIENCEON_KEY 값을 확인하세요.")
+        raise SourceError("ScienceON 인증키는 32자여야 합니다. 설정 → API 키 관리의 BYORBIT_SCIENCEON_KEY 값을 확인하세요.")
     enc = aes_cbc_encrypt(key, IV, plain.encode("utf-8"))
     return (base64.urlsafe_b64encode if urlsafe else base64.b64encode)(enc).decode("ascii")
 
@@ -204,13 +204,19 @@ class ScienceON(Source):
     needs_env = (ENV_CLIENT, ENV_KEY, ENV_MAC)
     key_help = ("ScienceON(https://scienceon.kisti.re.kr) 회원 가입·로그인 → API Gateway 'API 활용신청'"
                 "(https://scienceon.kisti.re.kr/por/api/useRequest/useRequestList.do)에서 이 PC의 MAC 주소를 적어 신청 → "
-                "승인되면 client_id(64자)와 인증키(32자)를 받습니다. 환경 변수 BYORBIT_SCIENCEON_CLIENT_ID, "
-                "BYORBIT_SCIENCEON_KEY, BYORBIT_SCIENCEON_MAC(신청 때 적은 MAC, 예: B4-2E-99-AD-48-7D)을 지정하고 앱을 다시 켜세요.")
+                "승인되면 client_id(64자)와 인증키(32자)를 받습니다. 설정 → API 키 관리에서 BYORBIT_SCIENCEON_CLIENT_ID, "
+                "BYORBIT_SCIENCEON_KEY, BYORBIT_SCIENCEON_MAC(신청 때 적은 MAC, 예: B4-2E-99-AD-48-7D) 세 값을 모두 넣으세요(또는 같은 이름의 환경 변수).")
     doc_types = ("article", "report", "thesis")
+    env_labels = {ENV_CLIENT: "client_id (64자)", ENV_KEY: "인증키 (32자)", ENV_MAC: "MAC 주소 (신청 때 적은 값)"}
 
     def __init__(self):
         self._token: tuple[str, float] | None = None
         self._lock = threading.Lock()
+
+    def reset(self) -> None:
+        """키가 바뀌면 메모리의 access_token을 버린다."""
+        with self._lock:
+            self._token = None
 
     def _secrets(self) -> tuple[str, str, str]:
         return self.env(ENV_CLIENT), self.env(ENV_KEY), self.env(ENV_MAC)

@@ -132,7 +132,7 @@ class KCI(Source):
     terms_url = "https://www.kci.go.kr/kciportal/po/openapi/openApiList.kci"
     needs_env = (ENV_KEY,)
     key_help = ("KCI 포털(https://www.kci.go.kr) 로그인 → 상단 '오픈 API' → 'Open API 신청'에서 논문 검색(articleSearch) "
-                "이용을 신청하면 인증키가 메일·마이페이지로 발급됩니다. 발급 키를 환경 변수 BYORBIT_KCI_KEY에 넣고 앱을 다시 켜세요.")
+                "이용을 신청하면 인증키가 메일·마이페이지로 발급됩니다. 발급 키를 설정 → API 키 관리의 BYORBIT_KCI_KEY에 넣으세요(또는 같은 이름의 환경 변수).")
     doc_types = ("article",)
 
     def search(self, query: str, *, limit: int = 25, since_year: int | None = None) -> list[Item]:

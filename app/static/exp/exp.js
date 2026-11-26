@@ -38,7 +38,7 @@ export function mountExperiment(el, opts = {}) {
   const inBv = !!el.closest('.bv');
   const root = h(`<section class="pr xp" aria-labelledby="${id}-t">
     <div class="xp-top">
-      <div class="grow"><h2 id="${id}-t">내 실험</h2>
+      <div class="grow"><h2 id="${id}-t" data-help="exp">내 실험</h2>
         <p class="sub small muted">공정 흐름(원료 → 전처리 → 건조 → 분말화 → 추출 …)을 내 방식대로 고치고, 내가 잰 값을 넣어 예측과 비교·보정합니다. 모든 계산은 이 컴퓨터 안에서만 합니다.</p></div>
       <div class="xp-pick">
         <label class="sr-only" for="${id}-sel">실험 고르기</label>
@@ -270,10 +270,10 @@ export function mountExperiment(el, opts = {}) {
     const feedWet = st.sim?.steps?.[0]?.stream_out?.wet_kg || 1;
     const sm = st.sim?.summary;
     P.innerHTML = '';
-    const tool = h(`<div class="card"><div class="row"><h3 class="grow" style="margin:0">공정 흐름 <span class="small muted">— ${esc(st.exp.flow.name)} · v${st.exp.flow.version} · ${esc(st.exp.byproduct)}</span></h3>
+    const tool = h(`<div class="card"><div class="row"><h3 class="grow" style="margin:0" data-help="exp.flow">공정 흐름 <span class="small muted">— ${esc(st.exp.flow.name)} · v${st.exp.flow.version} · ${esc(st.exp.byproduct)}</span></h3>
       ${sm ? `<span class="chips">${badge('literature', `${sm.literature_verified}/${sm.literature}`)}${badge('measured', sm.measured)}${badge('equipment', sm.equipment)}${badge('assumption', sm.assumption)}${badge('input', sm.input)}</span>` : ''}</div>
       <p class="small muted" style="margin:4px 0 8px">단계를 끌어 순서를 바꾸거나 ←·→ 단추를 쓰세요. 단계를 누르면 아래에서 값을 고칩니다. 사이의 막대는 흐름의 질량(갈색 건물 + 파란 물)과 TPC 잔존율입니다 — 흐름 기본값으로 모의한 값.</p>
-      <div class="xp-tool"><span class="lab">단계 추가</span></div>
+      <div class="xp-tool"><span class="lab" data-help="exp.steps">단계 추가</span></div>
       <div class="xp-chainwrap"><ol class="xp-chain" aria-label="공정 단계 (순서대로)"></ol></div>
       <div class="xp-legend"><span><i style="background:var(--v-earth)"></i>건물(고형분)</span><span><i style="background:var(--cold)"></i>물</span><span><i style="background:var(--v-ok)"></i>TPC 잔존율(원료 대비)</span><span>막대 높이 = 원료 대비 습량</span></div>
       ${sm ? `<p class="small muted" style="margin:6px 0 0">${esc(sm.text)}. ${esc(st.sim.disclaimer)}</p>` : ''}
@@ -517,12 +517,12 @@ export function mountExperiment(el, opts = {}) {
     const sl = Object.fromEntries(steps.map(s => [s.key, s.label]));
     const {conds, vals} = gridColumns();
     P.innerHTML = '';
-    const card = h(`<div class="card"><div class="row"><h3 class="grow" style="margin:0">런 표 <span class="small muted">— 런 ${st.exp.runs.length}개</span></h3>
+    const card = h(`<div class="card"><div class="row"><h3 class="grow" style="margin:0" data-help="exp.data">런 표 <span class="small muted">— 런 ${st.exp.runs.length}개</span></h3>
       <button class="btn sm primary xp-addrun" type="button">+ 런 추가</button>
-      <label class="btn sm" style="cursor:pointer">파일 가져오기 (CSV·XLSX)<input type="file" class="sr-only xp-file" accept=".csv,.tsv,.txt,.xlsx,.xlsm"></label>
+      <label class="btn sm" style="cursor:pointer">파일 가져오기 (CSV·XLSX)<input type="file" class="sr-only xp-file" accept=".csv,.tsv,.txt,.xlsx,.xlsm"></label><span data-help-chips="exp.import" data-help-bare></span>
       <a class="btn sm" href="${B}/experiments/${st.exp.exp_id}/export.csv" download>CSV 내보내기</a></div>
       <p class="small muted" style="margin:4px 0 8px">파란 열 = 조건(비우면 흐름 기본값), 갈색 열 = 내가 잰 값. 값 칸에는 숫자, <b>ND</b>(불검출), <b>&lt; 0.01</b>(검출 한계)를 넣을 수 있습니다. 칸을 벗어나면 저장됩니다.</p>
-      <div class="xp-tool" style="margin-bottom:8px"><span class="lab">열 추가</span><select class="inp xp-addcol" aria-label="열 추가"><option value="">조건이나 값을 고르세요</option></select></div>
+      <div class="xp-tool" style="margin-bottom:8px"><span class="lab" data-help="exp.acid">열 추가</span><select class="inp xp-addcol" aria-label="열 추가"><option value="">조건이나 값을 고르세요</option></select></div>
       <div class="xp-imp"></div>
       <div class="xp-grid"></div></div>`);
     // 열 추가 고르기
@@ -712,7 +712,7 @@ export function mountExperiment(el, opts = {}) {
     const targets = Object.keys(c.summary);
     if (!targets.includes(st.parityTarget)) st.parityTarget = targets[0];
     // 요약
-    const sum = h(`<div class="card"><div class="row"><h3 class="grow" style="margin:0">예측 대 실측</h3>
+    const sum = h(`<div class="card"><div class="row"><h3 class="grow" style="margin:0" data-help="exp.compare">예측 대 실측</h3>
       <button class="btn sm xp-recmp" type="button">다시 계산</button><button class="btn sm xp-savepred" type="button" title="지금 예측값을 이 런들의 '예측' 값으로 남김(보정에는 안 씀)">예측값 저장</button></div>
       ${c.in_sample ? `<div class="notice" role="note" style="margin-top:6px"><b>표본 내 비교</b> ${esc(c.notes.join(' '))}</div>` : ''}
       <p class="small muted" style="margin:6px 0">잔차 = 실측 − 예측. 폭 안 = 실측이 예측의 불확실 폭 안에 든 런 수. ${esc(c.disclaimer)}</p>
@@ -792,7 +792,7 @@ export function mountExperiment(el, opts = {}) {
   }
 
   function calCard() {
-    const card = h(`<div class="card xp-cal"><div class="row"><h3 class="grow" style="margin:0">내 데이터로 보정</h3>
+    const card = h(`<div class="card xp-cal"><div class="row"><h3 class="grow" style="margin:0" data-help="exp.calib">내 데이터로 보정</h3>
       ${st.exp.calibration_applied ? '<span class="pill ok">보정에 적용됨</span>' : '<span class="pill off">보정에 안 씀</span>'}</div>
       <p class="small muted" style="margin:4px 0">건조 단계의 내 실측(건조 전후 수분·TPC)을 건조 예측의 보정 근거로 씁니다 — CoA 실측과 함께 n을 셉니다. 적용 전에는 문헌·CoA만 씁니다. 문헌 값을 몰래 바꾸지 않고, 바뀌는 것을 전·후로 보입니다.</p>
       <div class="xp-tool"><label class="small"><input type="checkbox" class="xp-ea"${st.calEa ? ' checked' : ''}> Ea(활성화 에너지)도 내 자료로 맞춤 <span class="muted">(서로 다른 온도 3개 이상일 때만)</span></label>
@@ -863,7 +863,7 @@ export function mountExperiment(el, opts = {}) {
   }
 
   function sugCard() {
-    const card = h(`<div class="card xp-sug"><div class="row"><h3 class="grow" style="margin:0">다음 실험 제안</h3><span class="pill xp-badge-sug">제안</span><button class="btn sm xp-sg" type="button">제안 받기</button></div><div class="xp-sgbody"></div></div>`);
+    const card = h(`<div class="card xp-sug"><div class="row"><h3 class="grow" style="margin:0" data-help="exp.suggest">다음 실험 제안</h3><span class="pill xp-badge-sug">제안</span><button class="btn sm xp-sg" type="button">제안 받기</button></div><div class="xp-sgbody"></div></div>`);
     const body = card.querySelector('.xp-sgbody');
     const fmtP = p => !p ? '-' : `${fmt(p.value, 2)} <span class="pr-band">${fmt(p.low, 1)}–${fmt(p.high, 1)}</span>`;
     function draw() {

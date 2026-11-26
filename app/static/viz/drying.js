@@ -147,7 +147,7 @@ function compareSvg(groups, unit){
 export function mountDrying(el, ctx){
   el.innerHTML = `
   <div class="card">
-    <div class="row"><h2 class="grow">건조 방식</h2><div class="seg" data-methods role="group" aria-label="건조 방식 고르기"></div></div>
+    <div class="row"><h2 class="grow" data-help="viz.drying">건조 방식</h2><div class="seg" data-methods role="group" aria-label="건조 방식 고르기"></div></div>
     <p class="sub" data-summary></p>
     <div data-equip></div>
     <div class="stage-strip" data-stages></div>

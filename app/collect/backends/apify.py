@@ -60,11 +60,11 @@ TERMINAL = {"SUCCEEDED", "FAILED", "TIMED-OUT", "ABORTED"}
 ACTOR_RX = re.compile(r"^(?:[A-Za-z0-9][A-Za-z0-9_.\-]{0,62}[~/][A-Za-z0-9][A-Za-z0-9_.\-]{0,62}|[A-Za-z0-9]{17})$")
 SKIP_FILES_GLOB = "**/*.{pdf,PDF,hwp,hwpx,zip,doc,docx,xls,xlsx,ppt,pptx}"
 
-NO_TOKEN = (f"키 없음 — Apify API 토큰을 환경 변수 {TOKEN_ENV}에 넣으세요. 발급: Apify 가입 → Settings → "
+NO_TOKEN = (f"키 없음 — Apify API 토큰을 설정 → API 키 관리의 {TOKEN_ENV}에 넣으세요(또는 같은 이름의 환경 변수). 발급: Apify 가입 → Settings → "
             f"API & Integrations({TOKEN_URL}). 유료(크레딧 차감)이며 사이트 주소·설정이 Apify 클라우드로 나갑니다.")
 
 _ERRORS = {
-    401: "Apify 토큰이 맞지 않습니다. 환경 변수 BYORBIT_APIFY_TOKEN의 값을 Apify 콘솔에서 다시 확인하세요.",
+    401: "Apify 토큰이 맞지 않습니다. 설정 → API 키 관리의 BYORBIT_APIFY_TOKEN을 Apify 콘솔에서 다시 복사해 바꾸세요.",
     402: "Apify 크레딧(또는 결제 수단)이 부족합니다. Apify 콘솔의 Billing에서 확인하세요.",
     403: "이 토큰으로는 이 액터를 실행할 권한이 없습니다. 토큰 권한(Actor 실행)을 확인하세요.",
     404: "Apify 액터를 찾지 못했습니다. 사이트 설정의 액터 이름(예 apify~website-content-crawler)을 확인하세요.",
