@@ -19,7 +19,7 @@ from . import config, db, engines, keys, labeling, search as _search, thesaurus,
 from . import routes_collect, routes_experiment, routes_keys, routes_kg, routes_parse, routes_predict, routes_stats, routes_viz, routes_workbench
 from .collect import http as collect_http
 from .collect import scheduler as collect_scheduler
-from .engines import claude_code, food_mcp
+from .engines import claude_code, claude_setup, food_mcp
 from .ingest import parsers, pipeline, watcher
 
 STATIC = Path(__file__).with_name("static")
@@ -185,6 +185,43 @@ def engines_check(smoke: bool = False):
 def food_check():
     """식품 DB 서버를 띄워 도구 목록까지 받아 본다(백그라운드 작업). DB 조회는 하지 않는다."""
     return _job("food-check", food_mcp.check)
+
+
+# ---------------------------------------------------------------- Claude Code 연결 마법사
+# 설치·로그인·등록 상태만 본다(돈이 드는 호출 없음). 실제 호출 점검은 /api/engines/check?smoke=true.
+# 등록·해제는 사용자의 Claude Code 설정을 바꾸므로 POST만 — 다른 사이트의 요청은 _guard가 막는다.
+
+class SetupScope(BaseModel):
+    scope: str = "user"
+
+
+@app.get("/api/setup/status")
+def setup_status(registration: bool = True, fresh: bool = False):
+    return claude_setup.status(cached=not fresh, registration=registration)
+
+
+@app.post("/api/setup/recheck")
+def setup_recheck():
+    return claude_setup.status(cached=False)
+
+
+def _setup_change(fn, s: SetupScope | None):
+    scope = (s or SetupScope()).scope
+    if scope not in claude_setup.SCOPES:
+        raise HTTPException(400, f"scope는 {' 또는 '.join(claude_setup.SCOPES)}만 됩니다")
+    r = fn(scope=scope)
+    r["status"] = claude_setup.status(cached=False)
+    return r
+
+
+@app.post("/api/setup/register")
+def setup_register(s: SetupScope | None = None):
+    return _setup_change(claude_setup.register, s)
+
+
+@app.post("/api/setup/unregister")
+def setup_unregister(s: SetupScope | None = None):
+    return _setup_change(claude_setup.unregister, s)
 
 
 # ---------------------------------------------------------------- 프로젝트

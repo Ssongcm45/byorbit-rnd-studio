@@ -12,9 +12,40 @@
 2. **Claude Code**: PowerShell에서 `irm https://claude.ai/install.ps1 | iex`를 실행합니다(또는 `npm install -g @anthropic-ai/claude-code`). 그다음 `claude`를 한 번 실행해 로그인합니다.
 3. 이 폴더에서 **`install.bat`**을 더블클릭합니다. 가상환경, 패키지, 데이터 폴더, 표준 시드, MCP 설정이 준비됩니다.
 4. **`start.bat`**을 더블클릭하면 브라우저가 열립니다. 끝낼 때는 검은 창에서 Ctrl+C를 누릅니다.
-5. 앱의 **설정 → 연결 점검(실제 호출)**에서 "통과"가 나오면 Claude Code 연결이 끝난 것입니다. `check-claude.bat`으로도 점검할 수 있습니다.
+5. 앱의 **설정 → Claude Code 연결 마법사**에서 ① 설치 ② 로그인을 확인하고 ③ 연결 점검(실제 호출)에서 "통과"가 나오면 Claude Code 연결이 끝난 것입니다. `check-claude.bat`으로도 상태를 볼 수 있습니다(실제 호출은 물을 때 `y`를 누를 때만).
 
 > PowerShell이 스크립트 실행을 막으면 `install.bat`을 쓰세요(실행 정책을 이번 실행에만 우회합니다).
+
+## 다른 PC에 설치하고 Claude Code와 연결하기
+
+새 PC에서는 GitHub에서 받아 설치하고, **그 PC에 설치·로그인된 Claude Code**와 연결합니다. 자료·API 키·로그인은 PC마다 따로이며 자동 동기화는 없습니다.
+
+1. **받기** — 저장소는 비공개이므로 저장소 접근 권한이 있는 GitHub 계정이 필요합니다.
+   - Git이 있으면: 먼저 `gh auth login`(GitHub CLI) 또는 GitHub Desktop으로 로그인한 뒤
+     ```
+     git clone https://github.com/<계정>/byorbit-rnd-studio.git
+     ```
+     (`<계정>`은 저장소 주인의 GitHub 이름. 권한이 없으면 저장소 주인에게 초대를 받으세요.)
+   - Git이 없으면: 권한 있는 계정으로 GitHub 저장소 화면 → Code → Download ZIP으로 받거나, 권한 있는 사람에게 ZIP을 받아 풀어 둡니다.
+2. **Python 3.11 이상**과 **Claude Code**를 설치합니다(위 "설치" 1·2번). Claude Code는 새 PC에서 `claude`를 한 번 실행해 **그 PC에서** 로그인합니다.
+3. **`install.bat`** 더블클릭 — 가상환경·패키지·데이터 폴더를 만든 뒤 마지막 [5/5]에서 이 PC의 Claude Code를 찾아(공식 설치·npm 설치·WinGet·`BYORBIT_CLAUDE` 지정) 버전과 로그인 상태를 보여 줍니다. 돈이 드는 호출은 하지 않습니다.
+   - 설치·로그인이 되어 있으면 "내 Claude Code 대화창에도 자료 도구를 등록할까요? (Y/n)"를 묻습니다. Enter(=예)를 누르면 등록합니다(아래 "Claude Code에서 직접 쓰기").
+   - 설치·로그인이 안 되어 있으면 다음에 할 명령을 그대로 보여 줍니다. 마친 뒤 `check-claude.bat`을 실행해 다시 확인합니다.
+4. **`start.bat`** 더블클릭 → 앱의 **설정 → Claude Code 연결 마법사**에서 ① 설치 ② 로그인 ③ 연결 점검(실제 호출) ④ 자료 도구 등록을 차례로 확인합니다. 시작 화면 체크리스트 1번의 "연결 마법사 열기"로도 갑니다.
+5. **API 키 다시 넣기** — 키는 각 PC의 Windows 자격 증명 관리자에만 있어 옮겨지지 않습니다. 설정 → API 키 관리에서 다시 저장합니다.
+6. **자료 옮기기(선택)** — 이전 PC의 데이터 폴더(`C:\Users\<이름>\ByOrbit-RD`)를 앱을 끈 상태에서 통째로 새 PC의 같은 위치에 복사합니다. 두 PC에서 따로 고친 자료는 합쳐지지 않습니다.
+
+명령줄로도 같은 확인·등록을 할 수 있습니다.
+
+```
+.venv\Scripts\python -m app.cli setup-claude --check        설치·로그인·등록 상태 (질문 보내지 않음)
+.venv\Scripts\python -m app.cli setup-claude --register     내 Claude Code(사용자 범위)에 자료 도구 등록
+.venv\Scripts\python -m app.cli setup-claude --unregister   등록 해제
+```
+
+`--check`의 종료 코드: 0 준비됨 · 2 로그인 안 됨 · 3 설치 안 됨 · 4 설치됨(로그인 상태 모름 — 오래된 CLI) · 5 이미 등록됨 · 1 오류. 로그인 상태는 `claude auth status`(Claude Code 2.1.x)로 읽고, 이메일·조직 이름은 화면에 담지 않습니다.
+
+> npm으로 설치한 Claude Code(`claude.cmd`)는 콘솔 없이 도는 앱에서 실패할 수 있어, 앱은 그 안쪽의 `claude.exe`를 직접 부릅니다. Claude Code가 여러 군데 설치되어 있으면 마법사가 알려 주며, 다른 것을 쓰려면 환경 변수 `BYORBIT_CLAUDE`에 경로를 넣습니다.
 
 ## 쓰는 법
 
@@ -97,13 +128,25 @@ ByOrbit-RD\
 
 ## Claude Code에서 직접 쓰기
 
-앱 밖에서도 Claude Code 대화창에 이 자료 서버를 붙일 수 있습니다.
+앱 밖, 평소 쓰는 Claude Code 대화창에서도 이 자료 서버(`byorbit-rd`)를 쓸 수 있습니다.
+
+**한 번 등록해 두기(권장)** — 설정 → Claude Code 연결 마법사 ④ "등록"(또는 `install.bat`의 질문, `app.cli setup-claude --register`). 내부적으로 다음을 실행해 Claude Code **사용자 범위**(모든 폴더의 대화)에 넣습니다. 설정 값은 앱의 `mcp.json`과 같습니다(이 PC의 가상환경 파이썬, `BYORBIT_HOME`·`PYTHONPATH`·`PYTHONUTF8`).
+
+```
+claude mcp add-json --scope user byorbit-rd "{...mcp.json의 byorbit-rd 설정...}"
+```
+
+그다음 아무 Claude Code 대화에서 "byorbit-rd로 사과박 식이섬유 자료 찾아줘"처럼 부탁하면 됩니다. 앱 폴더나 데이터 폴더를 옮겼으면 마법사가 "지금 앱과 다름"으로 알려 주니 다시 등록하세요. 빼려면 마법사의 "해제"(또는 `claude mcp remove --scope user byorbit-rd`).
+
+**한 번만 붙여 쓰기** — 등록하지 않고 그 대화에만:
 
 ```
 claude --mcp-config "%USERPROFILE%\ByOrbit-RD\config\mcp.json"
 ```
 
-도구는 `search_chunks`, `get_chunk`, `lookup_concept`, `query_measurements`, `save_annotations`, `save_report_draft`, `propose_concept`입니다.
+도구는 `search_chunks`, `get_chunk`, `lookup_concept`, `query_measurements`(읽기)와 `save_annotations`, `save_report_draft`, `propose_concept`(쓰기 — DB를 직접 고치지 않고 라벨·리포트 초안·개념 제안을 남기며, 수치 라벨과 개념 제안은 검토 대기)입니다. 식품 영양 DB 서버는 등록하지 않습니다.
+
+> **보안 주의** — 내 Claude Code 대화창에서는 Claude가 자기 파일 읽기(Read·Grep)·셸 같은 내장 도구도 함께 씁니다. 그래서 내장 도구를 모두 끄고 실행하는 앱 안 "AI에 묻기"(`--tools ""`)보다 기밀 원본 보호가 약합니다. Claude가 데이터 폴더의 CoA 원본 파일을 직접 읽으면(권한을 허락했거나 묻지 않는 모드일 때) 가림이 적용되지 않습니다. `byorbit-rd` 도구 자체는 CoA 규칙(식별 정보 가림·보내지 않기)을 그대로 지킵니다. 기밀 자료는 앱 안 "AI에 묻기"로 다루세요.
 
 ## 식품 영양 DB 연결 (선택)
 
@@ -218,7 +261,8 @@ Codex CLI를 업데이트하면 보안 시험을 다시 해야 합니다(`app/en
 .venv\Scripts\python -m app.cli serve           웹앱 (--port, --no-browser, --no-watch)
 .venv\Scripts\python -m app.cli ingest <파일|폴더> --project 이름
 .venv\Scripts\python -m app.cli search "사과 포마스 식이섬유"
-.venv\Scripts\python -m app.cli check-claude    Claude Code 연결 점검
+.venv\Scripts\python -m app.cli check-claude    Claude Code 연결 점검 (실제 호출)
+.venv\Scripts\python -m app.cli setup-claude    Claude Code 찾기·로그인 확인 (--register·--unregister: 자료 도구 등록·해제)
 .venv\Scripts\python -m app.cli ask "질문"       Claude Code로 자료에 질문
 ```
 
@@ -235,7 +279,7 @@ app\
   labeling.py       AI 라벨 실행: 묶음·재시도·취소·이어하기(run·run_step에 진행 기록)
   tools.py          MCP 도구 (가림·검토 대기 규칙 포함)
   mcp_server.py     MCP 서버 byorbit-rd (stdio)
-  engines\          claude_code(기본) · food_mcp(식품 영양 DB, 선택) · codex(보조)
+  engines\          claude_code(기본) · claude_setup(설치 찾기·로그인 확인·내 Claude Code 등록) · food_mcp(식품 영양 DB, 선택) · codex(보조)
   viz\              structures(분자 구조·RDKit·PubChem) · drying(건조 모델·상평형도·비교) · system(흐름 지도)
   routes_viz.py     /api/viz · routes_predict.py /api/viz/predict
   routes_kg.py      /api/kg — 지식그래프(찾기·그래프·자세히·통계·TTL/JSON 내보내기)

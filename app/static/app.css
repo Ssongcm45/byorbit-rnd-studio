@@ -441,3 +441,16 @@ dialog::backdrop{background:var(--scrim)}
   .kset-h > .btn{width:100%}
   .keys-cfg .kv{grid-template-columns:minmax(0,1fr)}
 }
+/* Claude Code 연결 마법사 (설정) */
+.cw .step{align-items:start}
+.cw .step > .row{padding-top:2px}
+.cw .step.done b{text-decoration:none;color:var(--ink)}
+.cw .step .cw-x b,.cw .step .cw-list b{display:inline;font-size:inherit}
+.cw-x{margin-top:6px;display:grid;gap:4px;min-width:0}
+.cw-x:empty{display:none}
+.cw-cmd{display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-width:0}
+.cw-cmd code{flex:1 1 220px;min-width:0;padding:4px 8px;font-size:12.5px}
+.cw-list{margin:6px 0 0;padding-left:20px;font-size:12.5px;display:grid;gap:3px;color:var(--ink)}
+.cw-note{margin-top:4px}
+.cw-more summary{cursor:pointer;font-size:12.5px;color:var(--muted)}
+.cw.flash{border-color:var(--accent);box-shadow:var(--focus);transition:box-shadow .3s ease}

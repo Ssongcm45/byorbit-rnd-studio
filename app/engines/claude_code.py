@@ -30,9 +30,22 @@ def executable() -> str | None:
     exe = os.environ.get("BYORBIT_CLAUDE") or shutil.which("claude")
     if not exe and sys.platform == "win32":
         for p in (Path.home() / ".local" / "bin" / "claude.exe",
-                  Path(os.environ.get("APPDATA", "")) / "npm" / "claude.cmd"):
+                  Path(os.environ.get("APPDATA", "")) / "npm" / "claude.cmd",
+                  Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Links" / "claude.exe"):
             if p.exists():
-                return str(p)
+                exe = str(p)
+                break
+    return _real_exe(exe) if exe else exe
+
+
+def _real_exe(exe: str) -> str:
+    """npm 설치의 claude.cmd(배치 파일)는 cmd.exe를 거쳐야 해서, 콘솔이 없는 백그라운드 서버에서는
+    출력 없이 바로 실패할 수 있다. 배치 파일이 부르는 실제 claude.exe가 있으면 그것을 직접 쓴다."""
+    p = Path(exe)
+    if p.suffix.lower() in (".cmd", ".bat"):
+        real = p.parent / "node_modules" / "@anthropic-ai" / "claude-code" / "bin" / "claude.exe"
+        if real.exists():
+            return str(real)
     return exe
 
 
@@ -40,16 +53,21 @@ def mcp_config_path() -> Path:
     return config.path("config", "mcp.json")
 
 
-def write_mcp_config() -> Path:
-    """Claude Code가 띄울 MCP 서버 설정. 지금 쓰는 파이썬(가상환경)으로 app.mcp_server를 실행한다.
-    식품 DB가 켜져 있고 준비되었으면 byorbit-food도 넣는다(시크릿 없음 — 그 서버가 자기 .env.local을 읽는다)."""
-    cfg = {"mcpServers": {SERVER: {
+def rd_server_config() -> dict:
+    """자료 서버 byorbit-rd를 띄우는 설정 — mcp.json과 '내 Claude Code에 등록'(claude_setup)이 같은 값을 쓴다."""
+    return {
         "type": "stdio",
         "command": sys.executable,
         "args": ["-m", "app.mcp_server"],
         "env": {"PYTHONPATH": str(config.APP_ROOT), "BYORBIT_HOME": str(config.data_home()),
                 "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"},
-    }}}
+    }
+
+
+def write_mcp_config() -> Path:
+    """Claude Code가 띄울 MCP 서버 설정. 지금 쓰는 파이썬(가상환경)으로 app.mcp_server를 실행한다.
+    식품 DB가 켜져 있고 준비되었으면 byorbit-food도 넣는다(시크릿 없음 — 그 서버가 자기 .env.local을 읽는다)."""
+    cfg = {"mcpServers": {SERVER: rd_server_config()}}
     food = food_mcp.server_config()
     if food:
         cfg["mcpServers"][food_mcp.SERVER] = food
@@ -65,8 +83,14 @@ def version() -> dict:
         return {"installed": False, "message": "Claude Code(claude)를 찾지 못했습니다. 설치 후 터미널에서 'claude'로 로그인하세요."}
     try:
         p = subprocess.run([exe, "--version"], capture_output=True, text=True, encoding="utf-8",
-                           errors="replace", timeout=30)
-        return {"installed": p.returncode == 0, "path": exe, "version": (p.stdout or p.stderr).strip()}
+                           errors="replace", timeout=30, stdin=subprocess.DEVNULL)
+        out = (p.stdout or p.stderr).strip()
+        if p.returncode != 0:
+            return {"installed": False, "path": exe, "version": out,
+                    "message": f"Claude Code를 실행했지만 실패했습니다(종료 코드 {p.returncode}). "
+                               f"{out[:200] or '출력 없음'} — 터미널에서 'claude --version'이 되는지 확인하고, "
+                               "안 되면 Claude Code를 다시 설치하세요."}
+        return {"installed": True, "path": exe, "version": out}
     except (OSError, subprocess.TimeoutExpired) as e:
         return {"installed": False, "path": exe, "message": str(e)}
 

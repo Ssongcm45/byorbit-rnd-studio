@@ -308,11 +308,36 @@
   <header class="ph"><div class="ph-t"><h1 id="setTitle" data-help="settings">설정</h1>
     <p>AI 엔진 연결, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더, API 키, 식품 영양 DB 연결을 다룹니다.</p></div></header>
   <div class="grid2">
-    <div class="card">
-      <h2 data-help="settings.engine">AI 엔진</h2><p class="sub">기본 엔진은 이 PC에 설치·로그인된 Claude Code입니다. Codex는 보조 엔진입니다.</p>
-      <div class="kv" id="engInfo"><b>상태</b><span class="row"><span class="spin"></span>확인 중…</span></div>
-      <div class="row" style="margin-top:12px"><button class="btn" id="engCheck" type="button">설치 확인</button><button class="btn primary" id="engSmoke" type="button">연결 점검 (실제 호출)</button></div>
-      <p class="small muted" id="smokeOut" role="status" style="margin:8px 0 0"></p>
+    <div class="card cw" id="cwCard" style="grid-column:1/-1" aria-labelledby="cwTitle">
+      <div class="card-h"><h2 id="cwTitle" data-help="settings.engine"><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Claude Code 연결 마법사</h2>
+        <button class="btn sm ghost" id="engCheck" type="button"><svg class="ic sm" aria-hidden="true"><use href="#i-refresh"/></svg>다시 확인</button></div>
+      <p class="sub">이 PC에 설치·로그인된 Claude Code를 앱의 AI 엔진으로 씁니다. 위에서부터 차례로 확인하세요. ①·②·④ 확인은 이 PC 안에서만 하고 질문을 보내지 않습니다.</p>
+      <ol class="steps" id="cwSteps" aria-live="polite">
+        <li class="step" id="cw1"><span class="no" aria-hidden="true">1</span>
+          <div><b data-help="settings.cc.install">설치 확인</b><span class="d" id="cw1d"><span class="spin"></span> 확인 중…</span><div class="cw-x" id="cw1x"></div></div>
+          <div class="row" id="cw1a"></div></li>
+        <li class="step" id="cw2"><span class="no" aria-hidden="true">2</span>
+          <div><b data-help="settings.cc.login">로그인 확인</b><span class="d" id="cw2d">설치를 먼저 확인합니다.</span><div class="cw-x" id="cw2x"></div></div>
+          <div class="row" id="cw2a"></div></li>
+        <li class="step" id="cw3"><span class="no" aria-hidden="true">3</span>
+          <div><b data-help="settings.cc.smoke">앱 연결 점검 <span class="pill warn">실제 호출</span></b><span class="d">Claude Code에 짧은 시험 질문(‘사과 포마스’ 개념 찾기)을 보내 도구 호출까지 되는지 봅니다. 사용량이 조금 들고 최대 3분 걸립니다.</span>
+            <p class="small muted" id="smokeOut" role="status" style="margin:6px 0 0"></p></div>
+          <div class="row"><button class="btn primary sm" id="engSmoke" type="button">연결 점검 (실제 호출)</button></div></li>
+        <li class="step" id="cw4"><span class="no" aria-hidden="true">4</span>
+          <div><b data-help="settings.cc.register">내 Claude Code에 자료 도구 등록 <span class="pill">선택</span></b><span class="d" id="cw4d">확인 중…</span><div class="cw-x" id="cw4x"></div></div>
+          <div class="row" id="cw4a"><button class="btn sm" id="cwReg" type="button" disabled>등록</button><button class="btn sm ghost" id="cwUnreg" type="button" hidden>해제</button></div></li>
+        <li class="step cw-ref" id="cw5"><span class="no" aria-hidden="true">5</span>
+          <div><b data-help="settings.cc.move">다른 PC로 옮길 때 <span class="pill">참고</span></b><span class="d">새 PC마다 그 PC의 Claude Code와 따로 연결합니다. 자동 동기화는 없습니다.</span>
+            <ol class="cw-list">
+              <li>GitHub에서 받기 — <code>git clone</code>(저장소 권한 필요) 또는 ZIP 받아 풀기</li>
+              <li><b>install.bat</b> 더블클릭 — 끝에 Claude Code를 찾고 자료 도구 등록을 묻습니다</li>
+              <li><b>start.bat</b> 더블클릭 → 이 마법사에서 ①~④ 확인</li>
+              <li>API 키 다시 넣기 — 키는 PC마다 따로(Windows 자격 증명 관리자는 옮겨지지 않음)</li>
+              <li>자료 옮기기 — 이전 PC의 데이터 폴더(<code id="cwHome">ByOrbit-RD</code>)를 통째로 복사</li>
+            </ol></div>
+          <div class="row"><a class="btn sm ghost" href="#keysCard" onclick="event.preventDefault();document.getElementById('keysCard').scrollIntoView({block:'start'})">API 키 관리로</a></div></li>
+      </ol>
+      <details class="keys-cfg"><summary>자세히 — 경로·MCP 설정·Codex</summary><div class="kv" id="engInfo"><b>상태</b><span>확인 중…</span></div></details>
     </div>
     <div class="card">
       <h2 data-help="settings.coa">CoA 전송 규칙</h2><p class="sub">AI 엔진에 CoA(기밀) 자료를 어떻게 넘길지 정합니다. 바꾸면 바로 저장됩니다.</p>
@@ -328,7 +353,7 @@
       </div>
       <div class="row" style="margin-top:14px"><button class="btn primary" id="setSave" type="button">저장</button><button class="btn" id="newProj" type="button"><svg class="ic sm"><use href="#i-plus"/></svg>새 프로젝트</button></div>
     </div>
-    <div class="card">
+    <div class="card" style="grid-column:1/-1">
       <h2 data-help="settings.paths">데이터 폴더</h2><p class="sub">모든 자료와 DB는 이 PC의 이 폴더에만 있습니다. 백업은 폴더째 복사하면 됩니다.</p>
       <div class="kv" id="paths"></div>
     </div>
@@ -588,8 +613,8 @@ async function loadHome(){
   const c = h.counts, reviewed = (acc?.length||0) + (rej?.length||0), smoke = store.get('smoke');
   const steps = [
     {done: !!h.claude.path, t:'AI 엔진(Claude Code) 연결 점검',
-     d: h.claude.path ? ('이 PC에서 Claude Code를 찾았습니다.' + (smoke==='ok' ? ' 실제 호출도 통과했습니다.' : ' 설정에서 실제 호출까지 점검해 보세요.')) : '이 PC에서 Claude Code를 찾지 못했습니다. README의 설치 2번을 따라 설치한 뒤 다시 확인하세요.',
-     a: `<a class="btn sm" href="#settings">설정에서 점검</a>`},
+     d: h.claude.path ? ('이 PC에서 Claude Code를 찾았습니다.' + (smoke==='ok' ? ' 실제 호출도 통과했습니다.' : ' 연결 마법사에서 로그인·실제 호출·자료 도구 등록까지 확인해 보세요.')) : '이 PC에서 Claude Code를 찾지 못했습니다. 연결 마법사에서 설치 명령을 복사해 설치한 뒤 다시 확인하세요.',
+     a: `<button class="btn sm${h.claude.path?'':' primary'}" type="button" onclick="openClaudeWizard()">연결 마법사 열기</button>`},
     {done: c.document > 0, t:'자료 넣기', d: c.document ? `자료 ${c.document}건이 있습니다.` : '예시 자료(가짜 수치)로 먼저 둘러보거나, 내 파일을 올리세요.',
      a: `<button class="btn sm${c.document?'':' primary'}" type="button" onclick="addSamples(this)">예시 자료 넣기</button><a class="btn sm" href="#library">파일 올리기</a>`},
     {done: reviewed > 0, t:'라벨 검토', d: reviewed ? '라벨을 검토한 적이 있습니다.' : `AI·사전이 붙인 라벨을 승인·거절합니다.${c.pending?` 지금 ${c.pending}건이 기다립니다.`:''}`,
@@ -1076,15 +1101,114 @@ async function loadSettings(){
   const sep = S.home.includes('\\') ? '\\' : '/';
   $('#paths').innerHTML = [['데이터 폴더',''],['받은편지함','inbox'],['자료함','library'],['DB','db'+sep+'rd.sqlite'],['온톨로지','ontology'],['MCP 설정','config'+sep+'mcp.json'],['에이전트 지침','agents']]
     .map(([k,p]) => `<b>${k}</b><code>${esc(S.home + (p?sep+p:''))}</code>`).join('');
+  $('#cwHome').textContent = S.home;
+  loadClaudeWizard();
   let e;
   try{ e = await api('/api/engines/check') }catch(err){ $('#engInfo').innerHTML = `<b>상태</b><span>${errHTML(err)}</span>`; return }
   const c = e.claude.cli;
   $('#engInfo').innerHTML = `<b>Claude Code</b><span>${c.installed?`<span class="pill ok">설치됨</span> <span class="mono small">${esc(c.version||'')}</span>`:`<span class="pill bad">찾지 못함</span> <span class="small">${esc(c.message||'')}</span>`}</span>
     ${c.path?`<b>경로</b><code>${esc(c.path)}</code>`:''}<b>MCP 설정</b><code>${esc(e.claude.mcp_config)}</code>
     <b>Codex</b><span>${e.codex.cli.installed?`<span class="pill">설치됨</span> <span class="small muted">보조 엔진</span>`:'<span class="small muted">없음 (보조 엔진이라 없어도 됨)</span>'}</span>`;
-  setEngine(!!c.installed);
   renderFood(e.food||{});
 }
+// ---------- Claude Code 연결 마법사 (①설치 ②로그인 ③실제 호출 점검 ④내 Claude Code에 등록 ⑤다른 PC)
+const copyBtn = (text, label='복사') => `<button class="btn sm ghost" type="button" data-copy="${esc(text)}" aria-label="${esc(label)}: ${esc(text)}">${ICON('doc','sm')}${esc(label)}</button>`;
+const cmdLine = (text, label) => `<div class="cw-cmd"><code>${esc(text)}</code>${copyBtn(text, label)}</div>`;
+let CW = null;
+async function loadClaudeWizard(fresh){
+  $('#engCheck').disabled = true;
+  try{
+    // 빠른 확인(설치·로그인)을 먼저 그리고, 등록 상태(서버를 잠깐 띄워 봄)는 이어서 채운다
+    if(!CW || fresh) renderClaudeWizard(await api('/api/setup/status?registration=false' + (fresh ? '&fresh=true' : '')), true);
+    renderClaudeWizard(fresh ? await api('/api/setup/recheck', {method:'POST'}) : await api('/api/setup/status'));
+  }catch(err){ $('#cw1d').innerHTML = errHTML(err); $('#cw1').className = 'step next' }
+  finally{ $('#engCheck').disabled = false }
+}
+function renderClaudeWizard(s, partial){
+  CW = {...s, _partial: !!partial};
+  const smoke = store.get('smoke'), reg = s.registration || {}, lg = s.login || {};
+  const done = [!!s.installed, s.logged_in === true, smoke === 'ok', !!(reg.registered && reg.current !== false)];
+  const next = done.findIndex(d => !d);
+  [1,2,3,4].forEach((n, i) => {
+    const li = $('#cw'+n);
+    li.className = 'step' + (done[i] ? ' done' : '') + (i === next && (i < 3 || s.installed) ? ' next' : '');
+    li.querySelector('.no').innerHTML = done[i] ? ICON('check') : n;
+  });
+  setEngine(!!s.installed);
+  $('#engSmoke').disabled = !s.installed;
+  // ① 설치
+  if(s.installed){
+    $('#cw1d').innerHTML = `<span class="pill ok">설치됨</span> <span class="mono">${esc(s.version||'')}</span> · ${esc(s.kind_label||'')}`;
+    $('#cw1x').innerHTML = `<code>${esc(s.path)}</code>${s.hint ? `<p class="small muted" style="margin:4px 0 0">${esc(s.hint)}</p>` : ''}`;
+    $('#cw1a').innerHTML = '';
+  } else {
+    $('#cw1d').innerHTML = `<span class="pill bad">${s.path ? '실행 실패' : '찾지 못함'}</span> ${esc(s.message||'')} PowerShell에 아래 명령 하나를 붙여 넣어 설치한 뒤 ‘다시 확인’을 누르세요.`;
+    $('#cw1x').innerHTML = (s.install_commands||[]).map(c => `<span class="small muted">${esc(c.label)}</span>${cmdLine(c.cmd, '설치 명령 복사')}`).join('') + (s.path ? `<code>${esc(s.path)}</code>` : '');
+    $('#cw1a').innerHTML = '';
+  }
+  // ② 로그인
+  if(!s.installed){ $('#cw2d').textContent = '설치를 마치면 확인합니다.'; $('#cw2x').innerHTML = ''; }
+  else if(s.logged_in === true){
+    $('#cw2d').innerHTML = `<span class="pill ok">로그인됨</span> ${esc([lg.method_label, lg.plan].filter(Boolean).join(' · '))}`;
+    $('#cw2x').innerHTML = '';
+  } else if(s.logged_in === false){
+    $('#cw2d').innerHTML = `<span class="pill bad">로그인 안 됨</span> PowerShell(터미널)에서 <code>claude</code>를 실행하고 안내대로 로그인을 마친 뒤 ‘다시 확인’을 누르세요.`;
+    $('#cw2x').innerHTML = cmdLine(s.login_command||'claude', '로그인 명령 복사');
+  } else {
+    $('#cw2d').innerHTML = `<span class="pill warn">모름</span> ${esc(lg.reason||'로그인 상태를 바로 알 수 없습니다.')} ③ 연결 점검(실제 호출)으로 확인하세요.`;
+    $('#cw2x').innerHTML = '';
+  }
+  // ④ 내 Claude Code에 등록
+  const rb = $('#cwReg'), ub = $('#cwUnreg');
+  rb.disabled = !s.installed; ub.hidden = !reg.registered;
+  if(!s.installed){ $('#cw4d').textContent = '설치를 마치면 등록할 수 있습니다.'; $('#cw4x').innerHTML = ''; rb.textContent = '등록'; return }
+  if(partial){ $('#cw4d').innerHTML = '<span class="spin"></span> 등록 상태를 확인하는 중… (자료 서버를 잠깐 띄워 봅니다)'; return }
+  const scope = {user:'사용자 범위 — 모든 폴더의 대화', local:'로컬 범위', project:'프로젝트 범위'}[reg.scope] || reg.scope || '';
+  if(reg.registered === null){
+    $('#cw4d').innerHTML = `<span class="pill warn">확인 못 함</span> ${esc(reg.reason||'')}`;
+    rb.textContent = '등록';
+  } else if(!reg.registered){
+    $('#cw4d').innerHTML = `<span class="pill">등록 안 됨</span> 등록하면 이 PC의 Claude Code 대화창에서도 자료 도구 ${esc(s.server_name)}를 쓸 수 있습니다. 앱 안의 AI 기능은 등록과 관계없이 됩니다.`;
+    rb.textContent = '등록'; rb.className = 'btn sm primary';
+  } else {
+    const conn = reg.connected ? '<span class="pill ok">연결됨</span>' : reg.connected === false ? `<span class="pill bad">연결 실패</span> ${esc(reg.issue||'')}` : '';
+    const stale = reg.current === false ? `<br><span class="pill warn">지금 앱과 다름</span> ${esc(reg.mismatch||'')} — ‘다시 등록’을 누르세요.` : '';
+    $('#cw4d').innerHTML = `<span class="pill ok">등록됨</span> ${esc(scope)} ${conn}${stale}`;
+    rb.textContent = '다시 등록'; rb.className = 'btn sm' + (reg.current === false ? ' primary' : '');
+  }
+  $('#cw4x').innerHTML = `<span class="small muted">쓰는 법 — 아무 Claude Code 대화에서 이렇게 부탁하세요</span>${cmdLine(s.usage_example, '예시 문장 복사')}
+    <div class="callout warn cw-note">${ICON('alert','sm')}<div><p><b>보안 주의</b> — ${esc(s.security_note)}</p></div></div>
+    <details class="cw-more"><summary>직접 등록하는 명령·도구 목록</summary><p class="small muted" style="margin:6px 0">${esc(s.tools_note)}</p>${cmdLine(s.manual_command, '등록 명령 복사')}</details>`;
+}
+$('#cwCard').addEventListener('click', async e => {
+  const b = e.target.closest('[data-copy]'); if(!b) return;
+  try{ await navigator.clipboard.writeText(b.dataset.copy); toast('복사했습니다', 'ok') }
+  catch{ toast('복사하지 못했습니다 — 글자를 직접 골라 복사하세요', 'bad') }
+});
+$('#cwReg').onclick = async () => {
+  const s = CW || {};
+  const ok = await uiDialog({title: '내 Claude Code에 자료 도구 등록', ok: '등록',
+    html: `<div class="stack" style="gap:10px"><p style="margin:0">이 PC의 Claude Code <b>사용자 설정</b>에 <code>${esc(s.server_name||'byorbit-rd')}</code>를 넣습니다(<code>claude mcp add-json --scope user</code>). 모든 폴더의 Claude Code 대화에서 자료 도구 7개가 보이게 됩니다.</p>
+      <div class="callout warn">${ICON('alert','sm')}<div><p>${esc(s.security_note||'')}</p></div></div>
+      <p class="small muted" style="margin:0">언제든 ‘해제’로 뺄 수 있습니다. 앱 폴더나 데이터 폴더를 옮기면 다시 등록하세요.</p></div>`});
+  if(!ok) return;
+  const b = $('#cwReg'); b.disabled = true; b.innerHTML = '<span class="spin"></span> 등록 중…';
+  try{ const r = await api('/api/setup/register', {method:'POST', body:{scope:'user'}}); toast(r.message, r.ok ? 'ok' : 'bad'); renderClaudeWizard(r.status) }
+  catch(err){ toast('등록하지 못했습니다: ' + err.message, 'bad'); b.textContent = '등록' }
+  finally{ b.disabled = !CW?.installed }
+};
+$('#cwUnreg').onclick = async () => {
+  const ok = await uiConfirm('자료 도구 등록 해제', `내 Claude Code 설정에서 ${CW?.server_name||'byorbit-rd'}를 뺍니다.\n앱 안의 AI에 묻기·AI 라벨은 그대로 됩니다.`, {ok:'해제', danger:true});
+  if(!ok) return;
+  const b = $('#cwUnreg'); b.disabled = true;
+  try{ const r = await api('/api/setup/unregister', {method:'POST', body:{scope:'user'}}); toast(r.message, r.ok ? 'ok' : 'bad'); renderClaudeWizard(r.status) }
+  catch(err){ toast('해제하지 못했습니다: ' + err.message, 'bad') }
+  finally{ b.disabled = false }
+};
+window.openClaudeWizard = () => {
+  show('settings');
+  requestAnimationFrame(() => { const c = $('#cwCard'); c.scrollIntoView({block:'start'}); c.classList.add('flash'); setTimeout(() => c.classList.remove('flash'), 2000) });
+};
 function renderFood(f){
   $('#foodOn').checked = !!S.settings.food_mcp; $('#foodDir').value = S.settings.food_mcp_dir||'';
   $('#foodDir').placeholder = f.dir ? `비우면 자동: ${f.dir}` : '04_byorbit-agent 폴더 경로 (안에 mcp 폴더가 있는 곳)';
@@ -1198,7 +1322,7 @@ window.openKeys = async set => {
   (el.querySelector('[data-ksave]') || el).focus({preventScroll:true});
 };
 $$('input[name=coa]').forEach(r => r.onchange = async () => { try{ S.settings = await api('/api/settings',{method:'POST', body:{coa_rule:r.value}}); toast('CoA 규칙을 바꿨습니다', 'ok') }catch(e){ toast(e.message, 'bad') } });
-$('#engCheck').onclick = loadSettings;
+$('#engCheck').onclick = () => loadClaudeWizard(true);
 $('#engSmoke').onclick = async () => {
   const b = $('#engSmoke'); b.disabled = true;
   $('#smokeOut').innerHTML = '<span class="spin"></span> Claude Code에 도구 호출을 시켜 보는 중… (최대 3분)';
@@ -1206,6 +1330,7 @@ $('#engSmoke').onclick = async () => {
     const job = await waitJob(await api('/api/engines/check?smoke=true'));
     const r = job.result||{}, s = r.smoke||{};
     store.set('smoke', s.passed ? 'ok' : 'fail'); setEngine(!!r.cli?.installed || !!S.health?.claude?.path);
+    if(CW) renderClaudeWizard(CW, CW._partial);
     $('#smokeOut').innerHTML = s.passed ? `<span class="pill ok">통과</span> 도구 호출 확인 — 답: “${esc(s.answer)}” (${Math.round((s.duration_ms||0)/1000)}초)`
       : `<span class="pill bad">실패</span> ${esc(s.answer||r.cli?.message||job.error||'')}<br>${esc(r.hint||'')}`;
   }catch(e){ $('#smokeOut').innerHTML = errHTML(e) }
