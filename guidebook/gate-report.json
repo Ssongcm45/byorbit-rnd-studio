@@ -1,0 +1,1513 @@
+{
+  "gates": {
+    "G10": {
+      "problems": [],
+      "ok": true
+    },
+    "G1": {
+      "exists": true,
+      "pages": 146,
+      "range": [
+        80,
+        150
+      ],
+      "ok": true,
+      "refit": false
+    },
+    "G2": {
+      "not_embedded": [],
+      "ok": true
+    },
+    "G3": {
+      "overflows": [],
+      "count": 0,
+      "ok": true
+    },
+    "G4": {
+      "bookmarks": 17,
+      "mismatches": [],
+      "ok": true
+    },
+    "G11": {
+      "declared": 0,
+      "problems": [],
+      "ok": true
+    },
+    "G7-FRAME": {
+      "token_top_pt": 56.7,
+      "derived_top_pt": 51.3,
+      "book_pitch": 15.08,
+      "n_grid": 35,
+      "ok": true
+    },
+    "G7-BLANK": {
+      "blank_pages": [],
+      "ok": true
+    },
+    "G5": {
+      "blank_pages": [],
+      "ok": true
+    },
+    "G12": {
+      "parity_filler": [],
+      "ok": true
+    },
+    "G7-TAIL": {
+      "tails": [
+        {
+          "page": 6,
+          "reach": 0.8,
+          "lines": 608,
+          "role": null
+        },
+        {
+          "page": 10,
+          "reach": 0.769,
+          "lines": 627,
+          "role": null
+        },
+        {
+          "page": 17,
+          "reach": 0.903,
+          "lines": 471,
+          "role": null
+        },
+        {
+          "page": 25,
+          "reach": 0.835,
+          "lines": 674,
+          "role": null
+        },
+        {
+          "page": 32,
+          "reach": 0.88,
+          "lines": 406,
+          "role": null
+        },
+        {
+          "page": 42,
+          "reach": 0.821,
+          "lines": 588,
+          "role": null
+        },
+        {
+          "page": 49,
+          "reach": 0.72,
+          "lines": 514,
+          "role": null
+        },
+        {
+          "page": 56,
+          "reach": 0.714,
+          "lines": 513,
+          "role": null
+        },
+        {
+          "page": 61,
+          "reach": 0.909,
+          "lines": 579,
+          "role": null
+        },
+        {
+          "page": 70,
+          "reach": 0.8,
+          "lines": 635,
+          "role": null
+        },
+        {
+          "page": 85,
+          "reach": 0.809,
+          "lines": 277,
+          "role": null
+        },
+        {
+          "page": 91,
+          "reach": 0.709,
+          "lines": 616,
+          "role": null
+        },
+        {
+          "page": 106,
+          "reach": 0.717,
+          "lines": 699,
+          "role": null
+        },
+        {
+          "page": 117,
+          "reach": 0.707,
+          "lines": 560,
+          "role": null
+        },
+        {
+          "page": 127,
+          "reach": 0.706,
+          "lines": 516,
+          "role": null
+        },
+        {
+          "page": 139,
+          "reach": 0.709,
+          "lines": 511,
+          "role": null
+        },
+        {
+          "page": 146,
+          "reach": 1.0,
+          "lines": 83,
+          "role": null
+        }
+      ],
+      "ok": true
+    },
+    "G7-MID": {
+      "underfull": [],
+      "ok": true
+    },
+    "G7-DOC": {
+      "median": 0.8,
+      "p10": 0.707,
+      "ok": true
+    },
+    "G8": {
+      "stretched": [],
+      "ok": true
+    },
+    "G9": {
+      "violations": [],
+      "ok": true
+    }
+  },
+  "warns": [
+    "G7-MID: p5 reach 0.882 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p8 reach 0.96 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p9 reach 0.925 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p12 reach 0.944 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p13 reach 0.438 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p14 reach 0.823 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p15 reach 0.843 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p16 reach 0.983 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p19 reach 0.768 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p20 reach 0.889 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p22 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p27 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p29 reach 0.976 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p30 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p31 reach 0.679 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p34 reach 0.971 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p35 reach 0.808 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p36 reach 0.965 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p38 reach 0.861 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p39 reach 0.536 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p40 reach 0.826 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p44 reach 0.861 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p45 reach 0.995 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p48 reach 0.944 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p51 reach 0.77 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p52 reach 0.967 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p53 reach 0.997 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p54 reach 0.6 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p55 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p58 reach 0.825 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p59 reach 0.899 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p63 reach 0.989 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p64 reach 0.96 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p65 reach 0.547 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p66 reach 0.886 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p67 reach 0.963 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p68 reach 0.913 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p72 reach 0.607 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p73 reach 0.994 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p75 reach 0.496 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p76 reach 0.952 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p77 reach 0.945 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p79 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p80 reach 0.636 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p81 reach 0.693 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p82 reach 0.845 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p83 reach 0.563 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p84 reach 0.842 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p87 reach 0.171 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p89 reach 0.974 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p90 reach 0.977 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p93 reach 0.979 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p94 reach 0.376 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p95 reach 0.915 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p96 reach 0.763 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p97 reach 0.96 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p98 reach 0.763 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p99 reach 0.975 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p100 reach 0.955 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p101 reach 0.974 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p102 reach 0.987 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p103 reach 0.73 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p104 reach 0.884 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p105 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p108 reach 0.77 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p110 reach 0.366 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p111 reach 0.96 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p112 reach 0.96 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p113 reach 0.95 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p114 reach 0.948 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p115 reach 0.562 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p120 reach 0.08 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p122 reach 0.971 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p123 reach 0.911 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p124 reach 0.859 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p126 reach 0.989 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p129 reach 0.988 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p130 reach 0.703 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p131 reach 0.965 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p132 reach 0.143 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p133 reach 0.885 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p136 reach 0.761 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p138 reach 0.825 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p141 reach 1.0 — float 밀림 면제(다음 면 통짜 블록)",
+    "G7-MID: p142 reach 0.749 — float 밀림 면제(다음 면 통짜 블록)",
+    "G8: p21 행송 편차 15.72 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p41 행송 편차 13.49 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p74 행송 편차 18.15 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p78 행송 편차 18.15 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p88 행송 편차 13.49 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p109 행송 편차 14.48 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p121 행송 편차 13.49 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p125 행송 편차 14.48 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p137 행송 편차 18.15 vs 15.08 (혼합 콘텐츠 추정)",
+    "G8: p143 행송 편차 18.15 vs 15.08 (혼합 콘텐츠 추정)"
+  ],
+  "pass": true,
+  "metrics": {
+    "book_pitch": 15.08,
+    "n_grid": 35,
+    "pages": [
+      {
+        "page": 1,
+        "lines": 37,
+        "reach": 0.991,
+        "ink": 0.678,
+        "gap": 0.313,
+        "imgarea": 0.0
+      },
+      {
+        "page": 2,
+        "lines": 34,
+        "reach": 0.95,
+        "ink": 0.312,
+        "gap": 0.638,
+        "imgarea": 0.0
+      },
+      {
+        "page": 3,
+        "lines": 340,
+        "reach": 1.0,
+        "ink": 1.0,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 4,
+        "lines": 54,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 5,
+        "lines": 703,
+        "reach": 0.882,
+        "ink": 0.867,
+        "gap": 0.015,
+        "imgarea": 0.0
+      },
+      {
+        "page": 6,
+        "lines": 608,
+        "reach": 0.8,
+        "ink": 0.797,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 7,
+        "lines": 59,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 8,
+        "lines": 406,
+        "reach": 0.96,
+        "ink": 0.95,
+        "gap": 0.01,
+        "imgarea": 0.315
+      },
+      {
+        "page": 9,
+        "lines": 631,
+        "reach": 0.925,
+        "ink": 0.909,
+        "gap": 0.016,
+        "imgarea": 0.0
+      },
+      {
+        "page": 10,
+        "lines": 627,
+        "reach": 0.769,
+        "ink": 0.766,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 11,
+        "lines": 58,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 12,
+        "lines": 359,
+        "reach": 0.944,
+        "ink": 0.944,
+        "gap": 0.0,
+        "imgarea": 0.327
+      },
+      {
+        "page": 13,
+        "lines": 262,
+        "reach": 0.438,
+        "ink": 0.429,
+        "gap": 0.009,
+        "imgarea": 0.075
+      },
+      {
+        "page": 14,
+        "lines": 158,
+        "reach": 0.823,
+        "ink": 0.823,
+        "gap": 0.0,
+        "imgarea": 0.405
+      },
+      {
+        "page": 15,
+        "lines": 31,
+        "reach": 0.843,
+        "ink": 0.843,
+        "gap": 0.0,
+        "imgarea": 0.186
+      },
+      {
+        "page": 16,
+        "lines": 579,
+        "reach": 0.983,
+        "ink": 0.968,
+        "gap": 0.015,
+        "imgarea": 0.0
+      },
+      {
+        "page": 17,
+        "lines": 471,
+        "reach": 0.903,
+        "ink": 0.878,
+        "gap": 0.025,
+        "imgarea": 0.0
+      },
+      {
+        "page": 18,
+        "lines": 63,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 19,
+        "lines": 447,
+        "reach": 0.768,
+        "ink": 0.754,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 20,
+        "lines": 255,
+        "reach": 0.889,
+        "ink": 0.889,
+        "gap": 0.0,
+        "imgarea": 0.353
+      },
+      {
+        "page": 21,
+        "lines": 242,
+        "reach": 0.991,
+        "ink": 0.967,
+        "gap": 0.024,
+        "imgarea": 0.37
+      },
+      {
+        "page": 22,
+        "lines": 690,
+        "reach": 1.0,
+        "ink": 0.977,
+        "gap": 0.023,
+        "imgarea": 0.0
+      },
+      {
+        "page": 23,
+        "lines": 615,
+        "reach": 0.976,
+        "ink": 0.956,
+        "gap": 0.02,
+        "imgarea": 0.0
+      },
+      {
+        "page": 24,
+        "lines": 403,
+        "reach": 0.984,
+        "ink": 0.962,
+        "gap": 0.022,
+        "imgarea": 0.242
+      },
+      {
+        "page": 25,
+        "lines": 674,
+        "reach": 0.835,
+        "ink": 0.818,
+        "gap": 0.017,
+        "imgarea": 0.0
+      },
+      {
+        "page": 26,
+        "lines": 63,
+        "reach": 0.74,
+        "ink": 0.606,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 27,
+        "lines": 302,
+        "reach": 1.0,
+        "ink": 1.0,
+        "gap": 0.0,
+        "imgarea": 0.427
+      },
+      {
+        "page": 28,
+        "lines": 424,
+        "reach": 0.954,
+        "ink": 0.94,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 29,
+        "lines": 415,
+        "reach": 0.976,
+        "ink": 0.957,
+        "gap": 0.019,
+        "imgarea": 0.0
+      },
+      {
+        "page": 30,
+        "lines": 634,
+        "reach": 1.0,
+        "ink": 0.995,
+        "gap": 0.005,
+        "imgarea": 0.0
+      },
+      {
+        "page": 31,
+        "lines": 516,
+        "reach": 0.679,
+        "ink": 0.676,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 32,
+        "lines": 406,
+        "reach": 0.88,
+        "ink": 0.861,
+        "gap": 0.019,
+        "imgarea": 0.0
+      },
+      {
+        "page": 33,
+        "lines": 81,
+        "reach": 0.74,
+        "ink": 0.606,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 34,
+        "lines": 555,
+        "reach": 0.971,
+        "ink": 0.971,
+        "gap": 0.0,
+        "imgarea": 0.25
+      },
+      {
+        "page": 35,
+        "lines": 453,
+        "reach": 0.808,
+        "ink": 0.794,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 36,
+        "lines": 385,
+        "reach": 0.965,
+        "ink": 0.944,
+        "gap": 0.021,
+        "imgarea": 0.0
+      },
+      {
+        "page": 37,
+        "lines": 713,
+        "reach": 0.965,
+        "ink": 0.965,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 38,
+        "lines": 310,
+        "reach": 0.861,
+        "ink": 0.844,
+        "gap": 0.017,
+        "imgarea": 0.344
+      },
+      {
+        "page": 39,
+        "lines": 270,
+        "reach": 0.536,
+        "ink": 0.536,
+        "gap": 0.0,
+        "imgarea": 0.12
+      },
+      {
+        "page": 40,
+        "lines": 132,
+        "reach": 0.826,
+        "ink": 0.826,
+        "gap": 0.0,
+        "imgarea": 0.445
+      },
+      {
+        "page": 41,
+        "lines": 52,
+        "reach": 0.96,
+        "ink": 0.96,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 42,
+        "lines": 588,
+        "reach": 0.821,
+        "ink": 0.815,
+        "gap": 0.006,
+        "imgarea": 0.0
+      },
+      {
+        "page": 43,
+        "lines": 61,
+        "reach": 0.74,
+        "ink": 0.606,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 44,
+        "lines": 224,
+        "reach": 0.861,
+        "ink": 0.861,
+        "gap": 0.0,
+        "imgarea": 0.375
+      },
+      {
+        "page": 45,
+        "lines": 528,
+        "reach": 0.995,
+        "ink": 0.967,
+        "gap": 0.028,
+        "imgarea": 0.0
+      },
+      {
+        "page": 46,
+        "lines": 616,
+        "reach": 1.0,
+        "ink": 0.979,
+        "gap": 0.021,
+        "imgarea": 0.0
+      },
+      {
+        "page": 47,
+        "lines": 557,
+        "reach": 1.0,
+        "ink": 0.99,
+        "gap": 0.01,
+        "imgarea": 0.0
+      },
+      {
+        "page": 48,
+        "lines": 601,
+        "reach": 0.944,
+        "ink": 0.92,
+        "gap": 0.024,
+        "imgarea": 0.0
+      },
+      {
+        "page": 49,
+        "lines": 514,
+        "reach": 0.72,
+        "ink": 0.711,
+        "gap": 0.009,
+        "imgarea": 0.0
+      },
+      {
+        "page": 50,
+        "lines": 64,
+        "reach": 0.74,
+        "ink": 0.606,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 51,
+        "lines": 189,
+        "reach": 0.77,
+        "ink": 0.77,
+        "gap": 0.0,
+        "imgarea": 0.35
+      },
+      {
+        "page": 52,
+        "lines": 419,
+        "reach": 0.967,
+        "ink": 0.967,
+        "gap": 0.0,
+        "imgarea": 0.224
+      },
+      {
+        "page": 53,
+        "lines": 490,
+        "reach": 0.997,
+        "ink": 0.966,
+        "gap": 0.031,
+        "imgarea": 0.152
+      },
+      {
+        "page": 54,
+        "lines": 454,
+        "reach": 0.6,
+        "ink": 0.596,
+        "gap": 0.004,
+        "imgarea": 0.0
+      },
+      {
+        "page": 55,
+        "lines": 327,
+        "reach": 1.0,
+        "ink": 0.984,
+        "gap": 0.016,
+        "imgarea": 0.288
+      },
+      {
+        "page": 56,
+        "lines": 513,
+        "reach": 0.714,
+        "ink": 0.697,
+        "gap": 0.017,
+        "imgarea": 0.0
+      },
+      {
+        "page": 57,
+        "lines": 54,
+        "reach": 0.74,
+        "ink": 0.606,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 58,
+        "lines": 394,
+        "reach": 0.825,
+        "ink": 0.814,
+        "gap": 0.011,
+        "imgarea": 0.0
+      },
+      {
+        "page": 59,
+        "lines": 227,
+        "reach": 0.899,
+        "ink": 0.885,
+        "gap": 0.014,
+        "imgarea": 0.244
+      },
+      {
+        "page": 60,
+        "lines": 345,
+        "reach": 0.968,
+        "ink": 0.958,
+        "gap": 0.01,
+        "imgarea": 0.227
+      },
+      {
+        "page": 61,
+        "lines": 579,
+        "reach": 0.909,
+        "ink": 0.9,
+        "gap": 0.009,
+        "imgarea": 0.0
+      },
+      {
+        "page": 62,
+        "lines": 56,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 63,
+        "lines": 407,
+        "reach": 0.989,
+        "ink": 0.98,
+        "gap": 0.009,
+        "imgarea": 0.276
+      },
+      {
+        "page": 64,
+        "lines": 35,
+        "reach": 0.96,
+        "ink": 0.96,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 65,
+        "lines": 278,
+        "reach": 0.547,
+        "ink": 0.533,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 66,
+        "lines": 243,
+        "reach": 0.886,
+        "ink": 0.886,
+        "gap": 0.0,
+        "imgarea": 0.348
+      },
+      {
+        "page": 67,
+        "lines": 414,
+        "reach": 0.963,
+        "ink": 0.942,
+        "gap": 0.021,
+        "imgarea": 0.249
+      },
+      {
+        "page": 68,
+        "lines": 227,
+        "reach": 0.913,
+        "ink": 0.904,
+        "gap": 0.009,
+        "imgarea": 0.336
+      },
+      {
+        "page": 69,
+        "lines": 92,
+        "reach": 1.0,
+        "ink": 1.0,
+        "gap": 0.0,
+        "imgarea": 0.58
+      },
+      {
+        "page": 70,
+        "lines": 635,
+        "reach": 0.8,
+        "ink": 0.782,
+        "gap": 0.018,
+        "imgarea": 0.0
+      },
+      {
+        "page": 71,
+        "lines": 59,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 72,
+        "lines": 492,
+        "reach": 0.607,
+        "ink": 0.607,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 73,
+        "lines": 81,
+        "reach": 0.994,
+        "ink": 0.994,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 74,
+        "lines": 92,
+        "reach": 0.954,
+        "ink": 0.925,
+        "gap": 0.029,
+        "imgarea": 0.403
+      },
+      {
+        "page": 75,
+        "lines": 345,
+        "reach": 0.496,
+        "ink": 0.492,
+        "gap": 0.004,
+        "imgarea": 0.0
+      },
+      {
+        "page": 76,
+        "lines": 34,
+        "reach": 0.952,
+        "ink": 0.952,
+        "gap": 0.0,
+        "imgarea": 0.529
+      },
+      {
+        "page": 77,
+        "lines": 38,
+        "reach": 0.945,
+        "ink": 0.945,
+        "gap": 0.0,
+        "imgarea": 0.525
+      },
+      {
+        "page": 78,
+        "lines": 411,
+        "reach": 1.0,
+        "ink": 0.969,
+        "gap": 0.031,
+        "imgarea": 0.0
+      },
+      {
+        "page": 79,
+        "lines": 756,
+        "reach": 1.0,
+        "ink": 1.0,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 80,
+        "lines": 482,
+        "reach": 0.636,
+        "ink": 0.633,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 81,
+        "lines": 36,
+        "reach": 0.693,
+        "ink": 0.693,
+        "gap": 0.0,
+        "imgarea": 0.229
+      },
+      {
+        "page": 82,
+        "lines": 214,
+        "reach": 0.845,
+        "ink": 0.845,
+        "gap": 0.0,
+        "imgarea": 0.323
+      },
+      {
+        "page": 83,
+        "lines": 186,
+        "reach": 0.563,
+        "ink": 0.563,
+        "gap": 0.0,
+        "imgarea": 0.219
+      },
+      {
+        "page": 84,
+        "lines": 270,
+        "reach": 0.842,
+        "ink": 0.842,
+        "gap": 0.0,
+        "imgarea": 0.356
+      },
+      {
+        "page": 85,
+        "lines": 277,
+        "reach": 0.809,
+        "ink": 0.791,
+        "gap": 0.018,
+        "imgarea": 0.236
+      },
+      {
+        "page": 86,
+        "lines": 45,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 87,
+        "lines": 118,
+        "reach": 0.171,
+        "ink": 0.171,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 88,
+        "lines": 50,
+        "reach": 0.96,
+        "ink": 0.96,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 89,
+        "lines": 500,
+        "reach": 0.974,
+        "ink": 0.961,
+        "gap": 0.013,
+        "imgarea": 0.18
+      },
+      {
+        "page": 90,
+        "lines": 605,
+        "reach": 0.977,
+        "ink": 0.959,
+        "gap": 0.018,
+        "imgarea": 0.0
+      },
+      {
+        "page": 91,
+        "lines": 616,
+        "reach": 0.709,
+        "ink": 0.705,
+        "gap": 0.004,
+        "imgarea": 0.0
+      },
+      {
+        "page": 92,
+        "lines": 57,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 93,
+        "lines": 313,
+        "reach": 0.979,
+        "ink": 0.968,
+        "gap": 0.011,
+        "imgarea": 0.373
+      },
+      {
+        "page": 94,
+        "lines": 167,
+        "reach": 0.376,
+        "ink": 0.36,
+        "gap": 0.016,
+        "imgarea": 0.0
+      },
+      {
+        "page": 95,
+        "lines": 35,
+        "reach": 0.915,
+        "ink": 0.915,
+        "gap": 0.0,
+        "imgarea": 0.563
+      },
+      {
+        "page": 96,
+        "lines": 479,
+        "reach": 0.763,
+        "ink": 0.754,
+        "gap": 0.009,
+        "imgarea": 0.0
+      },
+      {
+        "page": 97,
+        "lines": 31,
+        "reach": 0.96,
+        "ink": 0.96,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 98,
+        "lines": 484,
+        "reach": 0.763,
+        "ink": 0.763,
+        "gap": 0.0,
+        "imgarea": 0.143
+      },
+      {
+        "page": 99,
+        "lines": 388,
+        "reach": 0.975,
+        "ink": 0.975,
+        "gap": 0.0,
+        "imgarea": 0.293
+      },
+      {
+        "page": 100,
+        "lines": 544,
+        "reach": 0.955,
+        "ink": 0.944,
+        "gap": 0.011,
+        "imgarea": 0.0
+      },
+      {
+        "page": 101,
+        "lines": 697,
+        "reach": 0.974,
+        "ink": 0.974,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 102,
+        "lines": 791,
+        "reach": 0.987,
+        "ink": 0.984,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 103,
+        "lines": 320,
+        "reach": 0.73,
+        "ink": 0.73,
+        "gap": 0.0,
+        "imgarea": 0.127
+      },
+      {
+        "page": 104,
+        "lines": 76,
+        "reach": 0.884,
+        "ink": 0.884,
+        "gap": 0.0,
+        "imgarea": 0.312
+      },
+      {
+        "page": 105,
+        "lines": 646,
+        "reach": 1.0,
+        "ink": 0.986,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 106,
+        "lines": 699,
+        "reach": 0.717,
+        "ink": 0.714,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 107,
+        "lines": 53,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 108,
+        "lines": 370,
+        "reach": 0.77,
+        "ink": 0.76,
+        "gap": 0.01,
+        "imgarea": 0.253
+      },
+      {
+        "page": 109,
+        "lines": 51,
+        "reach": 0.994,
+        "ink": 0.994,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 110,
+        "lines": 272,
+        "reach": 0.366,
+        "ink": 0.366,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 111,
+        "lines": 38,
+        "reach": 0.96,
+        "ink": 0.96,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 112,
+        "lines": 35,
+        "reach": 0.96,
+        "ink": 0.96,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 113,
+        "lines": 30,
+        "reach": 0.95,
+        "ink": 0.95,
+        "gap": 0.0,
+        "imgarea": 0.543
+      },
+      {
+        "page": 114,
+        "lines": 531,
+        "reach": 0.948,
+        "ink": 0.934,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 115,
+        "lines": 433,
+        "reach": 0.562,
+        "ink": 0.559,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 116,
+        "lines": 64,
+        "reach": 0.997,
+        "ink": 0.997,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 117,
+        "lines": 560,
+        "reach": 0.707,
+        "ink": 0.701,
+        "gap": 0.006,
+        "imgarea": 0.0
+      },
+      {
+        "page": 118,
+        "lines": 45,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 119,
+        "lines": 377,
+        "reach": 0.946,
+        "ink": 0.935,
+        "gap": 0.011,
+        "imgarea": 0.269
+      },
+      {
+        "page": 120,
+        "lines": 87,
+        "reach": 0.08,
+        "ink": 0.08,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 121,
+        "lines": 55,
+        "reach": 0.983,
+        "ink": 0.983,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 122,
+        "lines": 711,
+        "reach": 0.971,
+        "ink": 0.962,
+        "gap": 0.009,
+        "imgarea": 0.0
+      },
+      {
+        "page": 123,
+        "lines": 166,
+        "reach": 0.911,
+        "ink": 0.908,
+        "gap": 0.003,
+        "imgarea": 0.419
+      },
+      {
+        "page": 124,
+        "lines": 48,
+        "reach": 0.859,
+        "ink": 0.814,
+        "gap": 0.045,
+        "imgarea": 0.492
+      },
+      {
+        "page": 125,
+        "lines": 46,
+        "reach": 0.994,
+        "ink": 0.994,
+        "gap": 0.0,
+        "imgarea": 0.593
+      },
+      {
+        "page": 126,
+        "lines": 848,
+        "reach": 0.989,
+        "ink": 0.986,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 127,
+        "lines": 516,
+        "reach": 0.706,
+        "ink": 0.701,
+        "gap": 0.005,
+        "imgarea": 0.0
+      },
+      {
+        "page": 128,
+        "lines": 54,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 129,
+        "lines": 417,
+        "reach": 0.988,
+        "ink": 0.976,
+        "gap": 0.012,
+        "imgarea": 0.258
+      },
+      {
+        "page": 130,
+        "lines": 46,
+        "reach": 0.703,
+        "ink": 0.703,
+        "gap": 0.0,
+        "imgarea": 0.409
+      },
+      {
+        "page": 131,
+        "lines": 385,
+        "reach": 0.965,
+        "ink": 0.965,
+        "gap": 0.0,
+        "imgarea": 0.357
+      },
+      {
+        "page": 132,
+        "lines": 98,
+        "reach": 0.143,
+        "ink": 0.143,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 133,
+        "lines": 48,
+        "reach": 0.885,
+        "ink": 0.885,
+        "gap": 0.0,
+        "imgarea": 0.528
+      },
+      {
+        "page": 134,
+        "lines": 18,
+        "reach": 0.942,
+        "ink": 0.942,
+        "gap": 0.0,
+        "imgarea": 0.568
+      },
+      {
+        "page": 135,
+        "lines": 539,
+        "reach": 1.0,
+        "ink": 0.986,
+        "gap": 0.014,
+        "imgarea": 0.0
+      },
+      {
+        "page": 136,
+        "lines": 234,
+        "reach": 0.761,
+        "ink": 0.751,
+        "gap": 0.01,
+        "imgarea": 0.306
+      },
+      {
+        "page": 137,
+        "lines": 81,
+        "reach": 1.0,
+        "ink": 0.984,
+        "gap": 0.016,
+        "imgarea": 0.311
+      },
+      {
+        "page": 138,
+        "lines": 195,
+        "reach": 0.825,
+        "ink": 0.804,
+        "gap": 0.021,
+        "imgarea": 0.273
+      },
+      {
+        "page": 139,
+        "lines": 511,
+        "reach": 0.709,
+        "ink": 0.706,
+        "gap": 0.003,
+        "imgarea": 0.0
+      },
+      {
+        "page": 140,
+        "lines": 40,
+        "reach": 0.708,
+        "ink": 0.574,
+        "gap": 0.134,
+        "imgarea": 0.0
+      },
+      {
+        "page": 141,
+        "lines": 625,
+        "reach": 1.0,
+        "ink": 0.979,
+        "gap": 0.021,
+        "imgarea": 0.0
+      },
+      {
+        "page": 142,
+        "lines": 401,
+        "reach": 0.749,
+        "ink": 0.733,
+        "gap": 0.016,
+        "imgarea": 0.0
+      },
+      {
+        "page": 143,
+        "lines": 555,
+        "reach": 1.0,
+        "ink": 1.0,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 144,
+        "lines": 692,
+        "reach": 0.933,
+        "ink": 0.933,
+        "gap": 0.0,
+        "imgarea": 0.0
+      },
+      {
+        "page": 145,
+        "lines": 736,
+        "reach": 0.92,
+        "ink": 0.916,
+        "gap": 0.004,
+        "imgarea": 0.0
+      },
+      {
+        "page": 146,
+        "lines": 83,
+        "reach": 1.0,
+        "ink": 0.135,
+        "gap": 0.865,
+        "imgarea": 0.0
+      }
+    ],
+    "chapter_starts": [
+      4,
+      7,
+      11,
+      18,
+      26,
+      33,
+      43,
+      50,
+      57,
+      62,
+      71,
+      86,
+      92,
+      107,
+      118,
+      128,
+      140
+    ],
+    "tails": [
+      6,
+      10,
+      17,
+      25,
+      32,
+      42,
+      49,
+      56,
+      61,
+      70,
+      85,
+      91,
+      106,
+      117,
+      127,
+      139,
+      146
+    ],
+    "structural_exempt": [
+      1,
+      2,
+      3,
+      4,
+      7,
+      11,
+      18,
+      26,
+      33,
+      43,
+      50,
+      57,
+      62,
+      71,
+      86,
+      92,
+      107,
+      118,
+      128,
+      140
+    ]
+  },
+  "final": "D:\\04_ByOrbit\\10_rnd_AI_byrobit\\guidebook\\final\\guidebook.pdf"
+}

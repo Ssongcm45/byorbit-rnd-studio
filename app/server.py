@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import config, db, engines, labeling, search as _search, thesaurus, tools
-from . import routes_collect, routes_experiment, routes_parse, routes_predict, routes_stats, routes_viz, routes_workbench
+from . import routes_collect, routes_experiment, routes_kg, routes_parse, routes_predict, routes_stats, routes_viz, routes_workbench
 from .collect import scheduler as collect_scheduler
 from .engines import claude_code, food_mcp
 from .ingest import parsers, pipeline, watcher
@@ -37,7 +37,7 @@ async def _lifespan(app: FastAPI):
     collect_scheduler.stop()
 
 
-app = FastAPI(title="ByOrbit R&D Studio (개인용)", version=config.APP_VERSION, lifespan=_lifespan)
+app = FastAPI(title="R&D Studio V0.5", version=config.APP_VERSION, lifespan=_lifespan)
 
 
 # ---------------------------------------------------------------- 접근 방어 (DNS 리바인딩·CSRF)
@@ -296,6 +296,38 @@ def inbox_scan():
     return {"results": watcher.scan_once()}
 
 
+class SamplesIn(BaseModel):
+    project: str | None = None
+
+
+@app.post("/api/samples")
+def add_samples(s: SamplesIn):
+    """예시 자료(가짜 수치의 논문 PDF·CoA·HWPX·메모)를 받은편지함에 만들고 바로 처리한다 — 시작 화면의 '예시 자료 넣기'.
+    `python -m app.cli samples`와 같은 파일. 이미 넣었으면 중복으로 건너뛴다."""
+    from .sample_files import make_samples
+    proj = (s.project or "").strip()
+    if any(c in proj for c in r'\/:*?"<>|') or proj in (".", ".."):
+        raise HTTPException(400, r'프로젝트 이름에 \ / : * ? " < > | 는 쓸 수 없습니다')
+    if proj:
+        db.ensure_project(proj)
+    tmp = config.path("inbox", ".samples")  # 점(.) 폴더는 받은편지함 감시가 건너뛴다
+    shutil.rmtree(tmp, ignore_errors=True)
+    files = make_samples(tmp)
+    have = {r["file_name"] for r in db.rows("SELECT file_name FROM document")}
+    dest = config.path("inbox", proj) if proj else config.path("inbox")
+    dest.mkdir(parents=True, exist_ok=True)
+    new, skipped = [], []
+    for p in files.values():  # 만들 때마다 바이트가 달라 해시 중복으로 안 걸리므로 파일 이름으로 한 번만 넣는다
+        if p.name in have:
+            skipped.append(p.name)
+        else:
+            shutil.move(str(p), str(dest / p.name))
+            new.append(p.name)
+    shutil.rmtree(tmp, ignore_errors=True)
+    results = watcher.scan_once() if new else []
+    return {"files": new, "skipped": skipped, "results": results}
+
+
 # ---------------------------------------------------------------- 검색·개념
 
 @app.get("/api/search")
@@ -412,6 +444,7 @@ def annotations(status: str = "pending", project: str | None = None, limit: int 
 
 class Review(BaseModel):
     status: str  # accepted | rejected | pending·auto(되돌리기)
+    learn: bool = False  # 거절한 사전 라벨을 부정 사례로 배운다(다음부터 같은 표기 건너뜀). 되돌리기에 주면 배운 것도 끈다
 
 
 def _doc_byproduct(t, doc_id: str) -> str | None:
@@ -428,9 +461,9 @@ def _doc_byproduct(t, doc_id: str) -> str | None:
 
 @app.post("/api/annotations/{ann_id}")
 def review(ann_id: str, r: Review):
-    """라벨 검토 — 작업대와 같은 함수(labeling.review_annotation). 이 화면에서는 부정 사례를 배우지 않는다."""
+    """라벨 검토 — 작업대와 같은 함수(labeling.review_annotation). learn=True면 거절한 사전 라벨을 부정 사례로 배운다(기본 끔)."""
     try:
-        return labeling.review_annotation(ann_id, r.status, learn=False)
+        return labeling.review_annotation(ann_id, r.status, learn=r.learn)
     except KeyError:
         raise HTTPException(404, "라벨 없음")
     except labeling.ManualError as e:
@@ -441,13 +474,15 @@ def review(ann_id: str, r: Review):
 
 @app.get("/api/measurements")
 def measurements(byproduct: str = "", target: str = "", project: str = ""):
-    # 내 PC 화면에서는 시료 식별 정보도 보여준다(AI에 넘길 때만 가린다)
+    # 내 PC 화면에서는 시료 식별 정보도 보여준다(AI에 넘길 때만 가린다).
+    # doc_id·chunk_id(추출값은 승인한 라벨의 청크)로 화면에서 근거 자료를 바로 연다.
     rows = tools.measurements_query(byproduct or None, target or None, project or None, limit=500, apply_rule=False)["rows"]
     ids = [r["meas_id"] for r in rows]
     if ids:
         extra = {r["meas_id"]: r for r in db.rows(
-            "SELECT m.meas_id, s.lot_no, s.supplier, s.sample_code, s.collected_at, d.file_name FROM measurement m "
+            "SELECT m.meas_id, s.lot_no, s.supplier, s.sample_code, s.collected_at, d.file_name, a.chunk_id FROM measurement m "
             "LEFT JOIN sample s ON s.sample_id=m.sample_id LEFT JOIN document d ON d.doc_id=m.doc_id "
+            "LEFT JOIN annotation a ON a.ann_id=m.ann_id "
             "WHERE m.meas_id IN (%s)" % ",".join("?" * len(ids)), ids)}
         for r in rows:
             r.update({k: v for k, v in extra.get(r["meas_id"], {}).items() if k != "meas_id"})
@@ -564,4 +599,5 @@ app.include_router(routes_parse.router)  # /api/parse — 파서 선택·다시 
 app.include_router(routes_workbench.router)  # /api/wb — 문서 작업대(청크 검사·고치기·규칙·사람 라벨·배운 것)
 app.include_router(routes_stats.router)  # /api/stats — 통계 분석(회귀·t검정·논문용 표·그림)
 app.include_router(routes_predict.router)  # /api/viz/predict — 건조 조건 → 예상 결과(근거 포함)
+app.include_router(routes_kg.router)  # /api/kg — 지식그래프(개념·관계·언급 자료·측정값)
 app.mount("/static", StaticFiles(directory=str(STATIC)), name="static")

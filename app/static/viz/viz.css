@@ -1,4 +1,4 @@
-/* ByOrbit 시각화 — index.html의 CSS 변수를 그대로 쓰고, 없을 때(단독 페이지)는 같은 값으로 대체한다 */
+/* R&D Studio V0.5 시각화 — index.html의 CSS 변수를 그대로 쓰고, 없을 때(단독 페이지)는 같은 값으로 대체한다 */
 .bv{
   --v-bg:var(--bg,#eceff3); --v-surface:var(--surface,#fff); --v-surface-2:var(--surface-2,#f4f6f9);
   --v-ink:var(--ink,#131b26); --v-muted:var(--muted,#586577); --v-line:var(--line,#d3d9e1);

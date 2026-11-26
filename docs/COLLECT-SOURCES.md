@@ -4,7 +4,7 @@
 
 ## 0. 공통 원칙
 
-- **PC 밖으로 나가는 것**: 검색어와 그 출처가 요구하는 API 키뿐이다. 자료함 문서·CoA·시료·실험 데이터는 어떤 출처에도 보내지 않는다. User-Agent는 `ByOrbit-RD-Studio/0.3 (local research tool)`이고 이메일·이름 같은 개인 정보는 넣지 않는다.
+- **PC 밖으로 나가는 것**: 검색어와 그 출처가 요구하는 API 키뿐이다. 자료함 문서·CoA·시료·실험 데이터는 어떤 출처에도 보내지 않는다. User-Agent는 `RD-Studio/0.5 (local research tool)`이고 이메일·이름 같은 개인 정보는 넣지 않는다.
 - **API 키는 환경 변수로만** 받는다. 설정 파일·DB·로그에 쓰지 않는다. 오류 메시지에 키가 섞일 수 있는 곳(요청 주소를 되돌려 주는 서버 등)은 `***`로 가린다. 원래 예외를 잇지 않으므로(`raise … from None`) 추적 정보에도 키가 붙은 주소가 남지 않는다.
 - **키가 없으면** 출처 상태가 `ready: false`이고 빠진 환경 변수 이름과 발급 방법(아래 각 절)을 보여 준다. 그 상태에서 검색을 부르면 `MissingKey`가 난다.
 - **원문 PDF는 오픈 액세스만** `pdf_url`로 넘긴다. 국내 API 대부분은 무료 원문 직접 주소를 주지 않으므로 서지·초록·랜딩 주소만 수집하고, 원문은 해당 사이트에서 직접 연다.
@@ -106,7 +106,7 @@
 
 | 규칙 | 내용 |
 |---|---|
-| robots.txt | 호스트마다 `robots.txt`를 받아(하루 캐시) `urllib.robotparser`로 읽고, RFC 9309의 **가장 긴 규칙 우선**(`*`, `$` 지원)으로 판정한다. 우리 이름은 `ByOrbit-RD-Studio`. 막힌 주소는 건너뛰고 이유를 결과에 남긴다. |
+| robots.txt | 호스트마다 `robots.txt`를 받아(하루 캐시) `urllib.robotparser`로 읽고, RFC 9309의 **가장 긴 규칙 우선**(`*`, `$` 지원)으로 판정한다. 우리 이름은 `RD-Studio`. 막힌 주소는 건너뛰고 이유를 결과에 남긴다. |
 | robots.txt를 못 받을 때 | 404/410 → 없음으로 보고 일반 규칙만 적용. 401·403·5xx·연결 실패 → 그 호스트 전체를 건너뜀(보수적). |
 | 간격 | 호스트당 **최소 3초**. 사이트 `interval_s`나 robots `Crawl-delay`가 더 길면 그것을 따른다. 기본 사이트는 5초. |
 | 양 | 사이트 한 번 훑을 때 기본 10쪽(최대 30쪽), 깊이 1(최대 2). 사이트 검색 주소(`search_urls`)가 있으면 그 결과 목록만 보고, 검색어가 맞는 항목의 상세 페이지만 연다. |
@@ -156,12 +156,12 @@
   - http/https가 아닌 주소(`file:///C:/…`, `data:`, `javascript:`, `chrome:`, `about:` 등)로는 **이동하지 않는다**. 페이지 안의 모든 요청을 가로채(route) http/https가 아니면 끊는다 — 웹 페이지가 이 PC의 파일을 읽게 하지 못한다(로컬 서버로 실제 확인: `file://` fetch·이동 모두 막힘).
   - 이미지·글꼴·영상은 받지 않는다. 다운로드·서비스 워커는 끈다. 크롤 한 번마다 새 컨텍스트(쿠키·저장소 없음)를 열고 끝나면 닫는다. 동시에 띄우는 브라우저는 2개까지.
   - 리디렉션 뒤 주소가 다른 사이트이거나 robots.txt가 막은 곳이면 버린다. 이동마다 direct와 같은 호스트별 간격(≥3초·Crawl-delay)을 둔다.
-  - User-Agent는 일반 Chrome 문자열 + `ByOrbit-RD-Studio/0.3 (local research tool)`(개인 정보 없음).
+  - User-Agent는 일반 Chrome 문자열 + `RD-Studio/0.5 (local research tool)`(개인 정보 없음).
 - 크롤러 백그라운드 스레드에서 sync API를 그대로 쓴다(Windows에서 주 스레드가 아닌 스레드에서도 동작 확인).
 
 #### 왜 Playwright MCP가 아닌가
 
-Playwright MCP는 **AI가 브라우저를 직접 조종**하는 통로다. 앱 안의 Claude에 브라우저 MCP를 붙이면 AI가 `file://` 주소로 이 PC의 파일(기밀 자료 포함)을 열어 읽을 수 있어, 앱이 AI에 보내기 전에 하는 기밀 가림(masking)을 우회하게 된다. 그래서 브라우저는 **크롤러 코드만** 정해진 규칙(http/https만, 사이트 허용 경로만, robots·간격 준수)으로 쓰고, AI에게는 도구로 주지 않는다.
+Playwright MCP(`@playwright/mcp`, Apache-2.0)는 **AI가 브라우저를 직접 조종**하는 통로다. 최신 버전은 기본으로 `file://` 이동을 막지만 `--allow-unrestricted-file-access` 옵션으로 풀 수 있고, 공식 문서도 이것이 보안 경계가 아니라고 밝힌다(2026-11-26 확인). 앱 안의 Claude에 브라우저를 주면 설정 하나로 이 PC의 파일(기밀 자료 포함)을 읽는 길이 생겨, 앱이 AI에 보내기 전에 하는 기밀 가림(masking)을 우회할 수 있다. 그래서 브라우저는 **크롤러 코드만** 정해진 규칙(http/https만, 사이트 허용 경로만, robots·간격 준수)으로 쓰고, AI에게는 도구로 주지 않는다.
 
 #### Apify 방식 (`apify`) — 유료, 선택
 
@@ -221,4 +221,4 @@ Playwright MCP는 **AI가 브라우저를 직접 조종**하는 통로다. 앱 �
 - NTIS 매뉴얼의 매개변수 이름이 표와 예제에서 달라 예제 이름을 썼다. ScienceON의 Base64 종류(URL-safe/표준)는 문서와 샘플이 달라 둘 다 시도한다. KIPRIS 랜딩 주소(DOI 10.8080)는 추정이다.
 - 기본(direct) 방식은 자바스크립트로 그리는 목록을 읽지 못한다 → 사이트의 가져오기 방식을 `browser`로(`install-browser.bat`). 어떤 방식이든 POST로만 열리는 상세와 로그인 페이지는 읽지 않는다(GET으로 열리는 상세는 `link_template`로 처리).
 - Apify 방식은 실제 토큰으로 확인하지 못했다(공식 문서·액터 입력 스키마와 가짜 응답으로만 시험). Crawl-delay를 지원하지 않는다.
-- 문자 인코딩은 응답 헤더(charset)를 따른다. 헤더 없이 EUC-KR로 주는 사이트는 글자가 깨질 수 있다(기본 사이트는 모두 UTF-8).
+- 문자 인코딩: 응답 헤더(Content-Type의 charset)를 먼저 따르고, 헤더에 없으면 HTML 앞 4 KB의 `<meta charset=…>`·`<meta http-equiv="Content-Type" content="…; charset=…">`를 읽어 쓴다(EUC-KR 사이트 대비, `app/collect/http.py`의 `get_text`). 둘 다 없으면 UTF-8로 읽는다 — 헤더도 meta도 없이 EUC-KR로 주는 페이지만 글자가 깨질 수 있다(기본 사이트는 모두 UTF-8). 모르는 charset 이름이면 UTF-8로 대신 읽는다.

@@ -150,7 +150,16 @@ def add_alt_label(concept_id: str, label: str) -> str | None:
         db.log_change(t, "concept_label", lid, None,
                       {"concept_id": concept_id, "label": label, "label_type": "alt", "origin": "mine", "learned": True})
     invalidate()
+    _sync_mine_ttl()
     return lid
+
+
+def _sync_mine_ttl() -> None:
+    """배운 동의어를 mine.ttl(SKOS altLabel)에도 반영한다. 파일을 못 써도 DB 학습은 그대로 둔다."""
+    try:
+        db.regenerate_mine_ttl()
+    except OSError:
+        pass
 
 
 def find_mentions(text: str, min_len: int = 2, negatives: bool = True) -> list[dict]:

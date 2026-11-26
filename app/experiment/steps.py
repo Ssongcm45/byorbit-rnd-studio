@@ -157,6 +157,45 @@ def _num(key, label, unit, lo, hi, default, step=1, optional=False, help=None): 
 PACKAGES = ["방습(알루미늄)", "일반 PE", "개방"]
 THICK_SOURCES = ["층 두께", "분쇄 입자 크기"]
 
+# 범주 조건(기록·통계 분석용). 목록에서 고르거나 직접 입력(free) — 모델 계산에는 쓰지 않는다(근거 없음).
+ACIDS = ["구연산", "염산", "질산", "황산", "옥살산", "초산", "젖산", "사과산", "없음"]
+SOLVENTS = ["에탄올 수용액", "물", "에탄올", "메탄올", "아세톤 수용액", "산 수용액"]
+CHOICE_ALIASES = {  # 비교용 열쇠(소문자·공백 제거) → 목록 이름
+    "acid": {"citric": "구연산", "citricacid": "구연산", "시트르산": "구연산", "hcl": "염산", "hydrochloric": "염산",
+             "hydrochloricacid": "염산", "염화수소산": "염산", "nitric": "질산", "nitricacid": "질산", "hno3": "질산",
+             "sulfuric": "황산", "sulfuricacid": "황산", "sulphuric": "황산", "h2so4": "황산", "oxalic": "옥살산",
+             "oxalicacid": "옥살산", "acetic": "초산", "aceticacid": "초산", "아세트산": "초산", "lactic": "젖산",
+             "lacticacid": "젖산", "malic": "사과산", "malicacid": "사과산", "none": "없음", "-": "없음", "무": "없음"},
+    "solvent": {"water": "물", "h2o": "물", "증류수": "물", "정제수": "물", "탈이온수": "물", "ethanol": "에탄올",
+                "etoh": "에탄올", "주정": "에탄올", "methanol": "메탄올", "meoh": "메탄올", "aqueousethanol": "에탄올 수용액",
+                "에탄올수용액": "에탄올 수용액", "함수에탄올": "에탄올 수용액", "아세톤수용액": "아세톤 수용액",
+                "aqueousacetone": "아세톤 수용액", "산수용액": "산 수용액", "acidicwater": "산 수용액", "dilutedacid": "산 수용액"},
+}
+
+
+def _choice(key, label, label_en, options, help_):  # noqa: A002
+    return {"key": key, "label": label, "label_en": label_en, "type": "select", "free": True, "optional": True,
+            "default": None, "options": options, "recorded": True, "help": help_}
+
+
+def canon_choice(spec: dict, raw) -> str | None:
+    """범주 값 정리: 목록 이름 그대로 → 별칭(영문·화학식) → 직접 입력(앞뒤 공백 제거, 40자). 빈칸은 None."""
+    if raw is None:
+        return None
+    v = " ".join(str(raw).split())
+    if not v:
+        return None
+    if v in (spec.get("options") or []):
+        return v
+    k = v.lower().replace(" ", "").replace("_", "").replace("-", "") or v
+    hit = CHOICE_ALIASES.get(spec.get("key"), {}).get(k)
+    if hit:
+        return hit
+    for o in spec.get("options") or []:
+        if o.replace(" ", "") == v.replace(" ", ""):
+            return o
+    return v[:40]
+
 STEP_TYPES: dict[str, dict] = {
     "feed": {"label": "원료 투입", "group": "원료", "desc": "원료의 양·수분·성분. 비워 두면 내 CoA 실측 평균 → 가정 순으로 채운다.",
              "params": [_num("mass_kg", "투입량", "kg 습량", 0.001, 1e6, 100, 1),
@@ -185,7 +224,11 @@ STEP_TYPES: dict[str, dict] = {
                 "params": [_num("ethanol_pct", "에탄올 농도", "% v/v", 0, 100, 60, 1),
                            _num("temp_c", "추출 온도", "℃", 4, 90, 50, 1),
                            _num("time_min", "추출 시간", "min", 1, 1440, 60, 1),
-                           _num("ratio_ml_g", "용매 비율", "mL/g", 1, 200, 20, 1)]},
+                           _num("ratio_ml_g", "용매 비율", "mL/g", 1, 200, 20, 1),
+                           _choice("solvent", "용매 종류", "Solvent", SOLVENTS,
+                                   "계산에 쓰지 않음(기록·통계 분석용). 모델은 에탄올 수용액만 계산한다 — 목록에서 고르거나 직접 입력"),
+                           _choice("acid", "산 종류", "Acid type", ACIDS,
+                                   "계산에 쓰지 않음(기록·통계 분석용). 산의 효과는 근거가 없어 예측에 넣지 않는다 — 목록에서 고르거나 직접 입력")]},
     "store": {"label": "포장·저장", "group": "저장", "desc": "포장해 보관한다. 수분이 저장 습도의 평형으로 다가가고 TPC가 천천히 준다(가정 속도).",
               "params": [{"key": "package", "label": "포장", "type": "select", "options": PACKAGES, "default": "방습(알루미늄)"},
                          _num("days", "저장 기간", "일", 0, 1095, 90, 1),
@@ -237,6 +280,9 @@ def clean_params(step_type: str, params: dict | None, label: str = "") -> dict:
         v = raw.get(s["key"])
         if s.get("type") == "select":
             v = s["default"] if v in (None, "") else v
+            if s.get("free"):
+                out[s["key"]] = canon_choice(s, v)
+                continue
             if v not in s["options"]:
                 raise StepError(f"{where}'{s['label']}' 값 '{v}'는 고를 수 없습니다. {', '.join(s['options'])} 중 하나를 고르세요.")
             out[s["key"]] = v
@@ -603,6 +649,15 @@ def sim_extract(s_in, p, ctx) -> dict:
     if ratio < sv("e_min_ratio"):
         warns.append({"kind": "info", "text": f"용매 비율 {ratio:g} mL/g가 {sv('e_min_ratio'):g} mL/g보다 적어 포화로 수율이 더 낮을 수 있습니다(계산에 반영 안 함)."})
     warns.append({"kind": "info", "text": "추출 계수는 모두 가정입니다. 내 추출 실측(TPC 추출 수율)을 넣고 비교하세요."})
+    solvent, acid = p.get("solvent"), p.get("acid")
+    if solvent == "물" and c > 0:
+        warns.append({"kind": "info", "text": f"용매 종류가 '물'인데 에탄올 농도가 {c:g}%입니다. 물 추출이면 에탄올 농도를 0으로 두세요(계산은 에탄올 농도로 함)."})
+    elif solvent and solvent not in ("에탄올 수용액", "에탄올", "물"):
+        warns.append({"kind": "info", "text": f"용매 종류 '{solvent}'는 기록만 합니다 — 이 추출 모델은 에탄올 수용액(에탄올 농도)만 계산하므로 "
+                                              "이 예측을 그 용매의 결과로 보지 마세요."})
+    if acid and acid != "없음":
+        warns.append({"kind": "info", "text": f"산 종류 '{acid}'는 기록·통계 분석용입니다 — 산에 따른 수율 차이를 뒷받침하는 근거(문헌·내 실측 보정)가 "
+                                              "없어 예측에는 넣지 않습니다. 산별 차이는 통계 분석(회귀·t검정)으로 보세요."})
     k = P.arrhenius(sv("e_k_ref"), sv("e_ea") * 1000, t, 50.0)
     frac_eq = 1 - math.exp(-k * tm)
     sol = sv("e_solids") / 100 * frac_eq * math.exp(-0.5 * ((c - sv("e_etoh_opt")) / sv("e_etoh_width")) ** 2)

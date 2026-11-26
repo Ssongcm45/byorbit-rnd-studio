@@ -127,7 +127,7 @@ def test_robots_longest_match_and_agent_groups():
     assert not rb2.can_fetch("https://a.kr/fileDownLoad.do?x=1")
     only_google = crawler.Robots("User-agent: Googlebot\nAllow: /\n\nUser-agent: *\nDisallow: /\n")
     assert not only_google.can_fetch("https://a.kr/anything")
-    ours = crawler.Robots("User-agent: *\nDisallow: /\n\nUser-agent: ByOrbit-RD-Studio\nAllow: /reports/\n"
+    ours = crawler.Robots("User-agent: *\nDisallow: /\n\nUser-agent: RD-Studio\nAllow: /reports/\n"
                           "Disallow: /\n")
     assert ours.can_fetch("https://a.kr/reports/1") and not ours.can_fetch("https://a.kr/x")
     wild = crawler.Robots("User-agent: *\nDisallow: /*.hwp$\nDisallow: /tmp*\n")

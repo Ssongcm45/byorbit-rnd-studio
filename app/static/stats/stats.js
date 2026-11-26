@@ -78,7 +78,7 @@ export function mountStats(el, opts = {}) {
       if (!st.expId || !exps.some(x => x.exp_id === st.expId)) st.expId = exps[0].exp_id;
       body.innerHTML = `<label class="small">실험 <select class="inp sx-exp-sel">${exps.map(x => `<option value="${x.exp_id}"${x.exp_id === st.expId ? ' selected' : ''}>${esc(x.name)} — 런 ${x.n_runs}${x.confidentiality === '기밀' ? ' (기밀)' : ''}</option>`).join('')}</select></label>
         ${censoredSel()}
-        <p class="small muted sx-hint">산 종류처럼 실험 조건 칸에 없는 범주는 런 비고에 <code>산=구연산</code>처럼 적으면 범주 변수로 읽습니다.</p>`;
+        <p class="small muted sx-hint">산 종류·용매 종류는 실험 데이터 탭의 조건 칸(추출 · 산 종류)에 넣으면 범주 변수가 됩니다. 예전처럼 런 비고에 <code>산=구연산</code>으로 적은 것도 읽습니다.</p>`;
       body.querySelector('.sx-exp-sel').onchange = e => { st.expId = e.target.value; st.res = null; loadPreview() };
     } else if (st.kind === 'upload') {
       body.innerHTML = `<label class="btn sm" style="cursor:pointer">파일 고르기<input type="file" class="sr-only sx-file" accept=".csv,.tsv,.txt,.xlsx,.xlsm"></label>
@@ -119,7 +119,9 @@ export function mountStats(el, opts = {}) {
     const prev = st.spec;
     if (!prev || !names.has(prev.outcome)) return {...sug, categorical: [...(sug.categorical || [])]};
     return {...prev, continuous: prev.continuous.filter(c => names.has(c)), categorical: prev.categorical.filter(c => names.has(c.name)),
-      group: names.has(prev.group) ? prev.group : sug.group};
+      group: names.has(prev.group) ? prev.group : sug.group,
+      interactions: (prev.interactions || []).filter(p => p.every(v => names.has(v))), quadratic: (prev.quadratic || []).filter(c => names.has(c)),
+      xvar: names.has(prev.xvar) ? prev.xvar : null};
   }
 
   function renderPreview() {
@@ -177,12 +179,31 @@ export function mountStats(el, opts = {}) {
       <label><span>집단 비교(t검정) 변수</span><select class="inp sx-grp"><option value="">하지 않음</option>${cats.map(v => `<option value="${v.name}"${v.name === sp.group ? ' selected' : ''}>${esc(v.label_ko)} (${(v.levels || []).length}수준)</option>`).join('')}</select></label>
       <label><span>t검정 종류</span><select class="inp sx-test">${[['welch', 'Welch (기본 — 등분산 가정 없음)'], ['student', 'Student (등분산 가정)'], ['auto', 'Levene 보고 자동']].map(([k, l]) => `<option value="${k}"${(sp.test || st.test) === k ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
       <label><span>유의수준 α</span><input class="inp sx-alpha" type="number" min="0.001" max="0.2" step="0.01" value="${sp.alpha ?? st.alpha}"></label>
+      ${termsHtml()}
       </div>
       <p class="small muted sx-formula"></p>`;
+    function termsHtml() {
+      // 선택 항: 기본은 꺼짐(주효과만). 설명 변수 둘씩 짝 → 교호작용, 연속 변수 → 2차항(값 3개 이상 필요). 그림 1 가로축.
+      const preds = [...sp.continuous, ...sp.categorical.map(c => c.name)];
+      const nm = n => esc(cb.find(v => v.name === n)?.label_ko || n);
+      sp.interactions = (sp.interactions || []).filter(p => p.every(v => preds.includes(v)));
+      sp.quadratic = (sp.quadratic || []).filter(c => sp.continuous.includes(c));
+      if (sp.xvar && !sp.continuous.includes(sp.xvar)) sp.xvar = null;
+      const pairs = [];
+      for (let i = 0; i < preds.length; i++) for (let j = i + 1; j < preds.length; j++) pairs.push([preds[i], preds[j]]);
+      const has = p => sp.interactions.some(q => (q[0] === p[0] && q[1] === p[1]) || (q[0] === p[1] && q[1] === p[0]));
+      const xdef = sp.continuous.find(c => c.startsWith('temp')) || sp.continuous[0];
+      return `<fieldset class="sx-terms"><legend>모형 항 (선택 — 기본은 주효과만)</legend><div class="chips">
+          ${pairs.map(p => `<label class="chip"><input type="checkbox" class="sx-ix" value="${esc(p.join(':'))}"${has(p) ? ' checked' : ''}> ${nm(p[0])} × ${nm(p[1])}</label>`).join('')}
+          ${sp.continuous.map(c => `<label class="chip"><input type="checkbox" class="sx-sq" value="${esc(c)}"${sp.quadratic.includes(c) ? ' checked' : ''}> ${nm(c)}² <span class="muted">2차항</span></label>`).join('')}
+          ${!pairs.length && !sp.continuous.length ? '<span class="small muted">설명 변수를 두 개 이상 고르면 교호작용을, 연속 변수를 고르면 2차항을 넣을 수 있습니다.</span>' : ''}</div>
+          <p class="small muted" style="margin:4px 0 0">곱항·2차항은 연속 변수를 표본 평균으로 중심화해 만듭니다. 계수가 늘어나므로 런 수(계수당 10개 이상 권장)를 확인하세요.</p></fieldset>
+        <label><span>그림 1 가로축</span><select class="inp sx-xvar"${sp.continuous.length ? '' : ' disabled'}>${sp.continuous.map(c => `<option value="${esc(c)}"${(sp.xvar || xdef) === c ? ' selected' : ''}>${nm(c)}</option>`).join('') || '<option value="">연속 설명 변수 없음</option>'}</select></label>`;
+    }
     const R = $('.sx-roles');
     const sync = () => {
       sp.outcome = R.querySelector('.sx-out').value;
-      sp.continuous = [...R.querySelectorAll('fieldset input:checked')].map(x => x.value).filter(x => x !== sp.outcome);
+      sp.continuous = [...R.querySelectorAll('fieldset:not(.sx-terms) input:checked')].map(x => x.value).filter(x => x !== sp.outcome);
       const cat = R.querySelector('.sx-cat').value;
       const ref = R.querySelector('.sx-ref').value;
       const cv = cats.find(v => v.name === cat);
@@ -190,16 +211,27 @@ export function mountStats(el, opts = {}) {
       sp.group = R.querySelector('.sx-grp').value || null;
       sp.test = R.querySelector('.sx-test').value;
       sp.alpha = +R.querySelector('.sx-alpha').value || 0.05;
+      sp.interactions = [...R.querySelectorAll('.sx-ix:checked')].map(x => x.value.split(':'));
+      sp.quadratic = [...R.querySelectorAll('.sx-sq:checked')].map(x => x.value);
+      sp.xvar = R.querySelector('.sx-xvar')?.value || null;
       formula();
     };
     const formula = () => {
-      const rhs = [...sp.continuous, ...sp.categorical.map(c => `${c.name} (기준 = ${c.reference})`)];
+      const rhs = [...sp.continuous, ...sp.categorical.map(c => `${c.name} (기준 = ${c.reference})`),
+        ...(sp.quadratic || []).map(c => `${c}²`), ...(sp.interactions || []).map(p => p.join(' × '))];
       R.querySelector('.sx-formula').textContent = `모형: ${sp.outcome} ~ ${rhs.join(' + ') || '1'}` + (sp.group ? ` · 집단 비교: ${sp.group}` : '');
     };
     R.querySelectorAll('select, input').forEach(x => x.addEventListener('change', () => {
       const before = R.querySelector('.sx-cat').value;
       sync();
-      if (x.classList.contains('sx-out') || x.classList.contains('sx-cat')) { if (x.classList.contains('sx-cat') && before && !sp.group) sp.group = before; renderRoles() }
+      const structural = x.classList.contains('sx-out') || x.classList.contains('sx-cat') || x.closest('fieldset:not(.sx-terms)');
+      if (structural) {
+        if (x.classList.contains('sx-cat') && before && !sp.group) sp.group = before;
+        const key = x.className + '|' + x.value;
+        renderRoles();
+        // 다시 그린 뒤에도 키보드 초점을 같은 칸에 둔다
+        [...$('.sx-roles').querySelectorAll('select, input')].find(y => y.className + '|' + y.value === key || (x.tagName === 'SELECT' && y.className === x.className))?.focus();
+      }
     }));
     formula();
   }
@@ -243,9 +275,9 @@ export function mountStats(el, opts = {}) {
     const dropped = r.dataset.dropped || [];
     const checks = r.assumptions.map(c => `<article class="sx-check s-${c.status}">
         <header><span class="pill ${STATUS[c.status][1]}">${en ? STATUS_EN[c.status] : STATUS[c.status][0]}</span><b>${esc(en ? c.name_en : c.name_ko)}</b></header>
-        <p class="sx-stat"><span class="muted">${esc(c.test)}</span><br>${esc(c.stat)}</p>
+        <p class="sx-stat"><span class="muted">${esc(en ? c.test_en || c.test : c.test)}</span><br>${esc(en ? c.stat_en || c.stat : c.stat)}</p>
         <p class="small">${esc(en ? c.text_en : c.text_ko)}</p>
-        <p class="small muted">기준: ${esc(c.threshold)}</p></article>`).join('');
+        <p class="small muted">${en ? 'Criterion' : '기준'}: ${esc(en ? c.threshold_en || c.threshold : c.threshold)}</p></article>`).join('');
     const sentences = r.interpretation[st.lang];
     const mva = r.marginal_vs_adjusted;
     $('.sx-res').innerHTML = `

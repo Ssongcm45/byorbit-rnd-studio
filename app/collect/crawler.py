@@ -53,7 +53,7 @@ from .base import Item, clean_text
 log = logging.getLogger(__name__)
 
 DEFAULTS_FILE = Path(__file__).with_name("crawl_defaults.json")
-ROBOT_AGENT = "ByOrbit-RD-Studio"          # http.USER_AGENT의 제품 이름(robots.txt 판정용)
+ROBOT_AGENT = "RD-Studio"          # http.USER_AGENT의 제품 이름(robots.txt 판정용)
 MIN_INTERVAL_S = 3.0
 MAX_INTERVAL_S = 60.0
 DEFAULT_MAX_PAGES = 10

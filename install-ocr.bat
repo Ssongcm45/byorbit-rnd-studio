@@ -9,7 +9,7 @@ exit /b 1
 
 :venv_ok
 echo.
-echo === ByOrbit R^&D Studio - 로컬 OCR(RapidOCR) 설치 ===
+echo === R^&D Studio V0.5 - 로컬 OCR(RapidOCR) 설치 ===
 echo 스캔 PDF와 CoA 사진(.png/.jpg/.jpeg/.tif/.tiff)을 이 PC에서만 글자로 바꿉니다. 이미지는 PC 밖으로 나가지 않습니다.
 echo.
 echo [1/2] 패키지 설치 (requirements-ocr.txt: rapidocr, onnxruntime)...

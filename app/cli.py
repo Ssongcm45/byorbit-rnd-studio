@@ -17,7 +17,7 @@ def _print(obj):
 def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    ap = argparse.ArgumentParser(prog="byorbit", description="ByOrbit R&D Studio 개인용")
+    ap = argparse.ArgumentParser(prog="byorbit", description="R&D Studio V0.5")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("init", help="데이터 폴더·DB·시드·MCP 설정 만들기")
     s = sub.add_parser("serve", help="로컬 웹앱 실행")
@@ -54,7 +54,7 @@ def main(argv=None):
         app.state.no_watch = args.no_watch
         port = args.port or int(config.load_settings().get("port", 8765))
         url = f"http://127.0.0.1:{port}/"
-        print(f"ByOrbit R&D Studio — {url}  (데이터: {config.data_home()})  끝내려면 Ctrl+C")
+        print(f"R&D Studio V0.5 — {url}  (데이터: {config.data_home()})  끝내려면 Ctrl+C")
         if not args.no_browser:
             import threading
             threading.Timer(1.5, lambda: webbrowser.open(url)).start()

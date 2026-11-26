@@ -10,6 +10,8 @@ CDN을 쓰지 않고 이 폴더의 파일을 그대로 씁니다. 버전을 바�
 | `three/three.module.min.js` | three.js r170 (0.170.0) | MIT (`three/LICENSE`) | https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js | `08fd7545d13d2c7fb65ab691530a802dafefd638596501854f267d0fb13c39e7` |
 | `three/OrbitControls.js` | three.js r170 examples | MIT | https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js | (수정본 — 아래 참고) |
 | `three/LICENSE` | | | https://cdn.jsdelivr.net/npm/three@0.170.0/LICENSE | |
+| `cytoscape/cytoscape.min.js` | cytoscape.js 3.30.2 (받은 날 2026-11-26) | MIT (`cytoscape/LICENSE`) | https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/dist/cytoscape.min.js | `83e8c54a6bec655bfd81df07df605649c268af69aeca67a5ea2da54ea42dac81` |
+| `cytoscape/LICENSE` | | | https://cdn.jsdelivr.net/npm/cytoscape@3.30.2/LICENSE | |
 
 ## 수정 사항
 
@@ -20,3 +22,4 @@ CDN을 쓰지 않고 이 폴더의 파일을 그대로 씁니다. 버전을 바�
 
 - `app/static/viz/molecule.js` — 3Dmol.js(분자 3D 보기). `<script>`로 필요할 때만 불러옵니다.
 - `app/static/viz/drying.js` — three.js + OrbitControls(건조 입자 3D 단면). 필요할 때만 `import()`합니다.
+- `app/static/kg/kg.js` — cytoscape.js(개념 탭의 지식그래프). 확장 없이 내장 배치(cose·concentric)만 쓰고, `<script>`로 필요할 때만 불러옵니다.

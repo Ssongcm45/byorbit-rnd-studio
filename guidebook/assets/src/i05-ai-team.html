@@ -1,0 +1,49 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>AI 팀은 어떻게 나뉘어 일했을까?</title>
+<style>
+:root{--brand:#2DA082;--deep:#1F7A63;--pale:#EAF4F0;--ink:#231F20;--gray:#6D6E71;--warn:#E07B39;--warnpale:#FCEFE5;--line:#CFE3DA;--soft:#F6F8F7}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff}
+html{overflow:hidden}::-webkit-scrollbar{display:none}
+body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:var(--ink);width:1600px;padding:64px 72px 64px;font-size:32px;line-height:1.4;word-break:keep-all}
+h1{font-size:56px;line-height:1.25;margin:0 0 10px;font-weight:800;letter-spacing:-0.5px}
+.sub{font-size:32px;color:var(--gray);margin:0 0 40px}
+.row{display:flex;align-items:stretch;gap:0}
+.col{display:flex;flex-direction:column}
+.box{background:#fff;border:3px solid var(--line);border-radius:22px;padding:24px 26px}
+.box.b{border-color:var(--brand)}
+.box.f{background:var(--brand);border-color:var(--brand);color:#fff}
+.box.d{background:var(--deep);border-color:var(--deep);color:#fff}
+.box.p{background:var(--pale);border-color:var(--pale)}
+.box.w{border-color:var(--warn)}
+.box.wf{background:var(--warnpale);border-color:var(--warn)}
+.box.g{background:var(--soft);border-color:#E3E7E5}
+.t{font-weight:800;font-size:36px;line-height:1.25}
+.t2{font-weight:700;font-size:33px}
+.s{font-size:31px;color:var(--gray);margin-top:6px}
+.f .s,.d .s{color:#E6F4EE}
+.tag{display:inline-block;font-size:31px;font-weight:700;padding:3px 14px;border-radius:14px;background:var(--pale);color:var(--deep);margin:4px 6px 0 0}
+.tag.w{background:var(--warnpale);color:#B35A20}
+.tag.g{background:#EEF0EF;color:var(--gray)}
+.f .tag{background:rgba(255,255,255,.22);color:#fff}
+.p .tag,.wf .tag{background:#fff}
+.num{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:30px;flex:none}
+.arr{flex:none;display:flex;align-items:center;justify-content:center}
+.ic{flex:none}
+.note{font-size:31px;color:var(--gray);margin-top:28px}
+.k{color:var(--deep);font-weight:800}
+.wk{color:#B35A20;font-weight:800}
+ul.l{margin:8px 0 0;padding-left:26px}ul.l li{margin:4px 0}
+</style></head><body><h1>AI 팀은 어떻게 나뉘어 일했을까?</h1><p class="sub">사람은 방향을 정하고 승인합니다. AI끼리 역할을 나눠 만들고, 메인 AI가 다시 확인합니다.</p><div class="row" style="align-items:center">
+ <div class="box wf" style="flex:0 0 250px;text-align:center;padding:26px 16px"><svg class="ic" width="74" height="74" viewBox="0 0 64 64"><circle cx="32" cy="20" r="11" fill="#E07B39"/><path d="M10 58 a22 20 0 0 1 44 0 Z" fill="#E07B39"/></svg><div class="t" style="margin-top:6px">사람</div><div class="s">요청하고<br>결정하고<br>승인한다</div></div>
+ <div class="arr" style="flex-direction:column;padding:0 10px"><svg width="60" height="44" viewBox="0 0 60 44"><line x1="2" y1="22" x2="40" y2="22" stroke="#E07B39" stroke-width="8" stroke-linecap="round"/><path d="M34 8 L58 22 L34 36 Z" fill="#E07B39"/></svg></div>
+ <div class="box d" style="flex:0 0 330px;padding:26px 22px"><span class="ic" style="display:inline-grid;place-items:center;width:70px;height:70px;border-radius:50%;background:#fff"><svg class="ic" width="46" height="46" viewBox="0 0 64 64"><rect x="10" y="18" width="44" height="34" rx="10" fill="#1F7A63"/><circle cx="24" cy="35" r="5" fill="#fff"/><circle cx="40" cy="35" r="5" fill="#fff"/><line x1="32" y1="18" x2="32" y2="8" stroke="#1F7A63" stroke-width="4"/><circle cx="32" cy="7" r="4" fill="#1F7A63"/></svg></span><div class="t" style="margin-top:6px">메인 AI</div><ul class="l" style="font-size:31px;color:#E6F4EE"><li>기획·질문</li><li>계약 문서(PLAN) 쓰기</li><li>파일별로 나눠 맡기기</li><li>결과 다시 확인</li></ul></div>
+ <div class="arr" style="flex-direction:column;padding:0 10px"><svg width="60" height="44" viewBox="0 0 60 44"><line x1="2" y1="22" x2="40" y2="22" stroke="#2DA082" stroke-width="8" stroke-linecap="round"/><path d="M34 8 L58 22 L34 36 Z" fill="#2DA082"/></svg></div>
+ <div class="col" style="flex:1;gap:14px"><div class="box b" style="display:flex;gap:16px;align-items:center;padding:18px 20px"><svg class="ic" width="56" height="56" viewBox="0 0 64 64"><rect x="10" y="18" width="44" height="34" rx="10" fill="#2DA082"/><circle cx="24" cy="35" r="5" fill="#fff"/><circle cx="40" cy="35" r="5" fill="#fff"/><line x1="32" y1="18" x2="32" y2="8" stroke="#2DA082" stroke-width="4"/><circle cx="32" cy="7" r="4" fill="#2DA082"/></svg><div><div class="t">구현 AI <span style="color:var(--deep)">(큰 일)</span></div><div class="s">여러 파일에 걸친 새 기능</div><div class="tag g" style="margin-top:6px">예: M2 묶음 A·B·D</div></div></div><div class="box b" style="display:flex;gap:16px;align-items:center;padding:18px 20px"><svg class="ic" width="56" height="56" viewBox="0 0 64 64"><rect x="10" y="18" width="44" height="34" rx="10" fill="#2DA082"/><circle cx="24" cy="35" r="5" fill="#fff"/><circle cx="40" cy="35" r="5" fill="#fff"/><line x1="32" y1="18" x2="32" y2="8" stroke="#2DA082" stroke-width="4"/><circle cx="32" cy="7" r="4" fill="#2DA082"/></svg><div><div class="t">구현 AI <span style="color:var(--deep)">(단순한 일)</span></div><div class="s">정해진 틀을 따라 하는 일</div><div class="tag g" style="margin-top:6px">예: M2 묶음 C(로컬 OCR 설치)</div></div></div><div class="box b" style="display:flex;gap:16px;align-items:center;padding:18px 20px"><svg class="ic" width="56" height="56" viewBox="0 0 64 64"><rect x="10" y="18" width="44" height="34" rx="10" fill="#2DA082"/><circle cx="24" cy="35" r="5" fill="#fff"/><circle cx="40" cy="35" r="5" fill="#fff"/><line x1="32" y1="18" x2="32" y2="8" stroke="#2DA082" stroke-width="4"/><circle cx="32" cy="7" r="4" fill="#2DA082"/></svg><div><div class="t">구현 AI <span style="color:var(--deep)">(정밀한 일)</span></div><div class="s">계산·보안처럼 꼼꼼함이 중요한 일</div><div class="tag g" style="margin-top:6px">필요할 때 따로 맡김</div></div></div></div>
+</div>
+<div style="display:flex;justify-content:flex-end;padding-right:300px;margin:10px 0"><div class="arr" style="flex-direction:column;padding:0 10px"><svg width="44" height="56" viewBox="0 0 44 56"><line x1="22" y1="2" x2="22" y2="36" stroke="#1F7A63" stroke-width="8" stroke-linecap="round"/><path d="M8 30 L22 54 L36 30 Z" fill="#1F7A63"/></svg></div></div>
+<div class="row" style="align-items:stretch;justify-content:flex-end">
+ <div class="box p" style="flex:0 0 330px;padding:20px 22px"><svg class="ic" width="54" height="54" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#1F7A63"/><path d="M19 33 L28 42 L46 23" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="t" style="margin-top:4px">커밋</div><div class="s">사람이 확인한 뒤에만 저장소에 기록</div></div>
+ <div class="arr" style="flex-direction:column;padding:0 10px"><svg width="60" height="44" viewBox="0 0 60 44"><line x1="22" y1="22" x2="58" y2="22" stroke="#1F7A63" stroke-width="8" stroke-linecap="round"/><path d="M26 8 L2 22 L26 36 Z" fill="#1F7A63"/></svg></div>
+ <div class="box p" style="flex:0 0 660px;padding:20px 24px;display:flex;gap:18px;align-items:center"><svg class="ic" width="58" height="58" viewBox="0 0 64 64"><path d="M4 32 Q32 6 60 32 Q32 58 4 32 Z" fill="#fff" stroke="#1F7A63" stroke-width="4"/><circle cx="32" cy="32" r="9" fill="#1F7A63"/></svg><div><div class="t">메인 AI의 검증</div><div class="s">자동 시험(pytest) 실행 · 화면을 직접 찍어 보기 · DOI를 Crossref와 원문으로 대조</div></div></div>
+</div>
+<p class="note">구현 AI의 “다 됐습니다” 보고는 그대로 믿지 않습니다. 메인 AI가 시험과 화면으로 다시 확인합니다.</p></body></html>

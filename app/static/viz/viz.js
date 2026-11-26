@@ -1,4 +1,4 @@
-// ByOrbit R&D Studio — 시각화 작업 공간 (ES 모듈, 빌드 없음)
+// R&D Studio V0.5 — 시각화 작업 공간 (ES 모듈, 빌드 없음)
 //   import {mountViz, openStructure} from '/static/viz/viz.js';
 //   mountViz(document.querySelector('#vizRoot'), {api, initial:{tab:'flow'|'drying'|'molecule', term, method, project}});
 //   openStructure('클로로겐산')  // 다른 화면(측정값·라벨)에서 분자 구조로 바로 가기

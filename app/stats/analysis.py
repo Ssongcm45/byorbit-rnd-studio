@@ -57,13 +57,23 @@ class Labels:
                 return lv.get("label_" + lang) or lv.get("label_ko") or str(value)
         return str(value)
 
-    def term(self, term: str, lang: str = "ko") -> str:
+    def term(self, term: str, lang: str = "ko", unit: bool = True) -> str:
+        """계수 열 이름 → 이름표: 'temp_c' → '추출 온도 (℃)', 'acid[HCl]' → '염산', 'temp_c^2' → '추출 온도²',
+        'temp_c:acid[HCl]' → '추출 온도 × 염산', 항 이름 'temp_c:acid' → '추출 온도 × 산 종류'."""
         if term == "(Intercept)":
             return "(절편)" if lang == "ko" else "(Intercept)"
+        if ":" in term:
+            return " × ".join(self.term(p, lang, unit=False) for p in term.split(":"))
+        if term.endswith("^2"):
+            return self.var(term[:-2], lang, unit=False) + "²"
         if "[" in term:
             var, lv = term[:-1].split("[", 1)
             return self.level(var, lv, lang)
-        return self.var(term, lang)
+        return self.var(term, lang, unit=unit)
+
+    def termname(self, term: str, lang: str = "ko") -> str:
+        """항(term) 이름표 — 단위 없이."""
+        return self.term(term, lang, unit=False)
 
 
 # ---------------------------------------------------------------- 결과
@@ -146,9 +156,46 @@ def resolve_spec(ds: D.Dataset, spec: dict | None) -> dict:
     zero = s.get("zero") or "auto"
     if zero not in ("auto", "apa", "leading"):
         raise StatsError("숫자 앞 0 표기는 auto(한국어 0.034·영어 .034)·apa(.034)·leading(0.034) 중 하나로 고르세요.")
+    inter, quad = model_terms(ds, s, cont, [c["name"] for c in cats])
+    xvar = s.get("xvar") or None
+    if xvar and xvar not in cont:
+        raise StatsError(f"그림 1의 가로축 '{xvar}'는 연속 설명 변수가 아닙니다. 연속 설명 변수 중에서 고르세요.")
+    xvar = xvar or next((c for c in cont if c.startswith("temp")), cont[0] if cont else None)
     return {"outcome": s["outcome"], "continuous": cont, "categorical": cats, "group": group, "test": test, "alpha": alpha, "zero": zero,
+            "interactions": inter, "quadratic": quad, "xvar": xvar,
             "group_reference": next((c["reference"] for c in cats if c["name"] == group), None)
             or (ds.var(group).get("levels") or [{}])[0].get("value") if group else None}
+
+
+def model_terms(ds: D.Dataset, s: dict, cont: list[str], cat_names: list[str]) -> tuple[list[list[str]], list[str]]:
+    """선택 항 검사: 교호작용 [[a, b], …](또는 'a:b'), 2차항 [연속 변수, …]. 기본은 없음(주효과만)."""
+    L = Labels(ds)
+    preds = cont + cat_names
+    inter, seen = [], set()
+    for it in s.get("interactions") or []:
+        pair = it.split(":") if isinstance(it, str) else list(it)
+        if len(pair) != 2:
+            raise StatsError("교호작용은 두 변수의 짝으로 고르세요(예: 온도 × 산 종류).")
+        a, b = (str(x).strip() for x in pair)
+        for v in (a, b):
+            if v not in preds:
+                raise StatsError(f"교호작용의 '{v}'가 설명 변수에 없습니다. 연속·범주 설명 변수로 먼저 넣은 뒤 고르세요.")
+        if a == b:
+            raise StatsError(f"'{L.termname(a)}'끼리의 교호작용은 만들 수 없습니다 — 곡선은 2차항으로 넣으세요.")
+        if a in cat_names and b in cont:  # 이름은 연속 × 범주 순서로 맞춘다
+            a, b = b, a
+        key = frozenset((a, b))
+        if key in seen:
+            continue
+        seen.add(key)
+        inter.append([a, b])
+    quad = []
+    for c in s.get("quadratic") or []:
+        if c not in cont:
+            raise StatsError(f"2차항 '{c}'는 연속 설명 변수가 아닙니다. 연속 설명 변수로 넣은 변수만 2차항을 넣을 수 있습니다.")
+        if c not in quad:
+            quad.append(c)
+    return inter, quad
 
 
 def _precheck(ds: D.Dataset, spec: dict) -> tuple:
@@ -177,7 +224,13 @@ def _precheck(ds: D.Dataset, spec: dict) -> tuple:
         small = [k for k, v in counts.items() if v < 2]
         if small:
             raise StatsError(f"'{', '.join(L.level(spec['group'], k) for k in small)}' 수준의 런이 1개뿐입니다 — 수준마다 2개 이상(권장 3개 이상) 넣거나 그 수준의 런을 빼세요.")
-    k = 1 + len(spec["continuous"]) + sum(len(set(d[c["name"]].astype(str))) - 1 for c in spec["categorical"])
+    for c in spec.get("quadratic") or []:
+        if d[c].astype(float).nunique() < 3:
+            raise StatsError(f"'{L.var(c, unit=False)}'의 2차항을 넣으려면 서로 다른 값이 3개 이상 있어야 합니다(지금 {d[c].astype(float).nunique()}개). "
+                             "2차항을 빼거나 수준을 늘리세요.")
+    cat_lv = [(c["name"], core.level_order(d[c["name"]], c.get("reference"), c.get("levels"))) for c in spec["categorical"]]
+    X, _terms = core.design(d, spec["continuous"], cat_lv, spec.get("interactions") or [], spec.get("quadratic") or [])
+    k = X.shape[1]
     if len(d) <= k:
         raise StatsError(f"런 {len(d)}개로 회귀 계수 {k}개를 추정할 수 없습니다. 런을 더 넣거나 설명 변수를 줄이세요(계수보다 런이 많아야 합니다).")
     return d, dropped
@@ -185,9 +238,11 @@ def _precheck(ds: D.Dataset, spec: dict) -> tuple:
 
 # ---------------------------------------------------------------- 가정 점검
 
-def _st(key, name_ko, name_en, status, test, stat, threshold, ko, en, data=None):
+def _st(key, name_ko, name_en, status, test, stat, threshold, ko, en, data=None, test_en=None, stat_en=None, threshold_en=None):
+    """test·stat·threshold는 한국어, *_en은 영어(없으면 한국어와 같음 — 기호·숫자만 있는 경우)."""
     return {"key": key, "name_ko": name_ko, "name_en": name_en, "status": status, "test": test, "stat": stat,
-            "threshold": threshold, "text_ko": ko, "text_en": en, "data": data}
+            "threshold": threshold, "text_ko": ko, "text_en": en, "data": data,
+            "test_en": test_en or test, "stat_en": stat_en or stat, "threshold_en": threshold_en or threshold}
 
 
 def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
@@ -206,6 +261,7 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
         if sw:
             W, p = sw["W"], sw["p"]
             stat = f"W = {F.n(W, 3)}, {F.p_txt(p, True)}, n = {n}"
+            stat_en = f"W = {F.n(W, 3)}, {F.p_txt(p, False)}, n = {n}"
             sk = f"왜도 {F.n(reg['skew'], 2)}, 첨도(초과) {F.n(reg['kurtosis_excess'], 2)}"
             if p >= spec["alpha"]:
                 st, ko, en = "pass", f"잔차가 정규분포에서 벗어났다는 근거가 없습니다({sk})." + lowpow_ko, \
@@ -217,10 +273,11 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
                 st, ko, en = "fail", f"잔차가 정규분포와 다르고 n < 30입니다({sk}). p값·신뢰구간을 그대로 믿기 어렵습니다 — 이상치·변수 변환(로그 등)을 검토하세요.", \
                     "Residuals are non-normal and n < 30; p-values and CIs may be unreliable — check outliers or consider a transformation."
             out.append(_st("normality", "잔차 정규성", "Normality of residuals", st, "Shapiro–Wilk", stat, "p ≥ .05 (α = .05)", ko, en,
-                           {"qq": reg["qq"]}))
+                           {"qq": reg["qq"]}, stat_en=stat_en))
         # 2. 등분산
         bp = reg["bp"]
         stat = f"LM = {F.n(bp['LM'], 2)}, df = {bp['df']}, {F.p_txt(bp['p'], True)}"
+        stat_en = f"LM = {F.n(bp['LM'], 2)}, df = {bp['df']}, {F.p_txt(bp['p'], False)}"
         if bp["p"] >= spec["alpha"]:
             st, ko, en = "pass", "잔차의 퍼짐이 예측값·설명 변수에 따라 달라진다는 근거가 없습니다 — 일반(OLS) 표준오차를 주 결과로 씁니다." + lowpow_ko, \
                 "No evidence of heteroscedasticity; conventional OLS standard errors are reported as primary." + lowpow_en
@@ -228,22 +285,30 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
             st, ko, en = "fail", "잔차의 퍼짐이 일정하지 않습니다(이분산). 표 1에는 HC3 강건 표준오차(와 그로 계산한 t·p·95% CI)를 주 결과로 씁니다.", \
                 "Heteroscedasticity detected; HC3 heteroscedasticity-consistent standard errors are reported as primary in Table 1."
         out.append(_st("homoscedasticity", "등분산(잔차)", "Homoscedasticity", st, "Breusch–Pagan (Koenker, studentized)", stat,
-                       "p ≥ .05 (α = .05)", ko, en, {"fitted": reg["fitted"], "resid": reg["resid"], "run": run_of}))
+                       "p ≥ .05 (α = .05)", ko, en, {"fitted": reg["fitted"], "resid": reg["resid"], "run": run_of}, stat_en=stat_en))
         # 3. 다중공선성
         g = reg["gvif"]
         if g:
             items = sorted(((t, v["vif_equiv"]) for t, v in g.items()), key=lambda x: -(x[1] or 0))
-            mx = items[0][1] or 1.0
-            stat = ", ".join(f"{L.var(t, unit=False)} {F.n(v, 2)}" for t, v in items)
+            extra = [t for t, _v in items if ":" in t or t.endswith("^2")]
+            # 판정은 주효과 항으로만 — 곱항·2차항은 (중심화해도) 원래 변수와 겹치는 것이 정상이다
+            mx = max([(v or 1.0) for t, v in items if t not in extra] or [1.0])
+            stat = ", ".join(f"{L.termname(t)} {F.n(v, 2)}" for t, v in items)
+            stat_en = ", ".join(f"{L.termname(t, 'en')} {F.n(v, 2)}" for t, v in items)
             st = "pass" if mx <= 5 else "warn" if mx <= 10 else "fail"
             ko = {"pass": "설명 변수끼리 겹치는 정도가 작습니다.", "warn": "설명 변수끼리 꽤 겹칩니다 — 계수의 표준오차가 커졌을 수 있습니다.",
                   "fail": "설명 변수끼리 심하게 겹칩니다 — 계수를 따로 해석하기 어렵습니다. 겹치는 변수 하나를 빼거나 설계를 바꾸세요."}[st]
             en = {"pass": "Low multicollinearity.", "warn": "Moderate multicollinearity; standard errors may be inflated.",
                   "fail": "Severe multicollinearity; individual coefficients are not interpretable."}[st]
+            if extra:
+                ko += " 판정은 주효과 항으로만 했습니다(곱항·2차항은 원래 변수와 겹치는 것이 정상)."
+                en += " The verdict uses main-effect terms only (product and quadratic terms are expected to overlap with their components)."
             has_multi = any(v["df"] > 1 for v in g.values())
             note = " (자유도 2 이상 항은 GVIF^(1/(2·df))의 제곱)" if has_multi else ""
+            note_en = " (terms with df ≥ 2: squared GVIF^(1/(2·df)))" if has_multi else ""
             out.append(_st("vif", "다중공선성", "Multicollinearity", st, "VIF" + (" / GVIF" if has_multi else ""), stat + note,
-                           "VIF ≤ 5 통과 · 5–10 주의 · > 10 실패", ko, en))
+                           "VIF ≤ 5 통과 · 5–10 주의 · > 10 실패", ko, en, stat_en=stat_en + note_en,
+                           threshold_en="VIF ≤ 5 pass · 5–10 caution · > 10 fail"))
         # 4. 영향점
         cooks = reg["cooks"]
         cut = 4 / n
@@ -251,6 +316,7 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
         big.sort(key=lambda x: -x[1])
         mx = max((d for d in cooks if d is not None), default=0)
         stat = f"최대 D = {F.n(mx, 3)}; 4/n = {F.n(cut, 3)}; 넘은 런 {len(big)}개"
+        stat_en = f"max D = {F.n(mx, 3)}; 4/n = {F.n(cut, 3)}; runs above 4/n: {len(big)}"
         if not big:
             st, ko, en = "pass", "Cook's D가 4/n을 넘는 런이 없습니다 — 한두 런에 좌우되는 결과는 아닙니다.", "No observation exceeds Cook's D > 4/n."
         else:
@@ -259,12 +325,17 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
             ko = f"영향이 큰 런: {lst}. 이 런들을 빼고 다시 돌려 결론이 바뀌는지 확인하세요(측정 오류가 확인될 때만 빼고, 뺐다면 논문에 밝히세요)."
             en = f"Influential runs: {lst}. Re-fit without them as a sensitivity check; exclude only with a documented reason."
         out.append(_st("influence", "영향점", "Influential observations", st, "Cook's distance", stat, "D > 4/n 주의 · D > 1 실패", ko, en,
-                       {"cooks": cooks, "run": run_of, "cut": cut}))
+                       {"cooks": cooks, "run": run_of, "cut": cut}, stat_en=stat_en, threshold_en="D > 4/n caution · D > 1 fail"))
         # 5. 선형성
         lin = [x for x in reg["linearity"] if x["testable"]]
+        inq = [x["var"] for x in reg["linearity"] if x.get("in_model")]
+        q_ko = (f" {', '.join(L.var(v, unit=False) for v in inq)}는 2차항을 모형에 넣어 따로 검정하지 않았습니다(계수표의 2차항 참고)." if inq else "")
+        q_en = (f" {', '.join(L.var(v, 'en', unit=False) for v in inq)}: quadratic term already in the model (see its coefficient)." if inq else "")
+        lin_test_en = "t-test of an added centred quadratic term (predictors with ≥ 3 levels)"
         if lin:
             bad = [x for x in lin if x["p"] is not None and x["p"] < spec["alpha"]]
             stat = "; ".join(f"{L.var(x['var'], unit=False)} 2차항 {F.p_txt(x['p'], True)}" for x in lin)
+            stat_en = "; ".join(f"{L.var(x['var'], 'en', unit=False)} quadratic {F.p_txt(x['p'], False)}" for x in lin)
             if bad:
                 st = "warn"
                 ko = f"{F.w(', '.join(L.var(x['var'], unit=False) for x in bad), '과')} 결과 변수의 관계가 곧은 선이 아닐 수 있습니다 — 잔차-설명 변수 그림을 보고 2차항을 넣는 모형을 검토하세요."
@@ -272,12 +343,19 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
             else:
                 st, ko, en = "pass", "중심화한 2차항을 더해도 유의하지 않아 곧은 선 관계와 어긋난다는 근거가 없습니다." + lowpow_ko, \
                     "Adding centred quadratic terms did not improve fit; no evidence against linearity." + lowpow_en
-            out.append(_st("linearity", "선형성", "Linearity", st, "2차항 추가 t검정(수준 3개 이상인 연속 변수)", stat, "p ≥ .05", ko, en,
-                           {"by": {x["var"]: {"x": [float(v) for v in ds.df.loc[used, x["var"]]], "resid": reg["resid"]} for x in lin}}))
+            out.append(_st("linearity", "선형성", "Linearity", st, "2차항 추가 t검정(수준 3개 이상인 연속 변수)", stat, "p ≥ .05", ko + q_ko, en + q_en,
+                           {"by": {x["var"]: {"x": [float(v) for v in ds.df.loc[used, x["var"]]], "resid": reg["resid"]} for x in lin}},
+                           test_en=lin_test_en, stat_en=stat_en))
+        elif inq:
+            out.append(_st("linearity", "선형성", "Linearity", "info", "모형의 2차항", "2차항을 모형에 넣음", "—",
+                           q_ko.strip() + " 2차항이 유의하면 곧은 선이 아닌 곡선 관계입니다.",
+                           q_en.strip() + " A significant quadratic term indicates curvature.",
+                           test_en="Quadratic term in model", stat_en="quadratic term included"))
         else:
             out.append(_st("linearity", "선형성", "Linearity", "info", "—", "수준이 3개 이상인 연속 변수가 없음", "—",
                            "연속 변수의 값이 2가지뿐이라 곧은 선인지 자료로 확인할 수 없습니다(두 점은 늘 직선).",
-                           "Continuous predictors have fewer than 3 distinct values; linearity cannot be checked."))
+                           "Continuous predictors have fewer than 3 distinct values; linearity cannot be checked.",
+                           stat_en="no continuous predictor with ≥ 3 distinct values"))
         # 6. 독립성
         if "run_order" in ds.df.columns:
             ro = ds.df.loc[used, "run_order"].astype(float).to_numpy()
@@ -285,6 +363,7 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
             dw = float(np.sum(np.diff(r) ** 2) / np.sum(r ** 2))
             st = "warn" if dw < 1.5 or dw > 2.5 else "info"
             stat = f"Durbin–Watson(실험 순서) = {F.n(dw, 2)}"
+            stat_en = f"Durbin–Watson (run order) = {F.n(dw, 2)}"
             ko = ("실험 순서대로 놓은 잔차가 이웃끼리 닮아 있습니다 — 시간에 따른 표류(장비·시약)를 의심하세요."
                   if st == "warn" else "실험 순서로 본 잔차의 자기상관은 뚜렷하지 않습니다.") + \
                 " 독립성은 자료만으로 증명할 수 없습니다 — 런 순서 무작위화, 반복이 같은 추출물의 반복 측정(기술 반복)이 아닌지로 판단하세요."
@@ -292,9 +371,11 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
         else:
             dw = reg["dw"]
             st, stat = "info", f"Durbin–Watson(행 순서, 참고) = {F.n(dw, 2)}"
+            stat_en = f"Durbin–Watson (row order, reference only) = {F.n(dw, 2)}"
             ko = "독립성은 자료만으로 검정할 수 없습니다 — 런 순서를 무작위로 했는지, 반복이 서로 다른 추출(생물·공정 반복)인지 같은 추출물의 반복 측정인지로 판단하세요. 행 순서가 실험 순서일 때만 DW 값이 뜻이 있습니다."
             en = "Independence is a design property and cannot be tested automatically (DW shown for row order is only meaningful if rows are in run order)."
-        out.append(_st("independence", "독립성", "Independence", st, "설계로 판단", stat, "DW 1.5–2.5 (참고)", ko, en))
+        out.append(_st("independence", "독립성", "Independence", st, "설계로 판단", stat, "DW 1.5–2.5 (참고)", ko, en,
+                       test_en="Design-based", stat_en=stat_en, threshold_en="DW 1.5–2.5 (reference)"))
         # 7. 표본 크기(회귀)
         p_cols = reg["fit"]["k"] - 1
         ratio = n / max(p_cols, 1)
@@ -304,7 +385,9 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
               "fail": "계수 하나당 런이 5개 미만입니다 — 과적합 위험이 큽니다. 런을 늘리거나 변수를 줄이세요."}[st]
         en = {"pass": "At least 10 observations per coefficient.", "warn": "5–10 observations per coefficient; estimates may be unstable.",
               "fail": "Fewer than 5 observations per coefficient; high risk of overfitting."}[st]
-        out.append(_st("sample_size", "표본 크기(회귀)", "Sample size (regression)", st, "계수당 n", stat, "≥ 10 통과 · 5–10 주의 · < 5 실패", ko, en))
+        out.append(_st("sample_size", "표본 크기(회귀)", "Sample size (regression)", st, "계수당 n", stat, "≥ 10 통과 · 5–10 주의 · < 5 실패", ko, en,
+                       test_en="n per coefficient", stat_en=f"n = {n}, {p_cols} coefficients → {F.n(ratio, 1)} per coefficient",
+                       threshold_en="≥ 10 pass · 5–10 caution · < 5 fail"))
     if grp:
         gname = spec["group"]
         ns = [x["n"] for x in grp["desc"]]
@@ -315,7 +398,9 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
               "fail": "가장 작은 집단의 런이 5개 미만입니다 — 가정을 확인할 수 없고 검정력이 매우 낮습니다. 반복을 늘리세요."}[st]
         en = {"pass": "At least 10 runs per group.", "warn": "Smallest group has 5–9 runs; low power.",
               "fail": "Smallest group has fewer than 5 runs; assumptions cannot be checked and power is very low."}[st]
-        out.append(_st("group_n", "표본 크기(집단)", "Sample size (groups)", st, "집단별 n", stat, "≥ 10 통과 · 5–9 주의 · < 5 실패", ko, en))
+        out.append(_st("group_n", "표본 크기(집단)", "Sample size (groups)", st, "집단별 n", stat, "≥ 10 통과 · 5–9 주의 · < 5 실패", ko, en,
+                       test_en="n per group", stat_en=", ".join(f"{L.level(gname, x['level'], 'en')} n = {x['n']}" for x in grp["desc"]),
+                       threshold_en="≥ 10 pass · 5–9 caution · < 5 fail"))
         # 집단별 정규성
         norm = [x for x in grp["normality"] if x["p"] is not None]
         if norm:
@@ -332,10 +417,13 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
                     ("Mann–Whitney U" if grp["kind"] == "t" else "Kruskal–Wallis") + ") 결과를 민감도 분석으로 함께 보고하세요."
                 en = "Non-normal distribution in " + ", ".join(L.level(gname, x["level"], "en") for x in bad) + \
                     "; report the non-parametric test as a sensitivity analysis."
-            out.append(_st("group_normality", "집단별 정규성", "Normality within groups", st, "Shapiro–Wilk (집단별)", stat, "p ≥ .05", ko, en))
+            out.append(_st("group_normality", "집단별 정규성", "Normality within groups", st, "Shapiro–Wilk (집단별)", stat, "p ≥ .05", ko, en,
+                           test_en="Shapiro–Wilk (per group)",
+                           stat_en="; ".join(f"{L.level(gname, x['level'], 'en')} W = {F.n(x['W'], 3)}, {F.p_txt(x['p'], False)}" for x in norm)))
         # Levene
         lv = grp["levene"]
         stat = f"F({lv['df1']}, {lv['df2']}) = {F.n(lv['F'], 2)}, {F.p_txt(lv['p'], True)}"
+        stat_en = f"F({lv['df1']}, {lv['df2']}) = {F.n(lv['F'], 2)}, {F.p_txt(lv['p'], False)}"
         welch = grp["primary"] == "welch"
         if lv["p"] is not None and lv["p"] >= spec["alpha"]:
             st = "pass"
@@ -346,7 +434,8 @@ def assumptions(ds: D.Dataset, spec: dict, c: dict) -> list[dict]:
             ko = "집단 간 분산이 다릅니다. " + ("Welch 검정은 등분산을 가정하지 않으므로 주 결과로 그대로 씁니다." if welch
                                         else "Student t(등분산 가정)는 맞지 않습니다 — Welch 검정을 쓰세요.")
             en = "Unequal variances. " + ("Welch's test remains valid." if welch else "Student's t is not appropriate; use Welch's test.")
-        out.append(_st("levene", "등분산(집단)", "Equal variances (groups)", st, "Levene (중앙값 기준, Brown–Forsythe)", stat, "p ≥ .05", ko, en))
+        out.append(_st("levene", "등분산(집단)", "Equal variances (groups)", st, "Levene (중앙값 기준, Brown–Forsythe)", stat, "p ≥ .05", ko, en,
+                       test_en="Levene (median-centred, Brown–Forsythe)", stat_en=stat_en))
     return out
 
 
@@ -382,6 +471,15 @@ def methods(ds: D.Dataset, spec: dict, c: dict, primary_se: str) -> dict:
             [f"{L.var(x['name'], 'en', unit=False).lower()} (categorical; reference = {L.level(x['name'], x['reference'], 'en')})" for x in spec["categorical"]]
         ko.append(f"{F.w(L.var(spec['outcome'], unit=False), '을')} 결과 변수로, {F.w(', '.join(preds_ko), '을')} 설명 변수로 한 다중 선형 회귀(최소제곱법, OLS)를 적합했다.")
         en.append(f"{L.var(spec['outcome'], 'en', unit=False)} was regressed on {', '.join(preds_en)} using ordinary least squares (OLS).")
+        extra_ko = [L.termname(f"{a}:{b}") + " 교호작용" for a, b in spec.get("interactions") or []] + \
+            [L.var(c, unit=False) + "의 2차항" for c in spec.get("quadratic") or []]
+        extra_en = [f"the {L.termname(f'{a}:{b}', 'en').lower()} interaction" for a, b in spec.get("interactions") or []] + \
+            [f"a quadratic term for {L.var(c, 'en', unit=False).lower()}" for c in spec.get("quadratic") or []]
+        if extra_ko:
+            ko.append(f"모형에는 {', '.join(extra_ko)}을 더했고, 곱항·2차항은 연속 변수를 분석 표본 평균으로 중심화해 만들었다"
+                      "(주효과 계수는 다른 연속 변수의 평균·범주의 기준 수준에서의 기울기·차이).")
+            en.append(f"The model also included {', '.join(extra_en)}; continuous variables were mean-centred in product and quadratic terms, "
+                      "so main-effect coefficients are slopes or differences at the mean of the other continuous predictors and the reference level.")
         ko.append("잔차의 정규성은 Shapiro–Wilk 검정, 등분산성은 Breusch–Pagan 검정(Koenker 학생화), 다중공선성은 VIF, 영향점은 Cook's D(> 4/n)로 점검했다"
                   + ("; 이분산이 확인되어 HC3 강건 표준오차를 보고했다." if primary_se == "HC3" else "."))
         en.append("Residual normality was assessed with the Shapiro–Wilk test, homoscedasticity with the studentized Breusch–Pagan test, "
@@ -404,11 +502,12 @@ def methods(ds: D.Dataset, spec: dict, c: dict, primary_se: str) -> dict:
                       + f" with Holm adjustment (two-sided, α = {a}); the Kruskal–Wallis test served as a sensitivity analysis.")
     ko.append(f"결측이 있는 런은 목록별 삭제했다(전체 {c['n_total']}개 중 {dropped}개 제외, 분석 n = {c['n_used']}). 분석: {sw}.")
     en.append(f"Runs with missing values were excluded listwise ({dropped} of {c['n_total']} excluded; analysed n = {c['n_used']}). Software: {sw}.")
+    nx = len(spec.get("interactions") or []) + len(spec.get("quadratic") or [])
     short_ko = " · ".join(x for x in [
-        "OLS" + (" (HC3 강건 SE)" if primary_se == "HC3" else "") if reg else "",
+        "OLS" + (f" + 교호작용·2차항 {nx}개" if nx else "") + (" (HC3 강건 SE)" if primary_se == "HC3" else "") if reg else "",
         (test_name(grp, "ko") + f", 양측, α = {a_ko}" + (", 쌍별 Holm 보정" if grp and grp["kind"] == "anova" else "")) if grp else ""] if x)
     short_en = " · ".join(x for x in [
-        "OLS" + (" (HC3 robust SE)" if primary_se == "HC3" else "") if reg else "",
+        "OLS" + (f" + {nx} interaction/quadratic term{'s' if nx > 1 else ''}" if nx else "") + (" (HC3 robust SE)" if primary_se == "HC3" else "") if reg else "",
         (test_name(grp, "en") + f", two-sided, α = {a}" + (", Holm-adjusted pairwise tests" if grp and grp["kind"] == "anova" else "")) if grp else ""] if x)
     return {"ko": " ".join(ko), "en": " ".join(en), "short_ko": short_ko, "short_en": short_en}
 
@@ -460,7 +559,8 @@ def run(source: dict, spec: dict | None = None, options: dict | None = None) -> 
     _precheck(ds, sp)
     core_spec = {"outcome": sp["outcome"], "continuous": sp["continuous"],
                  "categorical": [{"name": x["name"], "reference": x["reference"], "levels": x["levels"]} for x in sp["categorical"]],
-                 "group": sp["group"], "group_reference": sp["group_reference"], "test": sp["test"], "alpha": sp["alpha"]}
+                 "group": sp["group"], "group_reference": sp["group_reference"], "test": sp["test"], "alpha": sp["alpha"],
+                 "interactions": sp["interactions"], "quadratic": sp["quadratic"]}
     if sp["group"] and sp["group"] not in [x["name"] for x in sp["categorical"]]:
         core_spec["group_levels"] = [x["value"] for x in ds.var(sp["group"]).get("levels") or []]
     try:
@@ -481,7 +581,8 @@ def run(source: dict, spec: dict | None = None, options: dict | None = None) -> 
                                 for i in c["dropped_index"]],
                     "codebook": ds.codebook, "warnings": ds.warnings},
         "spec": {k: v for k, v in sp.items() if k != "core_spec"},
-        "regression": c["regression"] and {k: c["regression"][k] for k in ("columns", "terms", "coef", "term_tests", "fit", "gvif", "linearity", "shapiro", "bp", "dw")},
+        "regression": c["regression"] and {k: c["regression"][k] for k in ("columns", "terms", "coef", "term_tests", "fit", "gvif", "linearity", "shapiro", "bp", "dw",
+                                                                         "interactions", "quadratic", "centers")},
         "primary_se": primary_se,
         "groups": c["groups"],
         "levels": c["levels"],

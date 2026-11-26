@@ -1,4 +1,4 @@
-﻿# ByOrbit R&D Studio 개인용 - 실행
+﻿# R&D Studio V0.5 - 실행
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Set-Location $PSScriptRoot
 $vpy = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"

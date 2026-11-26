@@ -1,0 +1,47 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>무엇이 PC 밖으로 나가고, 무엇이 남을까?</title>
+<style>
+:root{--brand:#2DA082;--deep:#1F7A63;--pale:#EAF4F0;--ink:#231F20;--gray:#6D6E71;--warn:#E07B39;--warnpale:#FCEFE5;--line:#CFE3DA;--soft:#F6F8F7}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff}
+html{overflow:hidden}::-webkit-scrollbar{display:none}
+body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:var(--ink);width:1600px;padding:64px 72px 64px;font-size:32px;line-height:1.4;word-break:keep-all}
+h1{font-size:56px;line-height:1.25;margin:0 0 10px;font-weight:800;letter-spacing:-0.5px}
+.sub{font-size:32px;color:var(--gray);margin:0 0 40px}
+.row{display:flex;align-items:stretch;gap:0}
+.col{display:flex;flex-direction:column}
+.box{background:#fff;border:3px solid var(--line);border-radius:22px;padding:24px 26px}
+.box.b{border-color:var(--brand)}
+.box.f{background:var(--brand);border-color:var(--brand);color:#fff}
+.box.d{background:var(--deep);border-color:var(--deep);color:#fff}
+.box.p{background:var(--pale);border-color:var(--pale)}
+.box.w{border-color:var(--warn)}
+.box.wf{background:var(--warnpale);border-color:var(--warn)}
+.box.g{background:var(--soft);border-color:#E3E7E5}
+.t{font-weight:800;font-size:36px;line-height:1.25}
+.t2{font-weight:700;font-size:33px}
+.s{font-size:31px;color:var(--gray);margin-top:6px}
+.f .s,.d .s{color:#E6F4EE}
+.tag{display:inline-block;font-size:31px;font-weight:700;padding:3px 14px;border-radius:14px;background:var(--pale);color:var(--deep);margin:4px 6px 0 0}
+.tag.w{background:var(--warnpale);color:#B35A20}
+.tag.g{background:#EEF0EF;color:var(--gray)}
+.f .tag{background:rgba(255,255,255,.22);color:#fff}
+.p .tag,.wf .tag{background:#fff}
+.num{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:30px;flex:none}
+.arr{flex:none;display:flex;align-items:center;justify-content:center}
+.ic{flex:none}
+.note{font-size:31px;color:var(--gray);margin-top:28px}
+.k{color:var(--deep);font-weight:800}
+.wk{color:#B35A20;font-weight:800}
+ul.l{margin:8px 0 0;padding-left:26px}ul.l li{margin:4px 0}
+</style></head><body><h1>무엇이 PC 밖으로 나가고, 무엇이 남을까?</h1><p class="sub">점선이 이 PC의 경계입니다. 밖으로 나가는 길은 앱과 AI 실행기를 거치는 오른쪽 하나뿐이고, 필요한 것만 나갑니다.</p><div class="row" style="gap:0;align-items:center">
+ <div style="flex:0 0 860px;border:5px dashed var(--brand);border-radius:30px;padding:24px 26px 26px;background:#FBFDFC">
+   <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px"><svg class="ic" width="54" height="54" viewBox="0 0 64 64"><rect x="6" y="10" width="52" height="34" rx="5" fill="#fff" stroke="#1F7A63" stroke-width="4"/><rect x="24" y="44" width="16" height="7" fill="#1F7A63"/><rect x="16" y="51" width="32" height="5" rx="2" fill="#1F7A63"/></svg><div class="t" style="color:var(--deep)">이 PC 안</div></div>
+   <div class="row" style="gap:22px;align-items:center">
+     <div style="flex:1"><div class="t2" style="margin-bottom:10px">여기 머무는 것 <span class="tag">밖으로 안 나감</span></div>
+       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="box b" style="padding:16px 18px"><svg class="ic" width="50" height="50" viewBox="0 0 64 64"><rect x="14" y="6" width="36" height="52" rx="5" fill="#fff" stroke="#2DA082" stroke-width="4"/><line x1="22" y1="22" x2="42" y2="22" stroke="#2DA082" stroke-width="4"/><line x1="22" y1="32" x2="42" y2="32" stroke="#2DA082" stroke-width="4"/><line x1="22" y1="42" x2="36" y2="42" stroke="#2DA082" stroke-width="4"/></svg><div class="t" style="margin-top:4px;font-size:31px">원본 파일</div><div class="s" style="font-size:31px">library 폴더의 PDF·엑셀·한글 파일</div></div><div class="box b" style="padding:16px 18px"><svg class="ic" width="50" height="50" viewBox="0 0 64 64"><ellipse cx="32" cy="14" rx="20" ry="7" fill="#fff" stroke="#2DA082" stroke-width="4"/><path d="M12 14 v34 a20 7 0 0 0 40 0 v-34" fill="none" stroke="#2DA082" stroke-width="4"/><path d="M12 31 a20 7 0 0 0 40 0" fill="none" stroke="#2DA082" stroke-width="4"/></svg><div class="t" style="margin-top:4px;font-size:31px">DB</div><div class="s" style="font-size:31px">rd.sqlite — 청크·라벨·측정값 전부</div></div><div class="box b" style="padding:16px 18px"><svg class="ic" width="50" height="50" viewBox="0 0 64 64"><rect x="12" y="28" width="40" height="28" rx="6" fill="#2DA082"/><path d="M20 28 V20 a12 12 0 0 1 24 0 V28" fill="none" stroke="#2DA082" stroke-width="5"/><circle cx="32" cy="41" r="4" fill="#fff"/></svg><div class="t" style="margin-top:4px;font-size:31px">CoA 식별 정보</div><div class="s" style="font-size:31px">로트번호·공급처·시료번호</div></div><div class="box b" style="padding:16px 18px"><svg class="ic" width="50" height="50" viewBox="0 0 64 64"><path d="M24 6 h16 M27 6 v18 L12 52 a4 4 0 0 0 4 6 h32 a4 4 0 0 0 4 -6 L37 24 V6" fill="#fff" stroke="#2DA082" stroke-width="4" stroke-linejoin="round"/><path d="M17 44 h30 l4 8 h-38 Z" fill="#2DA082"/></svg><div class="t" style="margin-top:4px;font-size:31px">실험·분석 데이터</div><div class="s" style="font-size:31px">내 실험 런, 통계 계산</div></div></div></div>
+     <div class="box d" style="flex:0 0 220px;text-align:center;padding:22px 14px"><span class="ic" style="display:inline-grid;place-items:center;width:60px;height:60px;border-radius:50%;background:#fff"><svg class="ic" width="39" height="39" viewBox="0 0 64 64"><rect x="10" y="18" width="44" height="34" rx="10" fill="#1F7A63"/><circle cx="24" cy="35" r="5" fill="#fff"/><circle cx="40" cy="35" r="5" fill="#fff"/><line x1="32" y1="18" x2="32" y2="8" stroke="#1F7A63" stroke-width="4"/><circle cx="32" cy="7" r="4" fill="#1F7A63"/></svg></span><div class="t" style="margin-top:6px;font-size:31px">앱 · AI 실행기</div><div class="s" style="font-size:31px">보낼 것을 고르고 가린다</div></div>
+   </div></div>
+ <div class="arr" style="flex-direction:column;padding:0 10px"><svg width="96" height="44" viewBox="0 0 96 44"><line x1="2" y1="22" x2="76" y2="22" stroke="#E07B39" stroke-width="9" stroke-linecap="round"/><path d="M70 8 L94 22 L70 36 Z" fill="#E07B39"/></svg><div style="font-size:31px;color:var(--gray);text-align:center;font-weight:700;margin-top:2px">필요한 것만</div></div>
+ <div class="col" style="flex:1;gap:14px"><div class="t2" style="color:#B35A20">PC 밖으로 나가는 것</div><div class="box wf" style="display:flex;gap:16px;align-items:center;padding:16px 20px"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><path d="M8 12 h48 v30 h-30 l-12 10 v-10 h-6 Z" fill="#fff" stroke="#E07B39" stroke-width="4" stroke-linejoin="round"/><line x1="18" y1="24" x2="46" y2="24" stroke="#E07B39" stroke-width="4"/><line x1="18" y1="33" x2="38" y2="33" stroke="#E07B39" stroke-width="4"/></svg><div><div class="t" style="font-size:31px">질문 + 본문 일부 </div><div class="s" style="font-size:31px">AI(Anthropic)로. CoA 식별 정보는 [가림]</div></div></div><div class="box wf" style="display:flex;gap:16px;align-items:center;padding:16px 20px"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><circle cx="27" cy="27" r="16" fill="none" stroke="#E07B39" stroke-width="5"/><line x1="39" y1="39" x2="54" y2="54" stroke="#E07B39" stroke-width="6" stroke-linecap="round"/></svg><div><div class="t" style="font-size:31px">검색어 </div><div class="s" style="font-size:31px">학술·공공 API로. 자료함 내용은 안 보냄</div></div></div><div class="box wf" style="display:flex;gap:16px;align-items:center;padding:16px 20px"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><circle cx="20" cy="32" r="11" fill="none" stroke="#E07B39" stroke-width="5"/><line x1="31" y1="32" x2="58" y2="32" stroke="#E07B39" stroke-width="5"/><line x1="50" y1="32" x2="50" y2="42" stroke="#E07B39" stroke-width="5"/><line x1="42" y1="32" x2="42" y2="40" stroke="#E07B39" stroke-width="5"/></svg><div><div class="t" style="font-size:31px">API 키 </div><div class="s" style="font-size:31px">그 키를 준 출처에만. 키는 환경 변수에만 보관</div></div></div><div class="box wf" style="display:flex;gap:16px;align-items:center;padding:16px 20px"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><circle cx="32" cy="32" r="25" fill="#fff" stroke="#E07B39" stroke-width="4"/><ellipse cx="32" cy="32" rx="11" ry="25" fill="none" stroke="#E07B39" stroke-width="3"/><line x1="7" y1="32" x2="57" y2="32" stroke="#E07B39" stroke-width="3"/></svg><div><div class="t" style="font-size:31px">선택 기능 <span class=tag>켤 때만</span></div><div class="s" style="font-size:31px">PubChem(영문 성분명 하나) · 식품 DB(식품명·성분값) · Upstage(문서 파일, 기밀은 차단)</div></div></div></div>
+</div>
+<p class="note">‘보내지 않기’ 규칙을 고르면 기밀(CoA) 본문과 측정값은 AI에도 전혀 넘기지 않습니다. 오류 메시지에서도 API 키는 가립니다.</p></body></html>

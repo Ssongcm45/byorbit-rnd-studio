@@ -14,9 +14,11 @@
   다시 robots·허용 경로·쪽수 제한으로 거른 뒤에만 쓴다(Apify가 더 가져와도 버린다).
 - `status() -> {"ready": bool, "message": str, ...}` — 화면의 준비 표시(미설치·키 없음).
 
-왜 Playwright MCP가 아닌가: MCP는 AI가 브라우저를 직접 조종하는 통로다. 앱 안의 Claude에 브라우저 MCP를 붙이면
-file:// 주소로 이 PC의 파일을 열 수 있어 기밀 자료 가림(masking)을 우회할 수 있다. 그래서 브라우저는 크롤러 코드만
-정해진 규칙(http/https만, 사이트 허용 경로만)으로 쓰고, AI에게는 도구로 주지 않는다.
+왜 Playwright MCP가 아닌가: MCP는 AI가 브라우저를 직접 조종하는 통로다. 최신 Playwright MCP(@playwright/mcp)는
+기본으로 file:// 이동을 막지만 옵션(--allow-unrestricted-file-access)으로 풀 수 있고, 공식 문서도 이것이
+보안 경계가 아니라고 밝힌다(2026-11-26 확인). 앱 안의 AI에 브라우저를 주면 설정 하나로 이 PC의 파일을 읽는 길이
+생겨 기밀 자료 가림(masking)을 우회할 수 있으므로, 브라우저는 크롤러 코드만 정해진 규칙(http/https만,
+사이트 허용 경로만)으로 쓰고 AI에게는 도구로 주지 않는다.
 """
 from __future__ import annotations
 

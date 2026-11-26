@@ -16,7 +16,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-USER_AGENT = "ByOrbit-RD-Studio/0.3 (local research tool)"
+USER_AGENT = "RD-Studio/0.5 (local research tool)"
 DEFAULT_TIMEOUT = 20
 MIN_INTERVAL = {"default": 1.0}     # 도메인별 최소 간격(초). 출처 모듈이 set_interval로 바꾼다.
 

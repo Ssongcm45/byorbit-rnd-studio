@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R&amp;D Studio V0.5 · 지식그래프 (단독 확인)</title>
+<link rel="stylesheet" href="../viz/viz.css" data-bv-css="1">
+<link rel="stylesheet" href="./kg.css" data-kg-css="1">
+<style>
+:root{
+  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
+  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
+  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
+  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
+  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme=light]){
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}}
+:root[data-theme=dark]{
+  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
+  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
+  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715; color-scheme:dark}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font)}
+header{padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--line);font-weight:700}
+header small{font-weight:400;color:var(--muted);margin-left:8px}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:.95}
+</style>
+</head>
+<body>
+<header>R&amp;D Studio V0.5 · 지식그래프 <small>단독 확인 페이지 — ?center=사과박|개념ID&amp;theme=dark · 본 앱에서는 '개념' 탭의 '지식그래프'</small></header>
+<main id="kg" style="max-width:1320px;margin:0 auto;padding:16px"></main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script type="module">
+import {mountKG} from './kg.js';
+const q = new URLSearchParams(location.search);
+if (q.get('theme')) document.documentElement.dataset.theme = q.get('theme');
+const t = document.getElementById('toast');
+const toast = m => { t.textContent = m; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 3200) };
+window.kg = mountKG(document.getElementById('kg'), {toast, center: q.get('center') || undefined,
+  openSearch: term => toast(`검색 열기: ${term} (본 앱에서는 검색 탭으로 갑니다)`),
+  openWorkbench: (doc, chunk) => toast(`작업대 열기: ${doc}${chunk ? ' · ' + chunk : ''}`)});
+</script>
+</body>
+</html>

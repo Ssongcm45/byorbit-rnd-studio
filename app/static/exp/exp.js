@@ -45,8 +45,8 @@ export function mountExperiment(el, opts = {}) {
         <select class="inp xp-sel" id="${id}-sel"></select>
         <span class="xp-conf"></span>
         <button class="btn sm xp-newbtn" type="button" aria-expanded="false">새 실험</button>
-        <button class="btn sm xp-edit" type="button">이름·등급</button>
-        <button class="btn sm xp-del" type="button">지우기</button>
+        <button class="btn sm xp-edit" type="button" aria-expanded="false" aria-controls="${id}-editf">이름·등급</button>
+        <button class="btn sm xp-del" type="button" aria-expanded="false" aria-controls="${id}-delf">지우기</button>
         <button class="btn sm xp-stats" type="button" title="이 실험의 런으로 회귀분석·t검정·논문용 표와 그림 만들기">통계 분석</button>
       </div>
     </div>
@@ -58,6 +58,16 @@ export function mountExperiment(el, opts = {}) {
       <div class="row"><button class="btn primary sm" type="submit">만들기</button><button class="btn sm xp-cancel" type="button">취소</button></div>
       <p class="small muted" style="grid-column:1/-1;margin:0">틀은 복사되어 이 실험만의 흐름이 됩니다. 단계를 더하고·빼고·순서를 바꾸고·끌 수 있습니다. '기밀' 실험도 밖으로 나가지 않습니다(이 앱에는 실험 자료를 보내는 길이 없음).</p>
     </form>
+    <form class="card xp-new xp-editf" id="${id}-editf" hidden aria-label="실험 이름·보안 등급 바꾸기">
+      <label>실험 이름 <input class="inp" name="name" required maxlength="80"></label>
+      <label>보안 등급 <select class="inp" name="conf"><option>내부</option><option>일반</option><option>기밀</option></select></label>
+      <div class="row"><button class="btn primary sm" type="submit">저장</button><button class="btn sm xp-editcancel" type="button">취소</button></div>
+      <p class="small muted xp-editmsg" style="grid-column:1/-1;margin:0">Esc로 닫습니다. '기밀'로 바꾸면 내려받은 표·그림을 다룰 때 등급에 맞게 다루세요.</p>
+    </form>
+    <div class="card xp-delf" id="${id}-delf" hidden role="group" aria-label="실험 지우기 확인">
+      <p class="xp-delmsg" style="margin:0 0 8px"></p>
+      <div class="row"><button class="btn sm danger xp-delok" type="button">지우기</button><button class="btn sm xp-delcancel" type="button">취소</button></div>
+    </div>
     <div class="tabs" role="tablist" aria-label="내 실험">${TABS.map(([k, l]) => `<button role="tab" id="${id}-tab-${k}" aria-controls="${id}-p-${k}" aria-selected="false" tabindex="-1" data-tab="${k}">${l}</button>`).join('')}</div>
     ${TABS.map(([k]) => `<div role="tabpanel" id="${id}-p-${k}" aria-labelledby="${id}-tab-${k}" data-panel="${k}" hidden></div>`).join('')}
     <div class="sr-only" aria-live="polite" id="${id}-live"></div>
@@ -92,20 +102,49 @@ export function mountExperiment(el, opts = {}) {
       await loadList(); open(x.exp_id);
     } catch (ex) { fail(ex) }
   });
-  $('.xp-edit').addEventListener('click', async () => {
+  // 이름·등급 바꾸기, 지우기 확인 — 창(prompt·confirm) 대신 제자리 양식. Esc로 닫고 닫으면 단추로 초점을 돌린다.
+  function toggleInline(sel, btnSel, on, focusSel) {
+    const f = $(sel), b = $(btnSel);
+    on = on ?? f.hidden;
+    if (on) { for (const [s2, b2] of [['.xp-editf', '.xp-edit'], ['.xp-delf', '.xp-del']]) if (s2 !== sel) { $(s2).hidden = true; $(b2).setAttribute('aria-expanded', 'false') } }
+    f.hidden = !on;
+    b.setAttribute('aria-expanded', String(on));
+    if (on) f.querySelector(focusSel)?.focus(); else b.focus();
+    return on;
+  }
+  $('.xp-edit').addEventListener('click', () => {
     if (!st.exp) return;
-    const name = prompt('실험 이름', st.exp.name);
-    if (name === null) return;
-    const conf = prompt('보안 등급(일반·내부·기밀)', st.exp.confidentiality);
-    if (conf === null) return;
-    try { await json(`${B}/experiments/${st.exp.exp_id}`, {method: 'PUT', body: {name, confidentiality: conf.trim()}}); await loadList(); open(st.exp.exp_id) }
-    catch (ex) { fail(ex) }
+    const f = $('.xp-editf');
+    if (f.hidden) { f.name.value = st.exp.name; f.conf.value = st.exp.confidentiality }
+    toggleInline('.xp-editf', '.xp-edit', undefined, '[name=name]');
   });
-  $('.xp-del').addEventListener('click', async () => {
+  $('.xp-editcancel').addEventListener('click', () => toggleInline('.xp-editf', '.xp-edit', false));
+  $('.xp-editf').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); toggleInline('.xp-editf', '.xp-edit', false) } });
+  $('.xp-editf').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = e.target;
+    try {
+      await json(`${B}/experiments/${st.exp.exp_id}`, {method: 'PUT', body: {name: f.name.value, confidentiality: f.conf.value}});
+      toggleInline('.xp-editf', '.xp-edit', false);
+      say('이름·보안 등급을 저장했습니다.');
+      await loadList(); open(st.exp.exp_id);
+    } catch (ex) { fail(ex) }
+  });
+  $('.xp-del').addEventListener('click', () => {
     if (!st.exp) return;
-    if (!confirm(`'${st.exp.name}' 실험과 런 ${st.exp.runs.length}개를 지울까요? (지운 기록은 변경 기록에 남습니다)`)) return;
-    try { await json(`${B}/experiments/${st.exp.exp_id}`, {method: 'DELETE'}); toast('실험을 지웠습니다.'); st.exp = null; await loadList(); open(st.list[0]?.exp_id) }
-    catch (ex) { fail(ex) }
+    $('.xp-delmsg').textContent = `'${st.exp.name}' 실험과 런 ${st.exp.runs.length}개를 지울까요? 지운 기록은 변경 기록에 남습니다.`;
+    toggleInline('.xp-delf', '.xp-del', undefined, '.xp-delcancel');
+  });
+  $('.xp-delcancel').addEventListener('click', () => toggleInline('.xp-delf', '.xp-del', false));
+  $('.xp-delf').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); toggleInline('.xp-delf', '.xp-del', false) } });
+  $('.xp-delok').addEventListener('click', async () => {
+    if (!st.exp) return;
+    try {
+      await json(`${B}/experiments/${st.exp.exp_id}`, {method: 'DELETE'});
+      $('.xp-delf').hidden = true; $('.xp-del').setAttribute('aria-expanded', 'false');
+      toast('실험을 지웠습니다.'); say('실험을 지웠습니다.');
+      st.exp = null; await loadList(); await open(st.list[0]?.exp_id); $('.xp-sel').focus();
+    } catch (ex) { fail(ex) }
   });
 
   // 통계 분석 열기: 호스트가 openStats를 주면 그것을, 아니면 'byorbit:open-stats' 이벤트(호스트가 preventDefault로 받음),
@@ -132,6 +171,7 @@ export function mountExperiment(el, opts = {}) {
       st.exp = await json(`${B}/experiments/${expId}`);
       $('.xp-sel').value = expId;
       st.cmp = st.sens = st.cal = st.sug = st.imp = null;
+      for (const [s2, b2] of [['.xp-editf', '.xp-edit'], ['.xp-delf', '.xp-del']]) { $(s2).hidden = true; $(b2).setAttribute('aria-expanded', 'false') }
       if (!st.sel || !st.exp.flow.steps.some(s => s.key === st.sel)) st.sel = (st.exp.flow.steps.find(s => s.type === 'dry') || st.exp.flow.steps[0]).key;
       await simulate();
       renderAll();
@@ -217,7 +257,7 @@ export function mountExperiment(el, opts = {}) {
         return bits.join(' · ');
       }
       case 'sieve': return `체 ${n(p.mesh_um, 0)} µm${p.yield_pct != null ? ` · 통과 ${n(p.yield_pct)}%` : ''}`;
-      case 'extract': return `에탄올 ${n(p.ethanol_pct, 0)}% · ${n(p.temp_c, 0)} ℃ · ${n(p.time_min, 0)}분`;
+      case 'extract': return `${p.solvent && p.solvent !== '에탄올 수용액' ? esc(p.solvent) : `에탄올 ${n(p.ethanol_pct, 0)}%`} · ${n(p.temp_c, 0)} ℃ · ${n(p.time_min, 0)}분${p.acid ? ` · ${esc(p.acid)}` : ''}`;
       case 'store': return `${esc(p.package || '')} · ${n(p.days, 0)}일 · ${n(p.temp_c, 0)} ℃`;
       default: return '';
     }
@@ -306,6 +346,20 @@ export function mountExperiment(el, opts = {}) {
       ${last ? '<b style="font-size:11px">제품</b>' : '<span class="xp-arrow" aria-hidden="true">→</span>'}</li>`);
   }
 
+  // 범주 조건의 목록(<datalist>): 목록에서 고르거나 직접 입력. 키보드로 ↓를 누르면 목록이 열린다.
+  // 목록은 단계 목록(catalog)을 받은 뒤 한 번만 root에 만든다(흐름·런 표가 같은 목록을 씀).
+  function buildChoiceLists() {
+    const seen = new Set();
+    const box = h('<div class="xp-dls" hidden></div>');
+    for (const c of st.cat.steps) for (const sp of c.params) {
+      if (!(sp.type === 'select' && sp.free) || seen.has(sp.key)) continue;
+      seen.add(sp.key);
+      box.insertAdjacentHTML('beforeend', `<datalist id="${id}-dl-${sp.key}">${(sp.options || []).map(o => `<option value="${esc(o)}"></option>`).join('')}</datalist>`);
+    }
+    root.appendChild(box);
+  }
+  function choiceList() { return '' }
+
   function specsFor(s) {
     if (s.type === 'dry') return st.cat.dry_methods[s.params.method || '열풍건조'];
     return st.cat.steps.find(c => c.type === s.type).params;
@@ -325,7 +379,11 @@ export function mountExperiment(el, opts = {}) {
       const cur = s.params[sp.key];
       const eff = ss?.params?.[sp.key];
       let ctl;
-      if (sp.type === 'select') {
+      if (sp.type === 'select' && sp.free) {
+        ctl = h(`<label for="${iid}">${esc(sp.label)} <span class="hint">(목록에서 고르거나 직접 입력)</span>
+          <input class="inp" id="${iid}" name="${sp.key}" list="${id}-dl-${sp.key}" maxlength="40" autocomplete="off" value="${esc(cur ?? '')}" placeholder="비움(기록 안 함)" data-t="text">
+          ${choiceList(sp)}${sp.help ? `<span class="hint">${esc(sp.help)}</span>` : ''}</label>`);
+      } else if (sp.type === 'select') {
         ctl = h(`<label for="${iid}">${esc(sp.label)} <select class="inp" id="${iid}" name="${sp.key}">${sp.options.map(o => `<option${(cur ?? sp.default) === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>${sp.help ? `<span class="hint">${esc(sp.help)}</span>` : ''}</label>`);
       } else {
         const ph = cur == null && eff != null ? `기본 ${fmt(eff, 3)}` : (sp.optional ? '비움(기본값)' : '');
@@ -336,7 +394,7 @@ export function mountExperiment(el, opts = {}) {
       const inp = ctl.querySelector('input,select');
       inp.addEventListener('change', () => {
         clearTimeout(st.paramTimer);
-        const v = inp.tagName === 'SELECT' ? inp.value : inp.value === '' ? null : Number(inp.value);
+        const v = inp.tagName === 'SELECT' ? inp.value : inp.dataset.t === 'text' ? (inp.value.trim() || null) : inp.value === '' ? null : Number(inp.value);
         if (inp.type === 'number' && v !== null && (v < sp.min || v > sp.max)) { inp.classList.add('bad'); say(`${sp.label}: ${sp.min}–${sp.max} 사이로 넣으세요.`); return }
         inp.classList.remove('bad');
         st.paramTimer = setTimeout(() => flowOp({op: 'params', key: s.key, params: {[sp.key]: v}}), 150);
@@ -433,7 +491,7 @@ export function mountExperiment(el, opts = {}) {
         addV(s.key, 'moisture'); addV(s.key, 'tpc');
       }
       if (s.type === 'sieve') addV(s.key, 'sieve_yield');
-      if (s.type === 'extract') { addC(s.key, 'ethanol_pct'); addC(s.key, 'temp_c'); addC(s.key, 'time_min'); addV(s.key, 'tpc_extract_yield') }
+      if (s.type === 'extract') { addC(s.key, 'ethanol_pct'); addC(s.key, 'temp_c'); addC(s.key, 'time_min'); addC(s.key, 'acid'); addV(s.key, 'tpc_extract_yield') }
       if (s.type === 'store') { addC(s.key, 'days'); addV(s.key, 'moisture') }
     }
     for (const r of st.exp.runs) {
@@ -507,6 +565,7 @@ export function mountExperiment(el, opts = {}) {
         const cells = conds.map(([k, p]) => {
           const sp = paramSpec(k, p); const v = r.conditions[k]?.[p];
           const base = st.exp.flow.steps.find(s => s.key === k)?.params?.[p];
+          if (sp?.type === 'select' && sp.free) return `<td class="grpc"><input class="inp txt choice" data-c="${k}.${p}" data-t="text" list="${id}-dl-${p}" maxlength="40" autocomplete="off" value="${esc(v ?? '')}" placeholder="${esc(base ?? '')}" aria-label="${esc(r.alias)} ${esc(sp.label)} (목록에서 고르거나 직접 입력)"></td>`;
           if (sp?.type === 'select') return `<td class="grpc"><select class="inp txt" data-c="${k}.${p}" aria-label="${esc(r.alias)} ${esc(sp.label)}"><option value="">(흐름: ${esc(base ?? sp.default)})</option>${sp.options.map(o => `<option${v === o ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></td>`;
           return `<td class="grpc"><input class="inp" data-c="${k}.${p}" inputmode="decimal" value="${v ?? ''}" placeholder="${base != null ? esc(fmt(base, 3)) : ''}" aria-label="${esc(r.alias)} ${esc(sp?.label || p)}"></td>`;
         }).join('');
@@ -549,7 +608,7 @@ export function mountExperiment(el, opts = {}) {
       tr.querySelectorAll('[data-c]').forEach(i => {
         const [k, p] = i.dataset.c.split('.');
         const v = i.value.trim();
-        if (v === '') { if (cond[k]) delete cond[k][p] } else (cond[k] ||= {})[p] = i.tagName === 'SELECT' ? v : Number(v);
+        if (v === '') { if (cond[k]) delete cond[k][p] } else (cond[k] ||= {})[p] = i.tagName === 'SELECT' || i.dataset.t === 'text' ? v : Number(v);
       });
       body.conditions = cond;
     }
@@ -843,6 +902,7 @@ export function mountExperiment(el, opts = {}) {
   (async () => {
     try {
       st.cat = await json(`${B}/steps`);
+      buildChoiceLists();
       await loadList();
       select(st.tab);
       const want = opts.expId === 'first' ? st.list[0]?.exp_id : opts.expId || store.get('last') || st.list[0]?.exp_id;

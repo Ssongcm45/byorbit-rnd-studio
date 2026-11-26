@@ -24,7 +24,7 @@ API: `/api/parse` (`app/routes_parse.py`). 코드: `app/ingest/parser_tools/`.
 | pdfplumber (`pdfplumber`) | PDF | 로컬 | requirements.txt에 포함(약 8MB) | 선 있는 표, 글자 크기로 제목·단계 판단, 표를 제자리 순서로 | 셀 밖으로 넘친 글자가 옆 칸에 붙을 수 있음, OCR 없음 |
 | RapidOCR (`rapidocr`) — 이미지 기본 | PDF·이미지 | 로컬 | install-ocr.bat(약 60MB + 모델 20~25MB) | 스캔본·사진·글자층이 깨진 PDF | 느림(쪽당 수 초), 인식 오류 가능 |
 | Docling (`docling`) | PDF·이미지 | 로컬 | install-docling.bat(약 1.5GB + 첫 실행 모델 약 500MB) | 2단 논문 읽기 순서, 캡션을 표에 붙임, 복잡한 표 | 매우 큼, 첫 실행 30초 이상 |
-| kordoc (`kordoc`) — .hwp 기본 | HWP(구 형식)·HWPX·PDF | 로컬(Node) | install-kordoc.bat(Node 18+, 약 100MB) | **구 형식 .hwp**, 병합 셀 표, 목록·각주 | PDF의 한글 CID 글꼴을 못 읽는 경우가 있음(아래 5절) |
+| kordoc (`kordoc`) — .hwp 기본 | HWP(구 형식)·HWPX·PDF | 로컬(Node) | install-kordoc.bat(Node 18+, PDF는 Node 20.6+ 권장, 약 100MB) | **구 형식 .hwp**, 병합 셀 표, 목록·각주 | PDF는 pdfjs-dist가 있어야 함(아래 6절) |
 | HWPX 기본 (`hwpx`) | HWPX | 로컬 | 없음 | 빠름 | 쪽 번호 없음, 병합 셀 단순 처리 |
 | 엑셀 기본 (`xlsx`) | XLSX·XLSM | 로컬 | 없음 | 시트별 표 | — |
 | 텍스트 기본 (`text`) | TXT·MD·CSV | 로컬 | 없음 | 인코딩 자동 | — |
@@ -89,9 +89,16 @@ API: `/api/parse` (`app/routes_parse.py`). 코드: `app/ingest/parser_tools/`.
 
 ## 6. 알려진 한계
 
-- kordoc의 PDF 읽기(pdfjs)는 cMap 설정 없이 동작해, 한글 CID 글꼴로 만든 PDF(예: 예시 논문)는 '글자 없음'으로 실패합니다.
-  PDF는 PyMuPDF·pdfplumber·Docling을 쓰고 kordoc은 HWP·HWPX에 쓰세요.
+- kordoc은 pdfjs `getDocument`를 cMap 설정 없이 불러, 그대로면 한글 CID 글꼴 PDF(예: 예시 논문)가 '이미지 기반 PDF(0자)'로 실패합니다.
+  **고침(2026-11-26)**: 다리(`kordoc_bridge.mjs`)가 pdfjs-dist를 찾으면 Node 모듈 고리(`module.register` → `kordoc_pdfjs_hooks.mjs`)로
+  kordoc이 부르는 pdfjs를 껍데기(`kordoc_pdfjs_shim.mjs`)로 바꿔 `getDocument`에 `cMapUrl = <pdfjs-dist>/cmaps/`(폴더 경로, 끝에 `/`),
+  `cMapPacked: true`, `standardFontDataUrl = <pdfjs-dist>/standard_fonts/`를 넣습니다(파일은 이 PC에서 읽음, 네트워크 없음).
+  확인: 임시 폴더에 `kordoc@2.5.2` + `pdfjs-dist@4.10.38`을 설치하고 `BYORBIT_KORDOC_DIR`로 가리켜 예시 PDF(`app.sample_files.make_pdf`)를 읽음 —
+  고치기 전 `IMAGE_BASED_PDF`, 고친 뒤 한글 제목·본문·표(3×4)가 나옴(Node 24.11). `module.register`가 없는 Node(20.6 미만)나 pdfjs-dist가 없으면 예전처럼 동작합니다.
+  시험: `tests/test_gaps.py::test_kordoc_korean_pdf`(kordoc+pdfjs가 없으면 건너뜀).
 - HWP·HWPX의 '쪽'은 kordoc에서 구역(section) 단위 근사치이고, HWPX 기본 파서는 쪽 정보가 없습니다(비교 화면에서 '쪽 정보 없음').
 - 한 칸·한 줄짜리 표(한글 문서의 제목 상자 등)는 kordoc 결과에서 본문(또는 제목)으로 바꿉니다.
 - 같은 도구를 다시 실행하면 그 도구의 이전 결과(선택되지 않은 것)를 바꿉니다. 선택된 결과는 남습니다.
-- 작업 진행 상태(`/api/parse/jobs/{id}`)는 메모리에만 있어 앱을 다시 켜면 사라집니다(결과 자체는 DB·파일에 남음).
+- 작업 진행 상태(`/api/parse/jobs/{id}`)는 메모리와 `데이터 폴더\config\parse_jobs.json`(최근 200개)에 남습니다. 앱을 다시 켜면 첫 `/api/parse` 작업 요청 때
+  이전 실행에서 끝나지 못한 작업을 `status: "interrupted"`(중단됨, `error`에 안내 문구)로 바꿉니다. 문서별 최근 작업: `GET /api/parse/docs/{doc_id}/jobs`.
+  실행 중이던 파싱 자체는 이어 하지 않습니다 — 같은 도구로 다시 실행하세요(이미 저장된 결과는 결과 목록에 그대로).

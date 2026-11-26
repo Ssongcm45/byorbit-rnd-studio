@@ -1,0 +1,39 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>기능 하나는 이렇게 만들어졌다</title>
+<style>
+:root{--brand:#2DA082;--deep:#1F7A63;--pale:#EAF4F0;--ink:#231F20;--gray:#6D6E71;--warn:#E07B39;--warnpale:#FCEFE5;--line:#CFE3DA;--soft:#F6F8F7}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff}
+html{overflow:hidden}::-webkit-scrollbar{display:none}
+body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:var(--ink);width:1600px;padding:64px 72px 64px;font-size:32px;line-height:1.4;word-break:keep-all}
+h1{font-size:56px;line-height:1.25;margin:0 0 10px;font-weight:800;letter-spacing:-0.5px}
+.sub{font-size:32px;color:var(--gray);margin:0 0 40px}
+.row{display:flex;align-items:stretch;gap:0}
+.col{display:flex;flex-direction:column}
+.box{background:#fff;border:3px solid var(--line);border-radius:22px;padding:24px 26px}
+.box.b{border-color:var(--brand)}
+.box.f{background:var(--brand);border-color:var(--brand);color:#fff}
+.box.d{background:var(--deep);border-color:var(--deep);color:#fff}
+.box.p{background:var(--pale);border-color:var(--pale)}
+.box.w{border-color:var(--warn)}
+.box.wf{background:var(--warnpale);border-color:var(--warn)}
+.box.g{background:var(--soft);border-color:#E3E7E5}
+.t{font-weight:800;font-size:36px;line-height:1.25}
+.t2{font-weight:700;font-size:33px}
+.s{font-size:31px;color:var(--gray);margin-top:6px}
+.f .s,.d .s{color:#E6F4EE}
+.tag{display:inline-block;font-size:31px;font-weight:700;padding:3px 14px;border-radius:14px;background:var(--pale);color:var(--deep);margin:4px 6px 0 0}
+.tag.w{background:var(--warnpale);color:#B35A20}
+.tag.g{background:#EEF0EF;color:var(--gray)}
+.f .tag{background:rgba(255,255,255,.22);color:#fff}
+.p .tag,.wf .tag{background:#fff}
+.num{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:30px;flex:none}
+.arr{flex:none;display:flex;align-items:center;justify-content:center}
+.ic{flex:none}
+.note{font-size:31px;color:var(--gray);margin-top:28px}
+.k{color:var(--deep);font-weight:800}
+.wk{color:#B35A20;font-weight:800}
+ul.l{margin:8px 0 0;padding-left:26px}ul.l li{margin:4px 0}
+</style></head><body><h1>기능 하나는 이렇게 만들어졌다</h1><p class="sub">요청에서 커밋까지 일곱 단계를 돌고, 다음 요청에서 다시 시작합니다.</p><div style="position:relative;width:1456px;height:1100px">
+<svg width="1456" height="900" style="position:absolute;left:0;top:0"><defs><marker id="ah" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0 0 L5 2.5 L0 5 Z" fill="#9FD3C1"/></marker></defs><path d="M882 115 A520 450 0 0 1 1021 173" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/><path d="M1212 381 A520 450 0 0 1 1247 511" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/><path d="M1178 770 A520 450 0 0 1 1082 875" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/><path d="M805 990 A520 450 0 0 1 651 990" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/><path d="M374 875 A520 450 0 0 1 278 770" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/><path d="M209 511 A520 450 0 0 1 244 381" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/><path d="M435 173 A520 450 0 0 1 574 115" fill="none" stroke="#9FD3C1" stroke-width="10" marker-end="url(#ah)"/></svg>
+<div style="position:absolute;left:518px;top:465px;width:420px;text-align:center"><div class="t" style="font-size:38px;color:var(--deep)">한 바퀴 = 기능 하나</div><div class="s" style="font-size:31px">주황 단계는 사람이 직접 하는 일</div></div>
+<div class="box b" style="position:absolute;left:528px;top:0px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="">1</div><div><div class="t" style="font-size:31px">요청</div><div class="s" style="font-size:31px;margin-top:2px">‘건조 방식을 그림으로 보고 싶어’</div></div></div><div class="box wf" style="position:absolute;left:935px;top:169px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="background:var(--warn)">2</div><div><div class="t" style="font-size:31px">질문으로 결정</div><div class="s" style="font-size:31px;margin-top:2px">구조는 로컬? PubChem은? → 사람이 고름</div></div></div><div class="box b" style="position:absolute;left:1035px;top:550px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="">3</div><div><div class="t" style="font-size:31px">계약 문서</div><div class="s" style="font-size:31px;margin-top:2px">PLAN 문서에 할 일·파일·규칙을 적음</div></div></div><div class="box b" style="position:absolute;left:754px;top:855px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="">4</div><div><div class="t" style="font-size:31px">나눠 맡기기</div><div class="s" style="font-size:31px;margin-top:2px">파일마다 담당 AI를 정해 겹치지 않게</div></div></div><div class="box b" style="position:absolute;left:302px;top:855px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="">5</div><div><div class="t" style="font-size:31px">검증</div><div class="s" style="font-size:31px;margin-top:2px">시험 실행 · 화면 확인 · 출처 원문 대조</div></div></div><div class="box wf" style="position:absolute;left:21px;top:550px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="background:var(--warn)">6</div><div><div class="t" style="font-size:31px">사용자 확인</div><div class="s" style="font-size:31px;margin-top:2px">결과를 보고 고칠 점을 말함</div></div></div><div class="box f" style="position:absolute;left:121px;top:169px;width:400px;height:190px;display:flex;gap:14px;align-items:center;padding:14px 18px"><div class="num" style="background:#fff;color:var(--brand)">7</div><div><div class="t" style="font-size:31px">커밋</div><div class="s" style="font-size:31px;margin-top:2px">확인된 것만 저장소에 기록</div></div></div></div></body></html>

@@ -62,6 +62,36 @@ def _core_spec(r) -> dict:
     return json.loads(json.dumps(r.spec["core_spec"], default=_json_default))
 
 
+def extra_columns(r) -> list[dict]:
+    """교호작용·2차항 열 — 앱 설계 행렬의 열 이름(col)과 R·Stata에서 만들 변수 이름(name), 곱할 조각(parts).
+    조각: ("c", 연속 변수) = (x − 표본 평균), ("d", 범주 변수, 수준, 수준 번호(1 = 기준)) = 그 수준이면 1."""
+    sp = _core_spec(r)
+    lv = r.core["levels"]
+    out, n = [], 0
+    for c in sp.get("quadratic") or []:
+        out.append({"col": f"{c}^2", "name": f"sq_{c}"[:32], "parts": [("c", c), ("c", c)]})
+
+    def parts(v):
+        if v in lv:
+            return [(f"{v}[{x}]", ("d", v, x, i + 1)) for i, x in enumerate(lv[v]) if i > 0]
+        return [(v, ("c", v))]
+    for a, b in sp.get("interactions") or []:
+        for na, pa in parts(a):
+            for nb, pb in parts(b):
+                n += 1
+                out.append({"col": f"{na}:{nb}", "name": f"ix{n}_{a}_{b}"[:32], "parts": [pa, pb]})
+    return out
+
+
+def _centered(r) -> list[str]:
+    seen = []
+    for e in extra_columns(r):
+        for p in e["parts"]:
+            if p[0] == "c" and p[1] not in seen:
+                seen.append(p[1])
+    return seen
+
+
 # ---------------------------------------------------------------- Python
 
 def analysis_py(r) -> str:
@@ -71,7 +101,7 @@ def analysis_py(r) -> str:
     v = r.out["software"]
     return f'''#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""ByOrbit R&D Studio — 통계 분석 재현 스크립트 (Python)
+"""R&D Studio V0.5 — 통계 분석 재현 스크립트 (Python)
 만든 때: {datetime.now():%Y-%m-%d %H:%M} · 데이터: {r.ds.title_ko}{' (예시·가짜 데이터)' if r.ds.is_demo else ''}
 
 실행:   python analysis.py            (같은 폴더의 data.csv를 읽어 요약을 출력하고 results.json을 씁니다)
@@ -106,7 +136,9 @@ def main():
     reg = res["regression"]
     if reg:
         f = reg["fit"]
-        print("\\n[OLS] " + SPEC["outcome"] + " ~ " + " + ".join(SPEC["continuous"] + [c["name"] for c in SPEC["categorical"]]))
+        print("\\n[OLS] " + SPEC["outcome"] + " ~ " + " + ".join(SPEC["continuous"] + [c["name"] for c in SPEC["categorical"]]
+                                                          + [q + "^2" for q in SPEC.get("quadratic") or []]
+                                                          + [":".join(p) for p in SPEC.get("interactions") or []]))
         print(f"{{'term':<24}}{{'B':>10}}{{'SE':>10}}{{'t':>8}}{{'p':>8}}  95% CI            beta   HC3 SE")
         for c in reg["coef"]:
             beta = "" if c["beta"] is None else f"{{c['beta']:.3f}}"
@@ -161,12 +193,16 @@ def analysis_r(r) -> str:
     lv = r.core["levels"]
     glv = r.out["groups"]["levels"] if r.out["groups"] else []
     vars_ = [y] + cont + [c["name"] for c in cats] + ([g] if g and g not in [c["name"] for c in cats] else [])
-    rhs = " + ".join(cont + [c["name"] for c in cats]) or "1"
+    extras = extra_columns(r)
+    rhs = " + ".join(cont + [c["name"] for c in cats] + [e["name"] for e in extras]) or "1"
     test = sp.get("test", "welch")
     idc = r.ds.id_col
     L = []
     A = L.append
-    A(f"# ByOrbit R&D Studio — 통계 분석 재현 스크립트 (R)  {datetime.now():%Y-%m-%d}")
+
+    def r_part(p, z="z"):
+        return f"({z}${p[1]} - m_{p[1]})" if p[0] == "c" else f"({z}${p[1]} == {_rq(p[2])})"
+    A(f"# R&D Studio V0.5 — 통계 분석 재현 스크립트 (R)  {datetime.now():%Y-%m-%d}")
     A("# !! 이 스크립트는 R이 설치되지 않은 PC에서 만들어져 실행해 보지 않았습니다. 처음 실행할 때 결과를 app_results.json의 값과 비교하세요.")
     A("# 실행: R 또는 RStudio에서 작업 폴더를 이 파일이 있는 폴더로 정한 뒤  source(\"analysis.R\", echo = TRUE)")
     A("# 선택 패키지(있으면 씀): install.packages(c(\"car\", \"lmtest\", \"ggplot2\")) — 없으면 같은 값을 기본 R로 직접 계산합니다.")
@@ -179,6 +215,16 @@ def analysis_r(r) -> str:
         A(f"d${c['name']} <- factor(d${c['name']}, levels = c({', '.join(_rq(x) for x in lv[c['name']])}))   # 첫 수준 = 기준")
     if g and g not in [c["name"] for c in cats]:
         A(f"d${g} <- factor(d${g}, levels = c({', '.join(_rq(x) for x in glv)}))")
+    if extras:
+        A("# 교호작용·2차항: 앱과 같게 연속 변수를 분석 표본 평균으로 중심화한 곱(주효과 열은 그대로)")
+        for c in _centered(r):
+            A(f"m_{c} <- mean(d${c})")
+        A("add_terms <- function(z) {")
+        for e in extras:
+            A(f"  z${e['name']} <- {' * '.join(r_part(p) for p in e['parts'])}   # {e['col']}")
+        A("  z")
+        A("}")
+        A("d <- add_terms(d)")
     if cont or cats:
         A("")
         A("## 1. 회귀 (OLS)")
@@ -209,6 +255,8 @@ def analysis_r(r) -> str:
         A("cd <- cooks.distance(m)")
         A(f'cat("Cook\'s D > 4/n:", as.character(d${idc}[cd > 4 / nrow(d)]), "\\n")' if idc in r.ds.df.columns else 'print(which(cd > 4 / nrow(d)))')
         for c in cont:
+            if c in (sp.get("quadratic") or []):
+                continue  # 2차항이 이미 모형에 있음
             A(f"m_q <- update(m, . ~ . + I(({c} - mean({c}))^2)); print(tail(summary(m_q)$coefficients, 1))   # 선형성: 2차항")
     if g:
         A("")
@@ -237,7 +285,7 @@ def analysis_r(r) -> str:
             A(f"print(pairwise.t.test(d${y}, d${g}, p.adjust.method = \"holm\", pool.sd = {'TRUE' if ve == 'TRUE' else 'FALSE'}))   # 쌍별 t + Holm")
             A(f"print(kruskal.test({y} ~ {g}, data = d))")
     # 그림
-    xv = next((c for c in cont if c.startswith("temp")), cont[0] if cont else None)
+    xv = R._xvar(r.spec)
     A("")
     A("## 4. 그림 1 (ggplot2가 있으면 두 패널을 따로 저장)")
     A('if (requireNamespace("ggplot2", quietly = TRUE)) {')
@@ -254,6 +302,8 @@ def analysis_r(r) -> str:
             else:
                 nd.append(f"{c['name']} = factor(levels(d${c['name']})[1], levels = levels(d${c['name']}))")
         A(f"  nd <- data.frame({', '.join(nd)})")
+        if extras:
+            A("  nd <- add_terms(nd)")
         A("  nd$fit <- predict(m, newdata = nd)")
         col = f", colour = {g}, shape = {g}" if g else ""
         A(f"  pa <- ggplot(d, aes(x = {xv}, y = {y}{col})) + geom_point(position = position_dodge(width = 1.5), size = 1.6) +")
@@ -283,7 +333,7 @@ def analysis_do(r) -> str:
     first_col = list(r.ds.df.columns)[0]
     L = []
     A = L.append
-    A(f"* ByOrbit R&D Studio — 통계 분석 재현 (Stata 15 이상)  {datetime.now():%Y-%m-%d}")
+    A(f"* R&D Studio V0.5 — 통계 분석 재현 (Stata 15 이상)  {datetime.now():%Y-%m-%d}")
     A("* !! 이 do 파일은 Stata가 설치되지 않은 PC에서 만들어져 실행해 보지 않았습니다. 처음 실행할 때 결과를 app_results.json의 값과 비교하세요.")
     A("* 실행: Stata에서 cd \"이 폴더\" 후  do analysis.do")
     A("version 15")
@@ -302,7 +352,18 @@ def analysis_do(r) -> str:
         A(f"label define {lab} " + " ".join(f'{i + 1} "{x}"' for i, x in enumerate(levels)))
         A(f"encode {name}, generate({name}_f) label({lab}) noextend   // 1 = 기준 수준")
         fv[name] = f"{name}_f"
-    rhs = " ".join(cont + [f"ib1.{fv[c['name']]}" for c in cats])
+    extras = extra_columns(r)
+    if extras:
+        A("* 교호작용·2차항: 앱과 같게 연속 변수를 분석 표본 평균으로 중심화한 곱(주효과 변수는 그대로)")
+        for c in _centered(r):
+            A(f"quietly summarize {c}")
+            A(f"scalar c_{c[:28]} = r(mean)")
+
+        def s_part(p):
+            return f"({p[1]} - c_{p[1][:28]})" if p[0] == "c" else f"({fv[p[1]]} == {p[3]})"
+        for e in extras:
+            A(f"generate double {e['name']} = {' * '.join(s_part(p) for p in e['parts'])}   // {e['col']}")
+    rhs = " ".join(cont + [f"ib1.{fv[c['name']]}" for c in cats] + [e["name"] for e in extras])
     if cont or cats:
         A("")
         A("* 1. 회귀 (OLS)")
@@ -317,6 +378,8 @@ def analysis_do(r) -> str:
         A("swilk r                   // Stata swilk는 근사식이 달라 p가 R·Python과 조금 다를 수 있음")
         A(f"list {idc} cooksd if cooksd > 4/e(N) & !missing(cooksd)" if idc in r.ds.df.columns else "list cooksd if cooksd > 4/e(N) & !missing(cooksd)")
         for c in cont:
+            if c in (sp.get("quadratic") or []):
+                continue  # 2차항이 이미 모형에 있음
             A(f"quietly summarize {c}")
             A(f"generate double {c[:26]}_sq = ({c} - r(mean))^2")
             A(f"regress {y} {rhs} {c[:26]}_sq   // 선형성: 2차항의 p")
@@ -364,7 +427,7 @@ def analysis_do(r) -> str:
             A("end")
             A("matrix colnames P = level_a level_b p p_holm")
             A("matrix list P")
-    xv = next((c for c in cont if c.startswith("temp")), cont[0] if cont else None)
+    xv = R._xvar(r.spec)
     A("")
     A("* 3. 그림 1")
     cols = ['"0 114 178"', '"213 94 0"', '"0 158 115"', '"204 121 167"']
@@ -380,6 +443,19 @@ def analysis_do(r) -> str:
         if g and g in [c["name"] for c in cats]:
             gf = fv[g]
             expr += "".join(f" + _b[{j + 1}.{gf}]*({gf} == {j + 1})" for j in range(1, len(glv)))
+        ci = {c: i for i, c in enumerate(cont)}
+        for e in extras:  # 예측선: 가로축 변수는 그 값, 다른 연속 변수는 평균, 범주는 집단 변수만 그 수준(나머지는 기준 = 0)
+            fac = []
+            for p in e["parts"]:
+                if p[0] == "c":
+                    fac.append(f"({p[1] if p[1] == xv else 'm_' + str(ci[p[1]])} - c_{p[1][:28]})")
+                elif p[1] == g:
+                    fac.append(f"({fv[p[1]]} == {p[3]})")
+                else:
+                    fac = None
+                    break
+            if fac:
+                expr += f" + _b[{e['name']}]*" + "*".join(fac)
         A(f"generate double yhat_mean = {expr}")
         if g:
             gf = fv[g]
@@ -404,7 +480,7 @@ def analysis_do(r) -> str:
 def readme(r) -> str:
     v = r.out["software"]
     demo = "\n!! 예시 데이터는 가짜(모의)입니다 — 논문에 쓰지 마세요.\n" if r.ds.is_demo else ""
-    return f"""ByOrbit R&D Studio — 통계 분석 재현 패키지
+    return f"""R&D Studio V0.5 — 통계 분석 재현 패키지
 만든 때: {datetime.now():%Y-%m-%d %H:%M}
 데이터: {r.ds.title_ko}{demo}
 분석 n = {r.core['n_used']} (전체 {r.core['n_total']}, 목록별 삭제 {len(r.core['dropped_index'])})
@@ -424,7 +500,7 @@ def readme(r) -> str:
            선택 패키지 car·lmtest·ggplot2가 있으면 쓰고, 없으면 같은 값을 기본 R로 계산합니다.
   Stata  : cd "이 폴더" → do analysis.do   (Stata 15 이상)
 
-알아 둘 차이
+{_readme_terms(r)}알아 둘 차이
   - t검정의 부호: 앱·Python은 '비교 수준 − 기준', R t.test와 Stata ttest는 '기준 − 비교'로 부호가 반대입니다(p는 같음).
   - Levene: 앱·R car::leveneTest는 중앙값 기준(Brown–Forsythe) — Stata robvar의 W50과 같습니다.
   - Breusch–Pagan: 앱·R lmtest::bptest(기본)·Stata estat hettest, rhs iid 는 같은 Koenker 판입니다.
@@ -433,6 +509,15 @@ def readme(r) -> str:
   - Welch ANOVA: Stata에는 기본 명령이 없습니다(ssc install wanova). 쌍별 Welch t + Holm은 do 파일이 직접 계산합니다.
   - Mann–Whitney: 앱 U는 비교 수준의 U, R wilcox.test의 W는 기준 집단의 U(= n1·n2 − U). 둘 다 점근·연속성 보정.
 """
+
+
+def _readme_terms(r) -> str:
+    ex = extra_columns(r)
+    if not ex:
+        return ""
+    lines = "\n".join(f"  {e['name']:<28} = 앱의 '{e['col']}'" for e in ex)
+    return ("교호작용·2차항\n  연속 변수를 분석 표본 평균으로 중심화한 곱으로 만든 열입니다(주효과 열은 그대로). R·Stata 스크립트가 직접 만듭니다.\n"
+            + lines + "\n\n")
 
 
 def reproduce_files(r) -> dict[str, bytes]:

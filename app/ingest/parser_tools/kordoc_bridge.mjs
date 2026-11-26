@@ -3,6 +3,9 @@
 //       node kordoc_bridge.mjs <kordoc dist/index.js 경로> --version
 // 문서는 이 PC 안에서만 읽는다(네트워크를 쓰지 않는다). 이미지 바이너리는 결과에서 뺀다.
 import { pathToFileURL } from 'node:url';
+import { createRequire, register } from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const [, , entry, file, optJson] = process.argv;
 const MARK = '@@KORDOC_JSON@@';
@@ -25,7 +28,26 @@ function strip(blocks) {
   });
 }
 
+// 한글 CID 글꼴 PDF: kordoc은 pdfjs getDocument에 cMap 설정을 주지 않는다 → pdfjs-dist가 있으면
+// 모듈 고리로 getDocument를 감싸 cMapUrl(pdfjs-dist/cmaps/)·cMapPacked·standardFontDataUrl을 넣는다(파일은 이 PC에서만 읽음).
+async function wirePdfjs() {
+  try {
+    const req = createRequire(entry);
+    const pkg = req.resolve('pdfjs-dist/package.json');
+    const dir = path.dirname(pkg).split(path.sep).join('/');
+    const cmaps = dir + '/cmaps/';
+    if (!fs.existsSync(cmaps)) return null;
+    const fonts = dir + '/standard_fonts/';
+    process.env.BYORBIT_PDFJS_OPTS = JSON.stringify({cMapUrl: cmaps, cMapPacked: true,
+      ...(fs.existsSync(fonts) ? {standardFontDataUrl: fonts} : {})});
+    register('./kordoc_pdfjs_hooks.mjs', import.meta.url);
+    return cmaps;
+  } catch { return null }   // pdfjs-dist가 없으면 HWP·HWPX만(그대로)
+}
+
 try {
+  const cmaps = await wirePdfjs();
+  if (cmaps) toErr('[kordoc bridge] pdfjs cMap: ' + cmaps);
   const k = await import(pathToFileURL(entry).href);
   if (file === '--version') {
     out({ success: true, version: k.VERSION });

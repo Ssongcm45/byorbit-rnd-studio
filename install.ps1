@@ -1,10 +1,10 @@
-﻿# ByOrbit R&D Studio 개인용 - 설치 (Windows PowerShell)
+﻿# R&D Studio V0.5 - 설치 (Windows PowerShell)
 # 실행: 폴더에서 마우스 오른쪽 > "PowerShell에서 실행" 또는  powershell -ExecutionPolicy Bypass -File install.ps1
 $ErrorActionPreference = "Continue"   # 네이티브 명령의 경고(stderr)로 멈추지 않게; 종료 코드로 판단
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Set-Location $PSScriptRoot
 Write-Host ""
-Write-Host "=== ByOrbit R&D Studio 개인용 설치 ===" -ForegroundColor Cyan
+Write-Host "=== R&D Studio V0.5 설치 ===" -ForegroundColor Cyan
 
 # 1) 파이썬 3.11 이상 찾기 (py 런처 우선)
 $py = $null; $pyArgs = @(); $v = ""

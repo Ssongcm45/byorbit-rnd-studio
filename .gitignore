@@ -11,3 +11,10 @@ __pycache__/
 # OS
 Thumbs.db
 .DS_Store
+
+# 안내서 작업물: 데모 데이터와 빌드 중간물은 저장소에 넣지 않는다
+guidebook/demo-home/
+guidebook/draft/
+guidebook/qc/
+guidebook/build/
+guidebook/typeset/

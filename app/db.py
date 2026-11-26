@@ -269,6 +269,60 @@ def export_seed_ttl() -> Path:
     return out
 
 
+def _iri_url(iri: str) -> str:
+    iri = iri if iri.startswith(("byo:", "mine:")) else f"byo:{_slug(iri)}"
+    return iri.replace("byo:", "https://byorbit.kr/onto/").replace("mine:", "https://byorbit.kr/onto/mine/")
+
+
+def regenerate_mine_ttl() -> Path:
+    """mine.ttl(내 확장)을 지금 DB에서 다시 만든다 — 덧붙이기 대신 다시 쓰므로 지운 것이 남지 않는다.
+    들어가는 것: (1) 내 확장 개념(origin='mine', status='active') 전체(표기·관계 포함),
+    (2) 시드 개념에 내가 더한 동의어(작업대에서 배운 것·직접 더한 것 — change_log에 learned 또는 origin='mine'으로 남은 표기 중
+    지금도 있는 것)를 skos:altLabel 삼중항으로. 직전 내용은 mine.ttl.bak에 한 벌 남긴다."""
+    out = config.path("ontology", "mine.ttl")
+    parts = [TTL_PREFIX, "# 내 확장 개념 — 앱이 DB에서 다시 만드는 파일(직접 고치지 마세요). 개념·배운 동의어가 여기에 모인다\n"]
+    mine = rows("SELECT concept_id FROM concept WHERE origin='mine' AND status='active' ORDER BY pref_label_ko, concept_id")
+    mine_ids = {r["concept_id"] for r in mine}
+    for r in mine:
+        parts.append(concept_ttl(r["concept_id"]))
+    added: dict[str, list[dict]] = {}
+    seen = set()
+    for r in rows("SELECT row_id, after_json FROM change_log WHERE table_name='concept_label' AND before_json IS NULL "
+                  "AND after_json IS NOT NULL ORDER BY log_id"):
+        try:
+            a = json.loads(r["after_json"] or "{}")
+        except ValueError:
+            continue
+        if not (a.get("learned") or a.get("origin") == "mine") or r["row_id"] in seen:
+            continue
+        seen.add(r["row_id"])
+        lab = one("SELECT l.label, l.lang, l.label_type, l.concept_id, c.iri FROM concept_label l JOIN concept c ON c.concept_id=l.concept_id "
+                  "WHERE l.label_id=?", (r["row_id"],))
+        if not lab or lab["concept_id"] in mine_ids or lab["label_type"] == "pref":
+            continue
+        added.setdefault(lab["concept_id"], []).append(lab)
+    if added:
+        parts.append("# 시드 개념에 더한 동의어(작업대에서 배운 것 포함)\n")
+        for cid, labs in sorted(added.items(), key=lambda kv: kv[1][0]["iri"]):
+            preds = []
+            for l in labs:
+                pred = "skos:hiddenLabel" if l["label_type"] == "hidden" else "skos:altLabel"
+                preds.append(f"  {pred} {_ttl_str(l['label'])}{'@' + l['lang'] if l['lang'] else ''}")
+            parts.append(f"<{_iri_url(labs[0]['iri'])}>\n" + " ;\n".join(preds) + " .\n")
+    text = "\n".join(parts)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    if out.exists():
+        old = out.read_text(encoding="utf-8")
+        if old == text:
+            return out
+        out.with_suffix(".ttl.bak").write_text(old, encoding="utf-8")
+    tmp = out.with_suffix(".ttl.tmp")
+    tmp.write_text(text, encoding="utf-8")
+    import os
+    os.replace(tmp, out)
+    return out
+
+
 def log_change(c, table: str, row_id: str, before, after) -> None:
     c.execute("INSERT INTO change_log(table_name, row_id, before_json, after_json) VALUES (?,?,?,?)",
               (table, row_id, json.dumps(before, ensure_ascii=False) if before is not None else None,

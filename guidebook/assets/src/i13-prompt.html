@@ -1,0 +1,54 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>좋은 AI 요청의 4요소</title>
+<style>
+:root{--brand:#2DA082;--deep:#1F7A63;--pale:#EAF4F0;--ink:#231F20;--gray:#6D6E71;--warn:#E07B39;--warnpale:#FCEFE5;--line:#CFE3DA;--soft:#F6F8F7}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff}
+html{overflow:hidden}::-webkit-scrollbar{display:none}
+body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:var(--ink);width:1600px;padding:64px 72px 64px;font-size:32px;line-height:1.4;word-break:keep-all}
+h1{font-size:56px;line-height:1.25;margin:0 0 10px;font-weight:800;letter-spacing:-0.5px}
+.sub{font-size:32px;color:var(--gray);margin:0 0 40px}
+.row{display:flex;align-items:stretch;gap:0}
+.col{display:flex;flex-direction:column}
+.box{background:#fff;border:3px solid var(--line);border-radius:22px;padding:24px 26px}
+.box.b{border-color:var(--brand)}
+.box.f{background:var(--brand);border-color:var(--brand);color:#fff}
+.box.d{background:var(--deep);border-color:var(--deep);color:#fff}
+.box.p{background:var(--pale);border-color:var(--pale)}
+.box.w{border-color:var(--warn)}
+.box.wf{background:var(--warnpale);border-color:var(--warn)}
+.box.g{background:var(--soft);border-color:#E3E7E5}
+.t{font-weight:800;font-size:36px;line-height:1.25}
+.t2{font-weight:700;font-size:33px}
+.s{font-size:31px;color:var(--gray);margin-top:6px}
+.f .s,.d .s{color:#E6F4EE}
+.tag{display:inline-block;font-size:31px;font-weight:700;padding:3px 14px;border-radius:14px;background:var(--pale);color:var(--deep);margin:4px 6px 0 0}
+.tag.w{background:var(--warnpale);color:#B35A20}
+.tag.g{background:#EEF0EF;color:var(--gray)}
+.f .tag{background:rgba(255,255,255,.22);color:#fff}
+.p .tag,.wf .tag{background:#fff}
+.num{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:30px;flex:none}
+.arr{flex:none;display:flex;align-items:center;justify-content:center}
+.ic{flex:none}
+.note{font-size:31px;color:var(--gray);margin-top:28px}
+.k{color:var(--deep);font-weight:800}
+.wk{color:#B35A20;font-weight:800}
+ul.l{margin:8px 0 0;padding-left:26px}ul.l li{margin:4px 0}
+</style></head><body><h1>좋은 AI 요청의 4요소</h1><p class="sub">AI에게 일을 맡길 때 이 네 가지를 한 번에 말하면 다시 묻고 고치는 일이 줄어듭니다.</p><div class="row" style="gap:20px;align-items:stretch"><div class="box" style="flex:1;border-color:#2DA082;padding:22px">
+<div style="display:flex;gap:14px;align-items:center"><div class="num" style="background:#2DA082">1</div><div class="t" style="font-size:38px">목적</div></div>
+<div style="margin-top:10px;display:flex;gap:14px;align-items:center"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#fff" stroke="#2DA082" stroke-width="4"/><circle cx="32" cy="32" r="16" fill="none" stroke="#2DA082" stroke-width="4"/><circle cx="32" cy="32" r="6" fill="#2DA082"/></svg><div class="s" style="margin:0">무엇에 쓰려고?</div></div>
+<div style="margin-top:12px;font-size:31px">예) 팀 회의에서 건조 방법을 고르려고</div></div><div class="box" style="flex:1;border-color:#1F7A63;padding:22px">
+<div style="display:flex;gap:14px;align-items:center"><div class="num" style="background:#1F7A63">2</div><div class="t" style="font-size:38px">조건</div></div>
+<div style="margin-top:10px;display:flex;gap:14px;align-items:center"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><rect x="12" y="28" width="40" height="28" rx="6" fill="#1F7A63"/><path d="M20 28 V20 a12 12 0 0 1 24 0 V28" fill="none" stroke="#1F7A63" stroke-width="5"/><circle cx="32" cy="41" r="4" fill="#fff"/></svg><div class="s" style="margin:0">지켜야 할 것</div></div>
+<div style="margin-top:12px;font-size:31px">예) 자료함의 논문·CoA만 근거로, 수치마다 근거 번호</div></div><div class="box" style="flex:1;border-color:#E07B39;padding:22px">
+<div style="display:flex;gap:14px;align-items:center"><div class="num" style="background:#E07B39">3</div><div class="t" style="font-size:38px">결과물</div></div>
+<div style="margin-top:10px;display:flex;gap:14px;align-items:center"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><rect x="14" y="6" width="36" height="52" rx="5" fill="#fff" stroke="#E07B39" stroke-width="4"/><line x1="22" y1="22" x2="42" y2="22" stroke="#E07B39" stroke-width="4"/><line x1="22" y1="32" x2="42" y2="32" stroke="#E07B39" stroke-width="4"/><line x1="22" y1="42" x2="36" y2="42" stroke="#E07B39" stroke-width="4"/></svg><div class="s" style="margin:0">어떤 모양으로?</div></div>
+<div style="margin-top:12px;font-size:31px">예) 표 1개 + 세 문장 요약</div></div><div class="box" style="flex:1;border-color:#6D6E71;padding:22px">
+<div style="display:flex;gap:14px;align-items:center"><div class="num" style="background:#6D6E71">4</div><div class="t" style="font-size:38px">확인 방법</div></div>
+<div style="margin-top:10px;display:flex;gap:14px;align-items:center"><svg class="ic" width="52" height="52" viewBox="0 0 64 64"><circle cx="32" cy="32" r="26" fill="#6D6E71"/><path d="M19 33 L28 42 L46 23" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><div class="s" style="margin:0">맞는지 어떻게 보나?</div></div>
+<div style="margin-top:12px;font-size:31px">예) 수치마다 출처 청크를 달아 원문과 대조</div></div></div>
+<div class="box p" style="margin-top:32px;padding:26px 30px;font-size:31px;line-height:1.7">
+<div class="t2" style="color:var(--deep);margin-bottom:8px">이렇게 이어 쓰면 하나의 요청</div>
+“<span style="border-bottom:5px solid #2DA082">팀 회의에서 건조 방법을 고르려고 하니</span>
+<span style="border-bottom:5px solid #1F7A63">자료함의 논문과 CoA만 근거로 쓰고 수치마다 근거 번호를 달아서</span>
+<span style="border-bottom:5px solid #E07B39">동결건조와 열풍건조의 식이섬유·폴리페놀 차이를 표 1개와 세 문장으로 정리해 줘.</span>
+<span style="border-bottom:5px solid #6D6E71">내가 원문과 맞춰 볼 수 있게 출처 청크도 함께 보여 줘.</span>”</div></body></html>

@@ -104,10 +104,18 @@ def validate_steps(steps: list[dict]) -> list[dict]:
             S.clean_params(t, params, label)  # 범위만 확인 — 저장은 사용자가 넣은 값만
         except S.StepError as ex:
             raise StoreError(str(ex)) from ex
-        specs = {s["key"] for s in S.specs_for(t, params)}
+        spec_map = {s["key"]: s for s in S.specs_for(t, params)}
+        specs = set(spec_map)
         unknown = [pk for pk in params if pk not in specs]
         if unknown:
             raise StoreError(f"'{label}' 단계에 없는 값 {', '.join(unknown)}이 있습니다. 가능한 값: {', '.join(sorted(specs))}")
+        for pk, pv in list(params.items()):  # 범주(직접 입력 가능) 값은 목록 이름으로 맞춰 저장
+            if spec_map.get(pk, {}).get("free"):
+                cv = S.canon_choice(spec_map[pk], pv)
+                if cv is None:
+                    params.pop(pk)
+                else:
+                    params[pk] = cv
         out.append({"key": k, "type": t, "label": label, "enabled": bool(st.get("enabled", True)), "params": params})
     if out[0]["type"] != "feed":
         raise StoreError("흐름의 첫 단계는 '원료 투입'이어야 합니다. 원료 투입을 맨 앞으로 옮기세요.")
@@ -429,7 +437,9 @@ def clean_conditions(steps: dict[str, dict], conditions: dict | None) -> dict:
             S.clean_params(st["type"], merged, st["label"])
         except S.StepError as ex:
             raise StoreError(str(ex)) from ex
-        out[k] = {pk: (pv if specs[pk].get("type") == "select" else float(pv)) for pk, pv in cond.items()}
+        out[k] = {pk: (S.canon_choice(specs[pk], pv) if specs[pk].get("free") else pv if specs[pk].get("type") == "select" else float(pv))
+                  for pk, pv in cond.items()}
+        out[k] = {pk: pv for pk, pv in out[k].items() if pv is not None}
     return out
 
 

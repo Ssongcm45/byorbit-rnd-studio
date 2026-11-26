@@ -109,3 +109,9 @@
 .bv .xp .xp-empty{padding:26px;text-align:center;color:var(--v-muted);font-size:13px;border:1px dashed var(--v-line);border-radius:10px}
 .bv .xp.xp-busy .xp-live{opacity:.75}
 .bv .xp .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* 제자리 양식: 이름·등급 바꾸기, 지우기 확인 */
+.bv .xp .xp-delf{border-color:var(--v-bad)}
+.bv .xp .btn.danger{background:var(--v-bad);border-color:var(--v-bad);color:#fff}
+.bv .xp .btn.danger:hover{filter:brightness(1.08)}
+/* 범주 조건(목록 + 직접 입력) 칸 */
+.bv .xp .xp-grid input.choice{min-width:96px}

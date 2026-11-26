@@ -4,6 +4,9 @@
 그래서 앱의 다른 모듈을 import하지 않고, 글(해석·판정 문구)은 넣지 않는다 — 숫자만 돌려준다.
 
 - 회귀: OLS (일반 SE + HC3 강건 SE), 표준화 β(연속 변수만, 표본 SD 비), 항별 F 검정, GVIF.
+  선택 항: 교호작용(interactions = [[a, b], …] — 연속×범주·연속×연속·범주×범주)과 2차항(quadratic = [연속 변수, …]).
+  곱항·2차항의 연속 변수는 분석 표본 평균으로 중심화한다(x − x̄) — 주효과 계수가 '다른 변수의 평균(범주는 기준 수준)에서의
+  기울기·차이'가 되고, 주효과 열은 중심화하지 않아 주효과만 있는 모형과 이름·뜻이 같다.
 - 진단: Shapiro–Wilk(잔차), Breusch–Pagan(Koenker 학생화 판 = R lmtest::bptest 기본), Cook's D, 2차항 선형성 검정, Durbin–Watson.
 - 집단 비교: Levene(중앙값 기준 = Brown–Forsythe = R car::leveneTest 기본), 집단별 Shapiro–Wilk,
   2수준 → Welch(기본)/Student t, 차이의 95% CI, Cohen's d·Hedges' g, Mann–Whitney U(점근, 연속성 보정);
@@ -65,20 +68,51 @@ def level_order(series: pd.Series, reference=None, levels=None) -> list[str]:
     return order
 
 
-def design(d: pd.DataFrame, continuous: list[str], categorical: list[tuple[str, list[str]]]):
-    """설계 행렬(절편 + 연속 + 처리 대비 가변수). 열 이름: '(Intercept)', 'temp_c', 'acid[HCl]'."""
+def centers_for(d: pd.DataFrame, continuous: list[str], interactions=(), quadratic=()) -> dict:
+    """곱항·2차항에 쓰는 연속 변수의 표본 평균(중심화 기준)."""
+    need = set(quadratic or []) | {v for pair in (interactions or []) for v in pair}
+    return {c: float(d[c].astype(float).mean()) for c in continuous if c in need}
+
+
+def design(d: pd.DataFrame, continuous: list[str], categorical: list[tuple[str, list[str]]],
+           interactions=(), quadratic=(), centers: dict | None = None):
+    """설계 행렬(절편 + 연속 + 처리 대비 가변수 [+ 2차항 + 곱항]).
+    열 이름: '(Intercept)', 'temp_c', 'acid[HCl]', 'temp_c^2', 'temp_c:acid[HCl]', 'temp_c:time_min'.
+    centers를 주면 그 평균으로 중심화한다(예측용 새 자료에 적합 때의 평균을 쓰기 위해)."""
     cols = {"(Intercept)": np.ones(len(d))}
     terms = {"(Intercept)": ["(Intercept)"]}
     for c in continuous:
         cols[c] = d[c].astype(float).to_numpy()
         terms[c] = [c]
+    catlv = {}
     for name, lv in categorical:
+        catlv[name] = lv
         s = d[name].astype(str).to_numpy()
         terms[name] = []
         for level in lv[1:]:
             col = f"{name}[{level}]"
             cols[col] = (s == level).astype(float)
             terms[name].append(col)
+    if centers is None:
+        centers = centers_for(d, continuous, interactions, quadratic)
+    for c in quadratic or []:
+        col = f"{c}^2"
+        cols[col] = (d[c].astype(float).to_numpy() - centers[c]) ** 2
+        terms[col] = [col]
+
+    def parts(v):
+        if v in catlv:
+            s = d[v].astype(str).to_numpy()
+            return [(f"{v}[{level}]", (s == level).astype(float)) for level in catlv[v][1:]]
+        return [(v, d[v].astype(float).to_numpy() - centers[v])]
+    for a, b in interactions or []:
+        tname = f"{a}:{b}"
+        terms[tname] = []
+        for na, xa in parts(a):
+            for nb, xb in parts(b):
+                col = f"{na}:{nb}"
+                cols[col] = xa * xb
+                terms[tname].append(col)
     return pd.DataFrame(cols, index=d.index), terms
 
 
@@ -106,9 +140,12 @@ def gvif(X: pd.DataFrame, terms: dict) -> dict:
 
 
 def ols(d: pd.DataFrame, outcome: str, continuous: list[str], categorical: list[tuple[str, list[str]]],
-        alpha: float = ALPHA) -> dict:
+        alpha: float = ALPHA, interactions=(), quadratic=()) -> dict:
     y = d[outcome].astype(float)
-    X, terms = design(d, continuous, categorical)
+    interactions = [tuple(p) for p in (interactions or [])]
+    quadratic = list(quadratic or [])
+    centers = centers_for(d, continuous, interactions, quadratic)
+    X, terms = design(d, continuous, categorical, interactions, quadratic, centers)
     n, k = X.shape
     if n <= k:
         raise CoreError(f"n={n} <= parameters={k}")
@@ -150,6 +187,9 @@ def ols(d: pd.DataFrame, outcome: str, continuous: list[str], categorical: list[
     lin = []
     for c in continuous:
         x = d[c].astype(float)
+        if c in quadratic:  # 2차항이 이미 모형에 있다 — 따로 검정하지 않는다(계수표의 2차항이 그 검정)
+            lin.append({"var": c, "testable": False, "levels": int(x.nunique()), "in_model": True})
+            continue
         if x.nunique() < 3:
             lin.append({"var": c, "testable": False, "levels": int(x.nunique())})
             continue
@@ -161,6 +201,7 @@ def ols(d: pd.DataFrame, outcome: str, continuous: list[str], categorical: list[
     osm_osr, _fit = ss.probplot(resid / math.sqrt(m.mse_resid), dist="norm")
     return {
         "columns": list(X.columns), "terms": terms, "coef": coef, "term_tests": term_tests,
+        "interactions": [list(p) for p in interactions], "quadratic": quadratic, "centers": {k: num(v) for k, v in centers.items()},
         "fit": {"n": int(n), "k": int(k), "df_model": num(m.df_model), "df_resid": num(m.df_resid), "r2": num(m.rsquared),
                 "adj_r2": num(m.rsquared_adj), "F": num(m.fvalue), "F_p": num(m.f_pvalue), "rmse": num(math.sqrt(m.mse_resid)),
                 "aic": num(m.aic), "sd_y": num(sdy)},
@@ -270,8 +311,8 @@ def group_compare(d: pd.DataFrame, outcome: str, group: str, levels: list[str], 
 
 
 def analyze(df: pd.DataFrame, spec: dict) -> dict:
-    """spec = {outcome, continuous: [..], categorical: [{name, reference, levels?}], group, test, alpha}
-    목록별 삭제 후 같은 표본으로 회귀와 집단 비교를 한다."""
+    """spec = {outcome, continuous: [..], categorical: [{name, reference, levels?}], group, test, alpha,
+    interactions?: [[a, b], ..], quadratic?: [..]}  목록별 삭제 후 같은 표본으로 회귀와 집단 비교를 한다."""
     outcome = spec["outcome"]
     cont = list(spec.get("continuous") or [])
     cats = list(spec.get("categorical") or [])
@@ -284,7 +325,8 @@ def analyze(df: pd.DataFrame, spec: dict) -> dict:
     cat_levels = [(c["name"], level_order(d[c["name"]], c.get("reference"), c.get("levels"))) for c in cats]
     res = {"n_total": int(len(df)), "n_used": int(len(d)), "dropped_index": dropped, "used_index": list(d.index),
            "levels": {n: lv for n, lv in cat_levels}}
-    res["regression"] = ols(d, outcome, cont, cat_levels, alpha) if (cont or cats) else None
+    res["regression"] = ols(d, outcome, cont, cat_levels, alpha, spec.get("interactions") or [],
+                            spec.get("quadratic") or []) if (cont or cats) else None
     if group:
         gc = next((c for c in cats if c["name"] == group), {})
         glv = res["levels"].get(group) or level_order(d[group], gc.get("reference") or spec.get("group_reference"),

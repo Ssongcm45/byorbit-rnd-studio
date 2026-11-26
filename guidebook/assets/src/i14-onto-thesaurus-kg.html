@@ -1,0 +1,60 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>개념 지도를 이루는 세 가지</title>
+<style>
+:root{--brand:#2DA082;--deep:#1F7A63;--pale:#EAF4F0;--ink:#231F20;--gray:#6D6E71;--warn:#E07B39;--warnpale:#FCEFE5;--line:#CFE3DA;--soft:#F6F8F7}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff}
+html{overflow:hidden}::-webkit-scrollbar{display:none}
+body{font-family:'Pretendard','Malgun Gothic',sans-serif;color:var(--ink);width:1600px;padding:64px 72px 64px;font-size:32px;line-height:1.4;word-break:keep-all}
+h1{font-size:56px;line-height:1.25;margin:0 0 10px;font-weight:800;letter-spacing:-0.5px}
+.sub{font-size:32px;color:var(--gray);margin:0 0 40px}
+.row{display:flex;align-items:stretch;gap:0}
+.col{display:flex;flex-direction:column}
+.box{background:#fff;border:3px solid var(--line);border-radius:22px;padding:24px 26px}
+.box.b{border-color:var(--brand)}
+.box.f{background:var(--brand);border-color:var(--brand);color:#fff}
+.box.d{background:var(--deep);border-color:var(--deep);color:#fff}
+.box.p{background:var(--pale);border-color:var(--pale)}
+.box.w{border-color:var(--warn)}
+.box.wf{background:var(--warnpale);border-color:var(--warn)}
+.box.g{background:var(--soft);border-color:#E3E7E5}
+.t{font-weight:800;font-size:36px;line-height:1.25}
+.t2{font-weight:700;font-size:33px}
+.s{font-size:31px;color:var(--gray);margin-top:6px}
+.f .s,.d .s{color:#E6F4EE}
+.tag{display:inline-block;font-size:31px;font-weight:700;padding:3px 14px;border-radius:14px;background:var(--pale);color:var(--deep);margin:4px 6px 0 0}
+.tag.w{background:var(--warnpale);color:#B35A20}
+.tag.g{background:#EEF0EF;color:var(--gray)}
+.f .tag{background:rgba(255,255,255,.22);color:#fff}
+.p .tag,.wf .tag{background:#fff}
+.num{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:30px;flex:none}
+.arr{flex:none;display:flex;align-items:center;justify-content:center}
+.ic{flex:none}
+.note{font-size:31px;color:var(--gray);margin-top:28px}
+.k{color:var(--deep);font-weight:800}
+.wk{color:#B35A20;font-weight:800}
+ul.l{margin:8px 0 0;padding-left:26px}ul.l li{margin:4px 0}
+</style></head><body><h1>개념 지도를 이루는 세 가지</h1><p class="sub">규칙(온톨로지)으로 틀을 잡고, 이름(시소러스)을 맞추고, 연결(지식그래프)로 봅니다. 예는 모두 이 앱의 표준 시드입니다.</p><div class="row" style="gap:22px;align-items:stretch"><div class="box b" style="flex:1;padding:24px 24px">
+<div style="display:flex;gap:14px;align-items:center"><svg class="ic" width="60" height="60" viewBox="0 0 64 64"><path d="M6 12 q13 -6 26 2 v42 q-13 -8 -26 -2 Z" fill="#fff" stroke="#2DA082" stroke-width="4" stroke-linejoin="round"/><path d="M58 12 q-13 -6 -26 2 v42 q13 -8 26 -2 Z" fill="#fff" stroke="#2DA082" stroke-width="4" stroke-linejoin="round"/></svg><div><div class="t" style="font-size:40px">온톨로지</div><div class="s" style="margin:0">분류와 관계의 규칙 = 도서관 분류표</div></div></div>
+<div style="margin-top:18px;font-size:31px;line-height:1.5">
+<div><b>농업</b></div><div style="padding-left:30px">└ <b>과실 착즙박</b></div><div style="padding-left:66px">└ <b style="color:var(--deep)">사과박</b></div>
+</div>
+<div style="margin-top:16px;background:var(--pale);border-radius:14px;padding:14px 16px;font-size:31px;line-height:1.45">
+부산물 —<b>원료</b>→ 원물<br>부산물 —<b>발생 공정</b>→ 공정<br>부산물 —<b>함유 성분</b>→ 성분</div>
+<div class="s" style="margin-top:14px">체계 9개 · 관계 4종</div></div><div class="box b" style="flex:1;padding:24px 24px">
+<div style="display:flex;gap:14px;align-items:center"><svg class="ic" width="60" height="60" viewBox="0 0 64 64"><path d="M8 12 h48 v30 h-30 l-12 10 v-10 h-6 Z" fill="#fff" stroke="#2DA082" stroke-width="4" stroke-linejoin="round"/><line x1="18" y1="24" x2="46" y2="24" stroke="#2DA082" stroke-width="4"/><line x1="18" y1="33" x2="38" y2="33" stroke="#2DA082" stroke-width="4"/></svg><div><div class="t" style="font-size:40px">시소러스</div><div class="s" style="margin:0">표준명 + 동의어 = 유의어 사전</div></div></div>
+<div style="margin-top:18px;font-size:31px"><span class="tag" style="font-size:33px;background:var(--brand);color:#fff">사과박</span> <span style="color:var(--gray)">표준명</span></div>
+<div style="margin-top:12px;line-height:1.9"><span class="tag " style="font-size:31px">사과 착즙박</span><span class="tag " style="font-size:31px">사과 포마스</span><span class="tag " style="font-size:31px">apple marc</span><span class="tag " style="font-size:31px">사과찌꺼기</span><span class="tag " style="font-size:31px">Apple pomace</span></div>
+<div style="margin-top:10px;font-size:31px">숨은 표기 <span class="tag g" style="font-size:31px">사과퍼미스</span></div>
+<div class="s" style="margin-top:14px">어느 이름으로 찾아도 같은 개념</div></div><div class="box b" style="flex:1;padding:24px 24px">
+<div style="display:flex;gap:14px;align-items:center"><svg class="ic" width="60" height="60" viewBox="0 0 64 64"><circle cx="32" cy="32" r="25" fill="#fff" stroke="#2DA082" stroke-width="4"/><ellipse cx="32" cy="32" rx="11" ry="25" fill="none" stroke="#2DA082" stroke-width="3"/><line x1="7" y1="32" x2="57" y2="32" stroke="#2DA082" stroke-width="3"/></svg><div><div class="t" style="font-size:40px">지식그래프</div><div class="s" style="margin:0">점과 선 = 지하철 노선도</div></div></div>
+<svg width="100%" viewBox="0 0 420 300" style="margin-top:12px">
+<g stroke-width="5" fill="none">
+<line x1="210" y1="150" x2="70" y2="50" stroke="#E07B39"/><line x1="210" y1="150" x2="350" y2="50" stroke="#2DA082"/>
+<line x1="210" y1="150" x2="70" y2="255" stroke="#6D6E71" stroke-dasharray="10 8"/><line x1="210" y1="150" x2="350" y2="255" stroke="#1F7A63" stroke-dasharray="10 8"/></g>
+<g font-family="Pretendard,Malgun Gothic" font-size="27" text-anchor="middle" font-weight="700">
+<rect x="140" y="125" width="140" height="50" rx="12" fill="#1F7A63"/><text x="210" y="160" fill="#fff">사과박</text>
+<rect x="10" y="25" width="120" height="50" rx="12" fill="#fff" stroke="#E07B39" stroke-width="4"/><text x="70" y="60" fill="#231F20">사과</text>
+<rect x="290" y="25" width="120" height="50" rx="12" fill="#fff" stroke="#2DA082" stroke-width="4"/><text x="350" y="60" fill="#231F20">펙틴</text>
+<rect x="0" y="230" width="140" height="50" rx="12" fill="#F6F8F7" stroke="#6D6E71" stroke-width="4"/><text x="70" y="265" fill="#231F20">논문</text>
+<rect x="280" y="230" width="140" height="50" rx="12" fill="#F6F8F7" stroke="#1F7A63" stroke-width="4"/><text x="350" y="265" fill="#231F20">측정값</text></g></svg>
+<div style="font-size:31px;line-height:1.45;margin-top:6px">원료·함유 성분(시드) + <b>언급</b>(자료) + <b>측정</b>(측정값)</div></div></div></body></html>

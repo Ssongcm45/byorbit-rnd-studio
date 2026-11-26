@@ -3,303 +3,380 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ByOrbit R&amp;D Studio 개인용</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%238a5a34%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22700%22%3EB%3C/text%3E%3C/svg%3E">
-<style>
-:root{
-  --bg:#eceff3; --surface:#fff; --surface-2:#f4f6f9; --ink:#131b26; --muted:#586577; --line:#d3d9e1;
-  --accent:#1d4f9c; --accent-ink:#fff; --accent-soft:#e2eaf6; --earth:#8a5a34; --earth-soft:#f2e8de;
-  --ok:#2d7a4b; --ok-soft:#e1f1e6; --warn:#9c5d00; --warn-soft:#f8ecd6; --bad:#b0281f; --bad-soft:#f7e1df;
-  --mark:#fff1b8; --shadow:0 1px 2px rgba(15,25,40,.06),0 4px 14px rgba(15,25,40,.07);
-  --font:'Malgun Gothic','맑은 고딕','Pretendard','Apple SD Gothic Neo',system-ui,sans-serif;
-  --mono:Consolas,'D2Coding',ui-monospace,Menlo,monospace; color-scheme:light;
-}
-@media (prefers-color-scheme: dark){:root{
-  --bg:#0e131a; --surface:#151c26; --surface-2:#1b2431; --ink:#e4e9f0; --muted:#98a4b5; --line:#2b3545;
-  --accent:#76a3ea; --accent-ink:#0b1426; --accent-soft:#1b2b43; --earth:#d39f75; --earth-soft:#2d2219;
-  --ok:#62c088; --ok-soft:#15301f; --warn:#e6a94f; --warn-soft:#33260f; --bad:#f07f76; --bad-soft:#3a1715;
-  --mark:#4a3d0f; --shadow:0 1px 2px rgba(0,0,0,.45),0 6px 18px rgba(0,0,0,.35); color-scheme:dark}}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.55;display:flex;flex-direction:column}
-button,input,select,textarea{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.mono{font-family:var(--mono)}
-.topbar{display:flex;align-items:center;gap:18px;padding:0 16px;height:54px;flex:none;background:var(--surface);border-bottom:1px solid var(--line)}
-.brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
-.brand .mk{width:28px;height:28px;border-radius:8px;background:var(--earth);display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
-.brand b{font-size:15px}.brand small{display:block;color:var(--muted);font-size:11px;line-height:1.1}
-nav{display:flex;gap:2px;overflow-x:auto}
-nav a{padding:7px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:600;white-space:nowrap;cursor:pointer}
-nav a:hover{background:var(--surface-2);color:var(--ink)}
-nav a[aria-current=page]{background:var(--accent-soft);color:var(--accent)}
-nav .count{font-family:var(--mono);font-size:11px;margin-left:5px;padding:0 6px;border-radius:9px;background:var(--warn-soft);color:var(--warn)}
-.tr{margin-left:auto;display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:12px;color:var(--muted)}
-.tr select{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 8px;font-weight:600;color:var(--ink)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
-.dot.ok{background:var(--ok)}.dot.bad{background:var(--bad)}
-main{flex:1;min-height:0;overflow-y:auto}
-.view{display:none}.view.active{display:block}
-.wrap{max-width:1200px;margin:0 auto;padding:20px 24px 56px;display:grid;gap:14px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
-.card h2{margin:0 0 4px;font-size:15px}.card p.sub{margin:0 0 10px;color:var(--muted);font-size:12.5px}
-.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.grow{flex:1}
-.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:600;font-size:13px;white-space:nowrap}
-.btn:hover{background:var(--surface-2)}.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.ok{color:var(--ok);border-color:var(--ok)}.btn.bad{color:var(--bad)}.btn.sm{height:26px;padding:0 9px;font-size:12px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.inp{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 9px;font-size:13px}
-textarea.inp{height:auto;min-height:84px;padding:8px 10px;width:100%;resize:vertical}
-.drop{border:2px dashed var(--line);border-radius:12px;background:var(--surface);padding:20px 22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop h2{margin:0;font-size:16px}.drop p{margin:2px 0 0;color:var(--muted);font-size:12.5px;max-width:70ch}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{font-size:11.5px;font-weight:600;color:var(--muted);text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
-tr:last-child td{border-bottom:0}
-tr.click{cursor:pointer}tr.click:hover td{background:var(--surface-2)}
-.num{text-align:right;font-family:var(--mono)}
-.stg{font-size:10.5px;padding:1px 6px;border-radius:5px;background:var(--surface-2);color:var(--muted);white-space:nowrap;margin-right:2px}
-.stg.done{background:var(--ok-soft);color:var(--ok)}.stg.warn{background:var(--warn-soft);color:var(--warn)}.stg.err{background:var(--bad-soft);color:var(--bad)}
-.cf{display:inline-flex;white-space:nowrap;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid var(--line);color:var(--muted)}
-.cf.s{border-color:var(--bad);color:var(--bad)}.cf.i{border-color:var(--warn);color:var(--warn)}
-.pill{display:inline-flex;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
-.pill.seed{background:var(--accent-soft);color:var(--accent)}.pill.mine{background:var(--earth-soft);color:var(--earth)}
-.pill.ok{background:var(--ok-soft);color:var(--ok)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}
-.note{font-size:12px;color:var(--warn);margin-top:3px}
-.muted{color:var(--muted)}.small{font-size:12px}
-.chips{display:flex;gap:4px;flex-wrap:wrap}
-.chip{font-size:11.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2)}
-.chip.k{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
-.hit{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--surface);cursor:pointer}
-.hit:hover{border-color:var(--accent)}
-.hit .meta{font-size:11.5px;color:var(--muted);display:flex;gap:8px;margin-bottom:3px}
-mark{background:var(--mark);color:inherit;border-radius:3px;padding:0 1px}
-.ann{border-bottom:2px solid var(--accent);background:var(--accent-soft);border-radius:3px;cursor:help}
-.ann.VALUE{border-color:var(--warn);background:var(--warn-soft)}.ann.pending{border-bottom-style:dashed}
-.chunktext{white-space:pre-wrap;font-size:13.5px;line-height:1.8;background:var(--surface-2);border-radius:8px;padding:12px 14px;max-height:56vh;overflow:auto}
-.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;align-items:start}
-.tree{font-size:13px}.tree ul{list-style:none;margin:0;padding-left:16px}.tree>ul{padding-left:0}
-.tree li{padding:1px 0}.tree .sec{font-weight:700}
-.tree button{border:0;background:none;padding:1px 4px;border-radius:4px;cursor:pointer;text-align:left}
-.tree button:hover{background:var(--surface-2)}
-dialog{border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);padding:0;width:min(860px,94vw);box-shadow:var(--shadow)}
-dialog::backdrop{background:rgba(10,15,25,.45)}
-.dhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
-.dhead h3{margin:0;font-size:15px;flex:1}.dbody{padding:14px 16px;max-height:76vh;overflow:auto}
-.answer{white-space:pre-wrap;background:var(--surface-2);border-radius:8px;padding:12px 14px;font-size:13.5px;line-height:1.75}
-.kv{display:grid;grid-template-columns:150px 1fr;gap:6px 12px;font-size:13px}.kv b{font-weight:600;color:var(--muted)}
-.radio{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;margin-bottom:6px}
-.radio:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
-.radio small{display:block;color:var(--muted)}
-.toast{position:fixed;right:16px;bottom:16px;background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:9px;font-size:13px;opacity:0;transition:.2s;pointer-events:none;max-width:420px}
-.toast.on{opacity:.95}
-.empty{padding:26px;text-align:center;color:var(--muted);font-size:13px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;word-break:break-all}
-.bar{height:10px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;display:flex}
-.bar i{display:block;height:100%}.bar i.ok{background:var(--ok)}.bar i.err{background:var(--bad)}.bar i.skip{background:var(--line)}
-#rvRows tr{scroll-margin:80px}
-#rvRows tr.rvf{outline:2px solid var(--accent);outline-offset:-2px}#rvRows tr.rvf td{background:var(--accent-soft)}
-#rvRows tr.decided td{opacity:.55}
-kbd{font-family:var(--mono);font-size:11px;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--surface-2)}
-.kbhelp{position:fixed;right:16px;bottom:64px;z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:12px 16px;font-size:13px;width:280px}
-.kbhelp h3{margin:0 0 8px;font-size:14px}.kbhelp .kv{grid-template-columns:110px 1fr}
-@media (max-width:860px){.split,.grid2{grid-template-columns:1fr}}
-</style>
+<meta name="color-scheme" content="light dark">
+<title>R&amp;D Studio V0.5</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%238a5a34%22/%3E%3Ctext x=%2216%22 y=%2222%22 font-size=%2216%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22 font-weight=%22700%22%3ER%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
+<a class="skip" href="#main">본문으로 건너뛰기</a>
+<!-- 아이콘 (선 아이콘, 24 격자) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.6l2 2h8.4A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.4 2.6 3.6 5.6 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.6-3.6-9S9.6 5.6 12 3z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H7a2 2 0 0 0-2 2z"/><path d="M5 20a2 2 0 0 1 2-2h12v3H7a2 2 0 0 1-2-1z"/></symbol>
+  <symbol id="i-graph" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="5.5" r="2.6"/><circle cx="18" cy="18.5" r="2.6"/><path d="m8.4 10.8 7.2-4.1M8.4 13.2l7.2 4.1"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12.2V4.5A1.5 1.5 0 0 1 4.5 3h7.7L21 11.8 11.8 21z"/><circle cx="7.6" cy="7.6" r="1.4"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9.5h18M3 14.8h18M9 9.5V20"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6.2L4.7 18.4A1.8 1.8 0 0 0 6.3 21h11.4a1.8 1.8 0 0 0 1.6-2.6L14 9.2V3"/><path d="M7.3 15h9.4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="m7.5 14.5 3.5-4 3 2.5 5-6"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v9a1.5 1.5 0 0 1-1.5 1.5H9.5L5 20v-4h-.5A.5.5 0 0 1 4 15.5z"/><path d="M8.5 9h7M8.5 12h4.5"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="18.5" cy="12" r="1.6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5.2c0 4.4 3 8.2 7 9.8 4-1.6 7-5.4 7-9.8V6z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M4 12 20 4l-5.5 16-3-6.5z"/><path d="m11.5 13.5 4-4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17h.01"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.5-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.5 4.5L20 16M20 20v-4h-4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5a4 4 0 0 1-2-2z"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+  <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></symbol>
+</svg>
+
 <header class="topbar">
-  <div class="brand"><div class="mk">B</div><div><b>ByOrbit R&amp;D Studio</b><small>개인용 · 이 PC에서 실행 중</small></div></div>
-  <nav id="nav">
-    <a data-v="library" aria-current="page">자료함</a>
-    <a data-v="search">검색</a>
-    <a data-v="review">라벨 검토<span class="count" id="pendingCount" hidden>0</span></a>
-    <a data-v="meas">측정값</a>
-    <a data-v="onto">개념</a>
-    <a data-v="ask">AI에 묻기</a>
-    <a data-v="collect">수집</a>
-    <a data-v="exp">실험</a>
-    <a data-v="stats">분석</a>
-    <a data-v="viz">시각화</a>
-    <a data-v="settings">설정</a>
-  </nav>
+  <button class="iconbtn" id="menuBtn" type="button" aria-label="메뉴 접기·펴기" aria-controls="sidebar" aria-expanded="true"><svg class="ic"><use href="#i-menu"/></svg></button>
+  <a class="brand" href="#home" aria-label="R&amp;D Studio V0.5 시작 화면"><span class="mk" aria-hidden="true">R</span><span><b>R&amp;D Studio V0.5</b><small>이 PC에서 실행 중</small></span></a>
+  <label class="proj"><span>프로젝트</span><select id="proj" aria-label="프로젝트"></select></label>
+  <form class="qs" id="qsForm" role="search" autocomplete="off">
+    <svg class="ic sm" aria-hidden="true"><use href="#i-search"/></svg>
+    <input id="qsIn" type="search" placeholder="자료 검색 — 예: 사과박 식이섬유" aria-label="자료 검색 (단축키 Ctrl+K 또는 /)" aria-keyshortcuts="Control+K /">
+    <kbd aria-hidden="true">Ctrl K</kbd>
+  </form>
   <div class="tr">
-    <label>프로젝트 <select id="proj"></select></label>
-    <span title="Claude Code"><span class="dot" id="engDot"></span> Claude Code</span>
+    <a class="spill" id="engPill" href="#settings" title="AI 엔진 상태 — 누르면 설정에서 연결 점검"><span class="dot" id="engDot"></span><span class="lbl" id="engTxt">AI 엔진 확인 중</span></a>
+    <a class="spill warn" id="pendPill" href="#review" hidden title="검토를 기다리는 라벨"><svg class="ic sm" aria-hidden="true"><use href="#i-tag"/></svg><span class="lbl">라벨 대기</span><b id="pendN">0</b></a>
+    <button class="iconbtn bordered" id="helpBtn" type="button" aria-label="도움말과 단축키" aria-keyshortcuts="?" title="도움말과 단축키 (?)"><svg class="ic"><use href="#i-help"/></svg></button>
   </div>
 </header>
-<main>
-<!-- 자료함 -->
-<section class="view active" id="v-library"><div class="wrap">
-  <div class="drop" id="drop">
-    <div><h2>자료를 여기에 끌어다 놓으세요</h2>
-      <p>PDF · HWPX · XLSX(CoA 자동 인식) · TXT. 파일은 이 PC의 데이터 폴더 안 <code>library</code>로 복사되고 원본은 그대로 둡니다.
-      받은편지함 폴더(<code id="inboxPath">inbox</code>)에 넣어도 자동으로 처리됩니다.</p></div>
-    <div class="row" style="margin-left:auto">
-      <select class="inp" id="upConf" title="보안 등급"><option>일반</option><option selected>내부</option><option>기밀</option></select>
-      <label class="btn primary">파일 선택<input type="file" id="fileIn" multiple hidden accept=".pdf,.hwpx,.xlsx,.xlsm,.txt,.md,.csv"></label>
+
+<aside class="sidebar" id="sidebar" aria-label="화면 메뉴">
+  <nav id="nav" aria-label="화면">
+    <div class="navgroup">시작</div>
+    <a class="ni" href="#home" data-v="home" title="시작"><svg class="ic"><use href="#i-home"/></svg><span class="lbl">시작</span></a>
+    <div class="navsep"></div>
+    <div class="navgroup">자료</div>
+    <a class="ni" href="#library" data-v="library" title="자료함"><svg class="ic"><use href="#i-folder"/></svg><span class="lbl">자료함</span></a>
+    <a class="ni" href="#collect" data-v="collect" title="자료 수집"><svg class="ic"><use href="#i-globe"/></svg><span class="lbl">자료 수집</span></a>
+    <a class="ni" href="#search" data-v="search" title="검색"><svg class="ic"><use href="#i-search"/></svg><span class="lbl">검색</span></a>
+    <a class="ni" href="#onto" data-v="onto" title="개념 사전"><svg class="ic"><use href="#i-book"/></svg><span class="lbl">개념 사전</span></a>
+    <a class="ni" href="#kg" data-v="kg" title="지식그래프"><svg class="ic"><use href="#i-graph"/></svg><span class="lbl">지식그래프</span></a>
+    <div class="navsep"></div>
+    <div class="navgroup">라벨</div>
+    <a class="ni" href="#review" data-v="review" title="라벨 검토"><svg class="ic"><use href="#i-tag"/></svg><span class="lbl">라벨 검토</span><span class="badge" id="pendingCount" hidden aria-label="검토 대기">0</span></a>
+    <div class="navsep"></div>
+    <div class="navgroup">실험·분석</div>
+    <a class="ni" href="#meas" data-v="meas" title="측정값"><svg class="ic"><use href="#i-table"/></svg><span class="lbl">측정값</span></a>
+    <a class="ni" href="#exp" data-v="exp" title="내 실험"><svg class="ic"><use href="#i-flask"/></svg><span class="lbl">내 실험</span></a>
+    <a class="ni" href="#stats" data-v="stats" title="통계 분석"><svg class="ic"><use href="#i-chart"/></svg><span class="lbl">통계 분석</span></a>
+    <div class="navsep"></div>
+    <div class="navgroup">보기·AI</div>
+    <a class="ni" href="#viz" data-v="viz" title="시각화"><svg class="ic"><use href="#i-cube"/></svg><span class="lbl">시각화</span></a>
+    <a class="ni" href="#ask" data-v="ask" title="AI에 묻기"><svg class="ic"><use href="#i-chat"/></svg><span class="lbl">AI에 묻기</span></a>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-proj"><label>프로젝트<select id="projM"></select></label></div>
+    <nav aria-label="설정"><a class="ni" href="#settings" data-v="settings" title="설정"><svg class="ic"><use href="#i-sliders"/></svg><span class="lbl">설정</span></a></nav>
+    <p class="sb-note"><b>내 PC 전용</b> · 자료와 DB는 이 PC의 데이터 폴더에만 있습니다.</p>
+  </div>
+</aside>
+<div class="scrim" id="scrim"></div>
+
+<main id="main" tabindex="-1">
+<!-- 시작 -->
+<section class="view" id="v-home" aria-labelledby="hTitle"><div class="page">
+  <div class="hero">
+    <div><h1 id="hTitle">R&amp;D Studio에 오신 걸 환영합니다</h1>
+      <p id="hSub">부산물 연구 자료를 이 PC에 모으고, 찾고, AI에게 근거 있는 답을 받는 작업실입니다. 처음이라면 아래 순서대로 해 보세요.</p></div>
+    <div class="ph-a"><a class="btn" href="#library"><svg class="ic sm"><use href="#i-upload"/></svg>파일 올리기</a>
+      <a class="btn primary" href="#ask"><svg class="ic sm"><use href="#i-chat"/></svg>AI에 묻기</a></div>
+  </div>
+  <div class="split split-wide">
+    <div class="card">
+      <div class="card-h"><h2><svg class="ic"><use href="#i-check"/></svg>처음 사용 체크리스트</h2><span class="small muted" id="hProgTxt"></span></div>
+      <div class="progress" style="margin-bottom:12px"><i id="hProg" style="width:0"></i></div>
+      <ol class="steps" id="hSteps"><li class="skel"><i></i><i></i><i></i></li></ol>
+    </div>
+    <div class="card">
+      <div class="card-h"><h2><svg class="ic"><use href="#i-shield"/></svg>안전 상태</h2></div>
+      <p class="sub">무엇이 이 PC 밖으로 나가는지 한눈에 봅니다.</p>
+      <div class="safe" id="hSafe"><div class="skel"><i></i><i></i><i></i></div></div>
+      <div class="row" style="margin-top:14px"><button class="btn sm" type="button" onclick="openOutbound()"><svg class="ic sm"><use href="#i-info"/></svg>외부로 나가는 것 자세히</button>
+        <a class="btn sm ghost" href="#settings">설정 바꾸기</a></div>
     </div>
   </div>
-  <div class="card" id="lblCard" hidden>
-    <div class="row"><h2 class="grow">AI 라벨 <span class="muted small" id="lblDoc"></span></h2>
+  <div class="stats" id="hStats" aria-label="주요 숫자"></div>
+  <div class="grid2">
+    <div class="card"><div class="card-h"><h2>최근 자료</h2><a class="btn sm ghost" href="#library">자료함 열기<svg class="ic sm"><use href="#i-arrow"/></svg></a></div>
+      <ul class="list" id="hDocs"><li class="skel"><i></i><i></i></li></ul></div>
+    <div class="card"><div class="card-h"><h2>수집함 새 항목</h2><a class="btn sm ghost" href="#collect">수집 열기<svg class="ic sm"><use href="#i-arrow"/></svg></a></div>
+      <ul class="list" id="hColl"><li class="skel"><i></i><i></i></li></ul></div>
+  </div>
+  <div class="card"><div class="card-h"><h2>바로 가기</h2></div>
+    <div class="qa">
+      <a href="#library"><svg class="ic lg"><use href="#i-upload"/></svg><span>파일 올리기<small>PDF·HWPX·엑셀(CoA)</small></span></a>
+      <a href="#search"><svg class="ic lg"><use href="#i-search"/></svg><span>자료 검색<small>동의어까지 넓혀 찾기</small></span></a>
+      <a href="#kg"><svg class="ic lg"><use href="#i-graph"/></svg><span>지식그래프<small>개념과 관계 지도</small></span></a>
+      <a href="#collect"><svg class="ic lg"><use href="#i-globe"/></svg><span>자료 수집<small>논문·특허 찾아 모으기</small></span></a>
+      <a href="#exp"><svg class="ic lg"><use href="#i-flask"/></svg><span>내 실험<small>조건·결과 기록, 예측 비교</small></span></a>
+      <a href="#viz"><svg class="ic lg"><use href="#i-cube"/></svg><span>시각화<small>건조 설비·분자 구조</small></span></a>
+    </div></div>
+</div></section>
+
+<!-- 자료함 -->
+<section class="view" id="v-library" aria-labelledby="libTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="libTitle">자료함</h1>
+    <p>논문·보고서·CoA를 넣으면 자동으로 읽고(파싱) 잘게 나눈 뒤(청크) 개념 라벨을 붙입니다. 원본 파일은 그대로 둡니다.</p></div>
+    <div class="ph-a"><button class="btn" id="scanInbox" type="button"><svg class="ic sm"><use href="#i-refresh"/></svg>받은편지함 다시 확인</button></div></header>
+  <div class="drop" id="drop">
+    <div class="di" aria-hidden="true"><svg class="ic lg"><use href="#i-upload"/></svg></div>
+    <div style="flex:1 1 320px;min-width:0"><h2>파일을 여기에 끌어다 놓으세요</h2>
+      <p>PDF · HWPX · XLSX(CoA 자동 인식) · TXT · MD · CSV. 파일은 이 PC의 데이터 폴더 <code>library</code>로 복사되고 원본은 그대로 둡니다.</p>
+      <details><summary>폴더에 넣어도 됩니다 (받은편지함)</summary>
+        <p>받은편지함 폴더 <code id="inboxPath">inbox</code>에 파일을 넣으면 자동으로 처리됩니다. 그 안에 <code>프로젝트 이름</code> 폴더를 만들어 넣으면 그 프로젝트로 들어갑니다.</p></details></div>
+    <div class="acts">
+      <label class="field" style="width:120px"><span>보안 등급</span>
+        <select class="inp" id="upConf" aria-describedby="upConfHelp"><option>일반</option><option selected>내부</option><option>기밀</option></select></label>
+      <label class="btn primary"><svg class="ic sm"><use href="#i-upload"/></svg>파일 선택<input type="file" id="fileIn" multiple hidden accept=".pdf,.hwpx,.xlsx,.xlsm,.txt,.md,.csv"></label>
+      <p class="small muted" id="upConfHelp" style="flex-basis:100%;margin:0">기밀: AI에 보낼 때 파일명·식별 정보를 가립니다.</p>
+    </div>
+  </div>
+  <div class="card" id="lblCard" hidden aria-live="polite">
+    <div class="card-h"><h2>AI 라벨 <span class="muted small" id="lblDoc"></span></h2>
       <span class="pill" id="lblState"></span>
-      <button class="btn sm" id="lblCancel" hidden>취소</button>
-      <button class="btn sm" id="lblResume" hidden title="오류·대기 청크만 다시 처리">재시도</button>
-      <button class="btn sm" id="lblClose" title="이 표시 닫기">닫기</button></div>
-    <div class="bar" id="lblBar" style="margin:10px 0 6px" role="progressbar" aria-valuemin="0"><i class="ok"></i><i class="err"></i><i class="skip"></i></div>
+      <button class="btn sm" id="lblCancel" type="button" hidden>취소</button>
+      <button class="btn sm" id="lblResume" type="button" hidden title="오류·대기 청크만 다시 처리">재시도</button>
+      <button class="btn sm ghost" id="lblClose" type="button" aria-label="이 표시 닫기"><svg class="ic sm"><use href="#i-x"/></svg></button></div>
+    <div class="bar" id="lblBar" style="margin:6px 0" role="progressbar" aria-label="AI 라벨 진행률" aria-valuemin="0"><i class="ok"></i><i class="err"></i><i class="skip"></i></div>
     <p class="small muted" id="lblText" style="margin:0"></p>
   </div>
   <div class="card">
-    <div class="row"><h2 class="grow">자료 목록 <span class="muted small" id="docSum"></span></h2>
-      <label class="small muted"><input type="checkbox" id="allProj"> 모든 프로젝트</label>
-      <button class="btn sm" id="scanInbox">받은편지함 다시 확인</button>
-      <button class="btn sm" id="refreshDocs">새로고침</button></div>
-    <table><thead><tr><th>파일</th><th>종류</th><th>등급</th><th>처리 단계</th><th class="num">청크</th><th class="num">라벨</th><th class="num">측정값</th><th></th></tr></thead>
-    <tbody id="docRows"></tbody></table>
+    <div class="card-h"><h2>자료 목록 <span class="muted small" id="docSum"></span></h2>
+      <label class="check"><input type="checkbox" id="allProj"> 모든 프로젝트</label>
+      <button class="btn sm" id="refreshDocs" type="button"><svg class="ic sm"><use href="#i-refresh"/></svg>새로고침</button></div>
+    <div class="tbl stack-sm"><table><thead><tr><th>파일</th><th>종류</th><th>등급</th><th>처리 단계</th><th class="num">청크</th><th class="num">라벨</th><th class="num">측정값</th><th><span class="sr-only">할 일</span></th></tr></thead>
+    <tbody id="docRows"><tr><td colspan="8"><div class="skel"><i></i><i></i><i></i></div></td></tr></tbody></table></div>
   </div>
 </div></section>
 
 <!-- 검색 -->
-<section class="view" id="v-search"><div class="wrap">
-  <div class="card">
-    <div class="row"><input class="inp grow" id="q" placeholder="예: 사과 포마스 식이섬유 · 굴 패각 소성 · TPC" autocomplete="off">
-      <label class="small muted"><input type="checkbox" id="qAll"> 모든 프로젝트</label>
-      <button class="btn primary" id="qBtn">검색</button></div>
-    <div class="chips" id="qExp" style="margin-top:8px"></div>
-  </div>
+<section class="view" id="v-search" aria-labelledby="sTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="sTitle">검색</h1>
+    <p>검색어를 동의어까지 넓혀 찾습니다. 예: “사과 포마스 TDF” → 사과박·apple pomace … 그리고 식이섬유·총식이섬유 …</p></div></header>
+  <form class="card" id="qForm" role="search" autocomplete="off">
+    <div class="row"><input class="inp grow" id="q" type="search" placeholder="예: 사과 포마스 식이섬유 · 굴 패각 소성 · TPC" aria-label="검색어" style="height:40px;font-size:14px;min-width:200px">
+      <label class="check"><input type="checkbox" id="qAll"> 모든 프로젝트</label>
+      <button class="btn primary" id="qBtn" type="submit" style="height:40px"><svg class="ic sm"><use href="#i-search"/></svg>검색</button></div>
+    <div class="chips" id="qExp" style="margin-top:8px" aria-label="넓힌 검색어"></div>
+  </form>
   <div class="split">
-    <div id="qRes" style="display:grid;gap:8px"><div class="empty">검색어를 넣으면 동의어까지 넓혀서 찾습니다.</div></div>
+    <div id="qRes" style="display:grid;gap:8px" aria-live="polite"></div>
     <div class="card" id="chunkCard" hidden>
-      <div class="row"><h2 class="grow" id="chTitle"></h2><span class="small muted" id="chMeta"></span>
-        <button class="btn sm" id="chWb" title="이 청크를 문서 작업대의 라벨 탭에서 엽니다">작업대에서 열기</button></div>
-      <div class="chunktext" id="chText" style="margin-top:8px"></div>
-      <p class="small muted" style="margin:8px 0 0">밑줄: 붙은 라벨(실선 확정 · 점선 검토 대기 · 주황 수치)</p>
+      <div class="card-h"><h2 id="chTitle" style="overflow-wrap:anywhere"></h2>
+        <button class="btn sm" id="chWb" type="button" title="이 청크를 문서 작업대의 라벨 탭에서 엽니다"><svg class="ic sm"><use href="#i-wrench"/></svg>작업대에서 열기</button></div>
+      <p class="small muted" id="chMeta" style="margin:0 0 8px"></p>
+      <div class="chunktext" id="chText" tabindex="0"></div>
+      <p class="small muted" style="margin:8px 0 0">밑줄: 붙은 라벨 (실선 확정 · 점선 검토 대기 · 주황 수치). 글자에 마우스를 올리면 라벨 내용이 보입니다.</p>
     </div>
   </div>
 </div></section>
 
 <!-- 라벨 검토 -->
-<section class="view" id="v-review"><div class="wrap">
+<section class="view" id="v-review" aria-labelledby="rTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="rTitle">라벨 검토</h1>
+    <p>AI가 제안한 수치 라벨과 신뢰도 0.9 미만 라벨을 사람이 확인합니다. 승인한 수치는 측정값 표로 올라갑니다.</p></div>
+    <div class="ph-a"><button class="btn" type="button" onclick="openHelp('review')"><svg class="ic sm"><use href="#i-keyboard"/></svg>단축키</button></div></header>
   <div class="card">
-    <div class="row"><h2 class="grow">라벨 검토</h2>
-      <select class="inp" id="rvStatus"><option value="pending">검토 대기</option><option value="auto">자동 확정</option><option value="accepted">승인함</option><option value="rejected">거절함</option></select></div>
-    <p class="sub">AI가 제안한 라벨 중 수치와 신뢰도 0.9 미만은 여기서 사람이 확인합니다. 승인한 수치는 측정값 표로 올라갑니다.
-      단축키: <kbd>J</kbd>/<kbd>K</kbd> 이동 · <kbd>A</kbd> 승인 · <kbd>R</kbd> 거절 · <kbd>U</kbd> 되돌리기 · <kbd>?</kbd> 도움말</p>
-    <table><thead><tr><th>문맥</th><th>라벨</th><th>개념·값</th><th class="num">신뢰도</th><th>출처</th><th></th></tr></thead><tbody id="rvRows"></tbody></table>
+    <div class="row" style="align-items:flex-end;margin-bottom:12px;gap:16px">
+      <label class="field" style="width:160px"><span>보기</span>
+        <select class="inp" id="rvStatus"><option value="pending">검토 대기</option><option value="auto">자동 확정</option><option value="accepted">승인함</option><option value="rejected">거절함</option></select></label>
+      <div class="field" style="flex:1 1 300px"><label class="check" style="color:var(--ink);font-weight:600"><input type="checkbox" id="rvLearn"> 거절을 학습 (다음부터 같은 표기 건너뛰기)</label>
+        <span class="help">사전 라벨을 거절할 때 같은 앞뒤 낱말의 같은 표기를 다음부터 라벨하지 않습니다. 작업대의 ‘배운 것’에서 끌 수 있고, 되돌리기(U)를 하면 배운 것도 꺼집니다.</span></div>
+      <p class="small muted" style="margin:0"><kbd>J</kbd>/<kbd>K</kbd> 이동 · <kbd>A</kbd> 승인 · <kbd>R</kbd> 거절 · <kbd>U</kbd> 되돌리기</p>
+    </div>
+    <div class="tbl stack-sm tall"><table><thead><tr><th>문맥</th><th>라벨</th><th>개념·값</th><th class="num">신뢰도</th><th>출처</th><th><span class="sr-only">결정</span></th></tr></thead><tbody id="rvRows"></tbody></table></div>
   </div>
 </div></section>
 
 <!-- 측정값 -->
-<section class="view" id="v-meas"><div class="wrap">
+<section class="view" id="v-meas" aria-labelledby="mTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="mTitle">측정값</h1>
+    <p>CoA에서 읽은 값과 라벨 검토에서 승인한 추출값입니다. 이 화면은 내 PC 전용이라 로트·공급처가 보이지만, AI에 넘길 때는 가려집니다.</p></div>
+    <div class="ph-a"><button class="btn" id="mCsv" type="button"><svg class="ic sm"><use href="#i-download"/></svg>CSV 저장</button></div></header>
   <div class="card">
-    <div class="row"><h2 class="grow">측정값</h2>
-      <input class="inp" id="mBp" placeholder="부산물 (예: 사과박)"><input class="inp" id="mTg" placeholder="항목 (예: 식이섬유)">
-      <label class="small muted"><input type="checkbox" id="mAll" checked> 모든 프로젝트</label>
-      <button class="btn" id="mBtn">조회</button><button class="btn" id="mCsv">CSV 저장</button></div>
-    <p class="sub">CoA에서 읽은 값과 승인한 추출값입니다. 이 화면은 내 PC 전용이라 로트·공급처가 보이지만, AI에 넘길 때는 가려집니다.</p>
-    <table><thead><tr><th>부산물</th><th>항목</th><th class="num">값</th><th>단위</th><th>기준</th><th>전처리</th><th>시험법</th><th>시료</th><th>입력</th><th>출처</th></tr></thead><tbody id="mRows"></tbody></table>
+    <form class="row" id="mForm" style="align-items:flex-end;margin-bottom:12px" autocomplete="off">
+      <label class="field" style="flex:1 1 180px"><span>부산물</span><input class="inp" id="mBp" placeholder="예: 사과박"></label>
+      <label class="field" style="flex:1 1 180px"><span>항목</span><input class="inp" id="mTg" placeholder="예: 식이섬유"></label>
+      <label class="check" style="height:34px"><input type="checkbox" id="mAll" checked> 모든 프로젝트</label>
+      <button class="btn primary" id="mBtn" type="submit">조회</button>
+    </form>
+    <div class="tbl stack-sm tall"><table><thead><tr><th>부산물</th><th>항목</th><th class="num">값</th><th>단위</th><th>기준</th><th>전처리</th><th>시험법</th><th>시료</th><th>입력</th><th>근거</th></tr></thead><tbody id="mRows"></tbody></table></div>
   </div>
 </div></section>
 
-<!-- 개념 -->
-<section class="view" id="v-onto"><div class="wrap">
-  <div class="grid2">
+<!-- 개념·지식그래프 -->
+<section class="view" id="v-onto" aria-labelledby="oTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="oTitle">개념 사전 · 지식그래프</h1>
+    <p>부산물·성분·공정 같은 개념과 동의어를 모은 사전입니다. 지식그래프에서는 개념(점)과 관계(선), 그 개념이 나온 자료를 지도로 봅니다.</p></div>
+    <div class="ph-a" id="ontoActs"><button class="btn primary" id="cAdd" type="button"><svg class="ic sm"><use href="#i-plus"/></svg>개념 추가</button></div></header>
+  <div class="ontotabs" role="tablist" aria-label="개념 보기 방식">
+    <button type="button" role="tab" id="ontoTabList" aria-controls="ontoList" aria-selected="true"><svg class="ic sm"><use href="#i-book"/></svg>분류·목록</button>
+    <button type="button" role="tab" id="ontoTabKG" aria-controls="ontoKG" aria-selected="false" tabindex="-1"><svg class="ic sm"><use href="#i-graph"/></svg>지식그래프</button>
+  </div>
+  <div id="ontoKG" role="tabpanel" aria-labelledby="ontoTabKG" hidden></div>
+  <div class="split split-narrow" id="ontoList" role="tabpanel" aria-labelledby="ontoTabList">
     <div class="card"><h2>부산물 분류</h2><p class="sub">표준 시드: 농업·임업·수산(+축산 자리). 이름을 누르면 오른쪽에서 동의어를 봅니다.</p><div class="tree" id="tree"></div></div>
     <div class="card">
-      <div class="row"><h2 class="grow">개념·동의어</h2>
-        <select class="inp" id="cScheme"><option value="">전체 체계</option></select>
-        <select class="inp" id="cOrigin"><option value="">시드+내 확장</option><option value="seed">표준 시드</option><option value="mine">내 확장</option></select></div>
-      <div class="row" style="margin:8px 0"><input class="inp grow" id="cQ" placeholder="표기로 찾기 (예: 포마스, FD)"><button class="btn" id="cAdd">+ 개념 추가</button></div>
-      <div style="max-height:62vh;overflow:auto"><table><thead><tr><th>표준명</th><th>체계</th><th>동의어</th><th class="num">사용</th><th></th></tr></thead><tbody id="cRows"></tbody></table></div>
+      <h2>개념·동의어</h2>
+      <div class="row" style="margin:8px 0 12px;align-items:flex-end">
+        <label class="field" style="flex:2 1 200px"><span>표기로 찾기</span><input class="inp" id="cQ" type="search" placeholder="예: 포마스, FD"></label>
+        <label class="field" style="flex:1 1 120px"><span>체계</span><select class="inp" id="cScheme"><option value="">전체 체계</option></select></label>
+        <label class="field" style="flex:1 1 120px"><span>출처</span><select class="inp" id="cOrigin"><option value="">시드+내 확장</option><option value="seed">표준 시드</option><option value="mine">내 확장</option></select></label></div>
+      <div class="tbl tall"><table><thead><tr><th>표준명</th><th>체계</th><th>동의어</th><th class="num">사용</th><th><span class="sr-only">승인</span></th></tr></thead><tbody id="cRows"></tbody></table></div>
     </div>
   </div>
 </div></section>
 
 <!-- AI에 묻기 -->
-<section class="view" id="v-ask"><div class="wrap">
-  <div class="card">
-    <h2>AI에 묻기 <span class="pill">Claude Code</span></h2>
-    <p class="sub">이 PC에 설치된 Claude Code가 자료 서버(byorbit-rd) 도구로 자료를 찾아 출처와 함께 답합니다. 질문과 찾은 본문 일부는 Anthropic으로 전송됩니다(CoA 식별 정보는 가림).</p>
-    <textarea class="inp" id="askQ" placeholder="예: 동결건조와 열풍건조 사과박의 식이섬유·폴리페놀 차이를 근거와 함께 정리해줘"></textarea>
-    <div class="row" style="margin-top:8px">
-      <select class="inp" id="askRole"><option value="librarian">자료 사서</option><option value="composition_analyst">성분 분석가</option><option value="report_writer">리포트 작성자(초안 저장)</option></select>
-      <span class="grow"></span><span class="small muted" id="askState"></span><button class="btn primary" id="askBtn">묻기</button></div>
-  </div>
-  <div class="card" id="askOut" hidden><h2>답변</h2><div class="answer" id="askAns"></div><p class="small muted" id="askMeta" style="margin:8px 0 0"></p></div>
-  <div class="card"><h2>리포트 초안</h2><p class="sub">리포트 작성자가 저장한 초안. 파일은 데이터 폴더 <code>reports</code>에도 있습니다.</p>
-    <table><thead><tr><th>제목</th><th class="num">근거</th><th>상태</th><th>만든 때</th></tr></thead><tbody id="rpRows"></tbody></table></div>
+<section class="view" id="v-ask" aria-labelledby="aTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="aTitle">AI에 묻기 <span class="pill accent">Claude Code</span></h1>
+    <p>이 PC의 Claude Code가 자료 서버(byorbit-rd) 도구로 자료를 찾아 출처와 함께 답합니다. 답의 출처 표시를 누르면 원문을 엽니다.</p></div></header>
+  <form class="card" id="askForm" autocomplete="off">
+    <label class="field"><span>질문</span>
+      <textarea class="inp" id="askQ" placeholder="예: 동결건조와 열풍건조 사과박의 식이섬유·폴리페놀 차이를 근거와 함께 정리해줘" aria-describedby="askHelp"></textarea>
+      <span class="help" id="askHelp">Ctrl+Enter로 보냅니다.</span></label>
+    <div class="row" style="margin-top:12px;align-items:flex-end">
+      <label class="field" style="width:220px"><span>역할</span>
+        <select class="inp" id="askRole"><option value="librarian">자료 사서</option><option value="composition_analyst">성분 분석가</option><option value="report_writer">리포트 작성자(초안 저장)</option></select></label>
+      <div class="callout warn grow" style="min-width:240px" id="askNotice"><svg class="ic sm" aria-hidden="true"><use href="#i-shield"/></svg>
+        <p><b>질문과 가려진 본문 일부가 Anthropic으로 전송됩니다.</b> CoA 식별 정보(로트·공급처·시료번호)는 가립니다. <a href="#" onclick="event.preventDefault();openOutbound()">자세히</a></p></div>
+      <button class="btn primary" id="askBtn" type="submit" style="height:40px"><svg class="ic sm"><use href="#i-send"/></svg>묻기</button>
+    </div>
+    <p class="small muted" id="askState" role="status" style="margin:8px 0 0;display:flex;gap:8px;align-items:center"></p>
+  </form>
+  <div class="card" id="askOut" hidden><div class="card-h"><h2>답변</h2><span class="small muted" id="askMeta"></span></div>
+    <div class="answer" id="askAns"></div><div id="askCites"></div></div>
+  <div class="card"><div class="card-h"><h2>리포트 초안</h2></div><p class="sub">리포트 작성자가 저장한 초안입니다. 파일은 데이터 폴더 <code>reports</code>에도 있습니다.</p>
+    <div class="tbl"><table><thead><tr><th>제목</th><th class="num">근거</th><th>상태</th><th>만든 때</th></tr></thead><tbody id="rpRows"></tbody></table></div></div>
 </div></section>
 
-<!-- 시각화 (app/static/viz) — 흐름·건조 방식·분자 구조 -->
-<section class="view" id="v-viz"><div id="vizRoot"></div></section>
 <!-- 자료 수집 (app/static/collect) — 공식 API·크롤러 → 수집함 -->
-<section class="view" id="v-collect"><div id="collectRoot"></div></section>
+<section class="view" id="v-collect" aria-labelledby="coTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="coTitle">자료 수집</h1>
+    <p>공식 API와 크롤러로 논문·보고서·특허를 찾아 수집함에 모읍니다. 검토한 뒤 자료함에 넣으세요.</p></div></header>
+  <div id="collectRoot"></div></div></section>
 <!-- 내 실험 (app/static/exp) — 공정 흐름·내 데이터·예측 비교·보정 -->
+<section class="view" id="v-exp" aria-label="내 실험"><div class="page page-mod">
+  <div id="expRoot"></div></div></section>
 <!-- 통계 분석 (app/static/stats) — 회귀·t검정·가정 점검·논문용 표·그림 -->
-<section class="view" id="v-stats"><div id="statsRoot" style="max-width:1320px;margin:0 auto;padding:16px"></div></section>
-<section class="view" id="v-exp"><div id="expRoot" style="max-width:1320px;margin:0 auto;padding:16px"></div></section>
+<section class="view" id="v-stats" aria-label="통계 분석"><div class="page page-mod">
+  <div id="statsRoot"></div></div></section>
+<!-- 시각화 (app/static/viz) — 흐름·건조 방식·분자 구조 -->
+<section class="view" id="v-viz" aria-labelledby="vTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="vTitle">시각화</h1>
+    <p>자료가 어디로 흐르는지(흐름), 건조 방식과 설비(3D·P&amp;ID), 성분의 분자 구조를 그림으로 봅니다.</p></div></header>
+  <div id="vizRoot"></div></div></section>
 <!-- 문서 작업대 (app/static/doc) — 파싱·청크 검사·고치기·규칙 배우기·사람 라벨 -->
-<section class="view" id="v-wb"><div id="wbRoot"></div></section>
+<section class="view" id="v-wb" aria-labelledby="wbTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="wbTitle">문서 작업대</h1>
+    <p>자료 하나를 열어 파싱 결과와 청크를 검사·고치고, 라벨을 직접 붙이고, 고친 규칙을 배웁니다. ‘닫기’를 누르면 자료함으로 돌아갑니다.</p></div></header>
+  <div id="wbRoot"></div></div></section>
 
 <!-- 설정 -->
-<section class="view" id="v-settings"><div class="wrap">
+<section class="view" id="v-settings" aria-labelledby="setTitle"><div class="page">
+  <header class="ph"><div class="ph-t"><h1 id="setTitle">설정</h1>
+    <p>AI 엔진 연결, CoA 전송 규칙, 기본 프로젝트, 데이터 폴더, 식품 영양 DB 연결을 다룹니다.</p></div></header>
   <div class="grid2">
     <div class="card">
-      <h2>AI 엔진</h2><p class="sub">기본 엔진은 Claude Code입니다. Codex는 2단계에서 연결합니다.</p>
-      <div class="kv" id="engInfo"><b>상태</b><span>확인 중…</span></div>
-      <div class="row" style="margin-top:10px"><button class="btn" id="engCheck">설치 확인</button><button class="btn primary" id="engSmoke">연결 점검 (실제 호출)</button></div>
-      <p class="small muted" id="smokeOut" style="margin:8px 0 0"></p>
+      <h2>AI 엔진</h2><p class="sub">기본 엔진은 이 PC에 설치·로그인된 Claude Code입니다. Codex는 보조 엔진입니다.</p>
+      <div class="kv" id="engInfo"><b>상태</b><span class="row"><span class="spin"></span>확인 중…</span></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="engCheck" type="button">설치 확인</button><button class="btn primary" id="engSmoke" type="button">연결 점검 (실제 호출)</button></div>
+      <p class="small muted" id="smokeOut" role="status" style="margin:8px 0 0"></p>
     </div>
     <div class="card">
-      <h2>CoA 전송 규칙</h2><p class="sub">AI 엔진에 CoA(기밀) 자료를 어떻게 넘길지 정합니다.</p>
+      <h2>CoA 전송 규칙</h2><p class="sub">AI 엔진에 CoA(기밀) 자료를 어떻게 넘길지 정합니다. 바꾸면 바로 저장됩니다.</p>
       <label class="radio"><input type="radio" name="coa" value="mask"><span><b>필요한 값만, 식별 정보는 가림</b><small>측정값은 넘기되 로트번호·공급처·시료번호는 [가림]으로 바꿉니다.</small></span></label>
       <label class="radio"><input type="radio" name="coa" value="block"><span><b>보내지 않기</b><small>CoA 본문과 측정값을 AI에 전혀 넘기지 않습니다. 논문·보고서만 씁니다.</small></span></label>
     </div>
     <div class="card">
-      <h2>기본값</h2>
-      <div class="kv" style="align-items:center">
-        <b>기본 프로젝트</b><select class="inp" id="setProj"></select>
-        <b>받은편지함 감시</b><label><input type="checkbox" id="setWatch"> 켜기 (재시작 후 적용)</label>
-        <b>AI 제한 시간</b><span><input class="inp" id="setTimeout" type="number" min="60" step="30" style="width:90px"> 초</span>
+      <h2>기본값</h2><p class="sub">앱을 열 때 고를 프로젝트와 받은편지함 감시 등을 정합니다.</p>
+      <div class="stack" style="gap:12px">
+        <label class="field"><span>기본 프로젝트</span><select class="inp" id="setProj"></select></label>
+        <div class="field"><span class="lab">받은편지함 감시</span><label class="check" style="color:var(--ink)"><input type="checkbox" id="setWatch"> 켜기</label><span class="help">앱을 다시 시작하면 적용됩니다.</span></div>
+        <label class="field" style="max-width:200px"><span>AI 제한 시간 (초)</span><input class="inp" id="setTimeout" type="number" min="60" step="30"><span class="help">긴 질문은 시간을 늘리세요.</span></label>
       </div>
-      <div class="row" style="margin-top:10px"><button class="btn primary" id="setSave">저장</button><button class="btn" id="newProj">+ 새 프로젝트</button></div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" id="setSave" type="button">저장</button><button class="btn" id="newProj" type="button"><svg class="ic sm"><use href="#i-plus"/></svg>새 프로젝트</button></div>
     </div>
     <div class="card">
       <h2>데이터 폴더</h2><p class="sub">모든 자료와 DB는 이 PC의 이 폴더에만 있습니다. 백업은 폴더째 복사하면 됩니다.</p>
       <div class="kv" id="paths"></div>
     </div>
-    <div class="card">
+    <div class="card" style="grid-column:1/-1">
       <h2>식품 영양 DB 연결 (ByOrbit Food MCP)</h2><p class="sub">켜면 AI가 농진청 원물·식약처 식품 성분 DB를 참고 기준값으로 함께 조회합니다. 읽기 전용 도구 12개만 허용합니다.</p>
-      <div class="kv" style="align-items:center">
-        <b>식품 DB 쓰기</b><label><input type="checkbox" id="foodOn"> 켜기</label>
-        <b>Food MCP 폴더</b><input class="inp" id="foodDir" placeholder="비우면 자동으로 찾습니다">
+      <div class="grid2" style="gap:12px 24px">
+        <div class="stack" style="gap:12px">
+          <div class="field"><span class="lab">식품 DB 쓰기</span><label class="check" style="color:var(--ink)"><input type="checkbox" id="foodOn"> 켜기</label></div>
+          <label class="field"><span>Food MCP 폴더</span><input class="inp" id="foodDir" placeholder="비우면 자동으로 찾습니다"><span class="help">04_byorbit-agent 폴더(안에 mcp 폴더가 있는 곳)</span></label>
+          <div class="row"><button class="btn primary" id="foodSave" type="button">저장</button><button class="btn" id="foodCheck" type="button">연결 점검</button></div>
+          <p class="small muted" id="foodOut" role="status" style="margin:0"></p>
+        </div>
+        <div><div class="kv" id="foodInfo"><b>상태</b><span>확인 중…</span></div>
+          <p class="small muted" style="margin:10px 0 0">식품 도구에는 식품명과 성분값만 넘어가며, 질의는 Food MCP의 Neon DB로 갑니다. extract_label_table(파일·URL 읽기)은 보안상 막혀 있습니다.</p></div>
       </div>
-      <div class="kv" id="foodInfo" style="margin-top:10px"><b>상태</b><span>확인 중…</span></div>
-      <div class="row" style="margin-top:10px"><button class="btn primary" id="foodSave">저장</button><button class="btn" id="foodCheck">연결 점검</button></div>
-      <p class="small muted" id="foodOut" style="margin:8px 0 0"></p>
-      <p class="small muted" style="margin:6px 0 0">식품 도구에는 식품명과 성분값만 넘어가며, 질의는 Food MCP의 Neon DB로 갑니다. extract_label_table(파일·URL 읽기)은 보안상 막혀 있습니다.</p>
     </div>
   </div>
 </div></section>
 </main>
 
-<dialog id="dlg"><div class="dhead"><h3 id="dlgT"></h3><button class="btn sm" onclick="dlg.close()">닫기</button></div><div class="dbody" id="dlgB"></div></dialog>
-<div class="toast" id="toast"></div>
-<div class="kbhelp" id="kbHelp" hidden role="dialog" aria-label="라벨 검토 단축키">
-  <h3>라벨 검토 단축키</h3>
-  <div class="kv"><b><kbd>J</kbd> / <kbd>↓</kbd></b><span>다음 라벨</span><b><kbd>K</kbd> / <kbd>↑</kbd></b><span>이전 라벨</span>
-    <b><kbd>A</kbd></b><span>승인 (수치는 측정값으로)</span><b><kbd>R</kbd></b><span>거절</span>
-    <b><kbd>U</kbd></b><span>마지막 결정 되돌리기</span><b><kbd>?</kbd> / <kbd>Esc</kbd></b><span>이 도움말 열기·닫기</span></div>
-  <p class="small muted" style="margin:8px 0 0">입력칸에 글을 쓰는 동안에는 단축키가 동작하지 않습니다.</p>
-</div>
+<!-- 내용 보기 대화상자 -->
+<dialog id="dlg" aria-labelledby="dlgT"><div class="dhead"><h3 id="dlgT"></h3><button class="iconbtn" type="button" aria-label="닫기" onclick="dlg.close()"><svg class="ic"><use href="#i-x"/></svg></button></div><div class="dbody" id="dlgB"></div></dialog>
+<!-- 확인·입력 대화상자 (confirm/prompt 대신) -->
+<dialog id="cdlg" class="narrow" aria-labelledby="cdlgT"><form method="dialog" id="cdlgF">
+  <div class="dhead"><h3 id="cdlgT"></h3></div>
+  <div class="dbody" id="cdlgB"></div>
+  <div class="dfoot" style="flex-direction:row-reverse;justify-content:flex-start"><button class="btn primary" id="cdlgOk" value="ok">확인</button><button class="btn" id="cdlgCancel" value="cancel" formnovalidate>취소</button></div>
+</form></dialog>
+<!-- 도움말·단축키 -->
+<dialog id="helpDlg" aria-labelledby="helpT"><div class="dhead"><h3 id="helpT">도움말과 단축키</h3><button class="iconbtn" type="button" aria-label="닫기" onclick="this.closest('dialog').close()"><svg class="ic"><use href="#i-x"/></svg></button></div>
+  <div class="dbody">
+    <div class="help-grid">
+      <div><h4>어디서나</h4><div class="kv"><b><kbd>Ctrl</kbd>+<kbd>K</kbd> · <kbd>/</kbd></b><span>머리줄 검색칸으로</span><b><kbd>?</kbd></b><span>이 도움말</span><b><kbd>Esc</kbd></b><span>대화상자·메뉴 닫기</span></div>
+        <p class="small muted">입력칸에 글을 쓰는 동안에는 <kbd>/</kbd>·<kbd>?</kbd>와 아래 단축키가 동작하지 않습니다.</p></div>
+      <div id="helpReview"><h4>라벨 검토</h4><div class="kv"><b><kbd>J</kbd> / <kbd>↓</kbd></b><span>다음 라벨</span><b><kbd>K</kbd> / <kbd>↑</kbd></b><span>이전 라벨</span>
+        <b><kbd>A</kbd></b><span>승인 (수치는 측정값으로)</span><b><kbd>R</kbd></b><span>거절</span><b><kbd>U</kbd></b><span>마지막 결정 되돌리기</span></div></div>
+      <div style="grid-column:1/-1"><h4>처음이라면</h4>
+        <ol class="small" style="margin:0;padding-left:1.3em;line-height:1.9">
+          <li><b>설정 → 연결 점검</b>으로 Claude Code가 동작하는지 확인합니다.</li>
+          <li><b>자료함</b>에 파일을 끌어다 놓거나, 시작 화면에서 <b>예시 자료 넣기</b>를 누릅니다.</li>
+          <li><b>라벨 검토</b>에서 AI가 붙인 수치 라벨을 승인·거절합니다.</li>
+          <li><b>검색</b>·<b>지식그래프</b>로 자료를 찾고, <b>AI에 묻기</b>로 근거 있는 답을 받습니다.</li></ol>
+        <p class="small muted" style="margin:10px 0 0">자세한 설명은 앱 폴더의 <code>README.md</code>와 <code>guidebook</code>에 있습니다.</p></div>
+    </div>
+  </div></dialog>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ICON = (n, cls='sm') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const dlg = $('#dlg');
-let S = {settings:{}, project:''};
+const store = {get(k){ try{ return localStorage.getItem('ux:'+k) }catch{ return null } }, set(k,v){ try{ localStorage.setItem('ux:'+k, v) }catch{} }};
+let S = {settings:{}, project:'', route:null, docs:{}};
 
 async function api(path, opt={}) {
   const r = await fetch(path, opt.body && !(opt.body instanceof FormData)
@@ -308,71 +385,307 @@ async function api(path, opt={}) {
   if (!r.ok) throw new Error(j.detail || r.statusText);
   return j;
 }
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3200)}
+// ---------- 알림(토스트)
+function toast(m, kind=''){
+  const box = $('#toasts'), t = document.createElement('div');
+  t.className = 'toast ' + kind; t.setAttribute('role', kind==='bad' ? 'alert' : 'status');
+  t.innerHTML = (kind==='bad' ? ICON('alert') : kind==='ok' ? ICON('check') : '') + `<span>${esc(m)}</span>`;
+  box.append(t); while(box.children.length > 3) box.firstElementChild.remove();
+  setTimeout(() => t.remove(), kind==='bad' ? 7000 : 3600);
+}
 async function waitJob(job, onTick){
   while(job.status==='running'){await new Promise(r=>setTimeout(r,1500));job=await api('/api/jobs/'+job.job_id);onTick&&onTick(job)}
   return job;
 }
+// ---------- 빈 상태·오류·불러오는 중 (같은 모양)
+const emptyHTML = (icon, title, text, actions='') => `<div class="empty"><div class="ei">${ICON(icon,'lg')}</div><b>${title}</b>${text?`<p>${text}</p>`:''}${actions?`<div class="row">${actions}</div>`:''}</div>`;
+const errHTML = (e, hint) => `<div class="err">${ICON('alert')}<div><b>불러오지 못했습니다.</b> ${esc(e?.message||e)}<br><span class="muted">${hint||'앱(검은 창)이 켜져 있는지 확인하고 새로고침하세요.'}</span></div></div>`;
+const skelRow = cols => `<tr><td colspan="${cols}"><div class="skel"><i></i><i></i><i></i></div></td></tr>`;
 
-// ---------- 화면 전환
-$$('#nav a').forEach(a => a.onclick = () => show(a.dataset.v));
-function show(v){
-  $$('#nav a').forEach(a => a.dataset.v===v ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'));
-  $$('.view').forEach(s => s.classList.toggle('active', s.id==='v-'+v));
-  ({library:loadDocs, review:loadReview, meas:loadMeas, onto:loadOnto, ask:loadReports, settings:loadSettings})[v]?.();
-  location.hash = v;
+// ---------- 확인·입력 대화상자 (브라우저 기본 confirm/prompt 대신)
+function uiDialog({title, html, ok='확인', cancel='취소', danger=false, focus, validate}){
+  return new Promise(res => {
+    const d = $('#cdlg'), okB = $('#cdlgOk'), caB = $('#cdlgCancel');
+    $('#cdlgT').textContent = title; $('#cdlgB').innerHTML = html;
+    okB.textContent = ok; okB.className = 'btn ' + (danger ? 'danger' : 'primary');
+    caB.textContent = cancel || '취소'; caB.hidden = cancel === null;
+    d.returnValue = '';
+    $('#cdlgF').onsubmit = e => { if(e.submitter?.value !== 'cancel' && validate && !validate()) e.preventDefault() };
+    d.onclose = () => res(d.returnValue === 'ok');
+    d.showModal();
+    (focus ? d.querySelector(focus) : danger ? caB : okB)?.focus();
+  });
 }
+const uiConfirm = (title, text, opt={}) => uiDialog({title, html:`<p style="margin:0;white-space:pre-line">${esc(text)}</p>`, ...opt});
+async function uiPrompt(title, {label, placeholder='', value='', help='', ok='확인'}={}){
+  const ok2 = await uiDialog({title, ok, focus:'#cdlgIn',
+    html:`<label class="field"><span>${esc(label)}</span><input class="inp" id="cdlgIn" value="${esc(value)}" placeholder="${esc(placeholder)}">${help?`<span class="help">${esc(help)}</span>`:''}<span class="help" id="cdlgErr" style="color:var(--bad)" hidden>내용을 입력하세요.</span></label>`,
+    validate: () => { const v = $('#cdlgIn').value.trim(); $('#cdlgErr').hidden = !!v; return !!v }});
+  return ok2 ? $('#cdlgIn').value.trim() : null;
+}
+
+// ---------- 떠 있는 메뉴 (자료함 '더 보기')
+let MENU = null;
+function closeMenu(focusBack){ if(!MENU) return; MENU.el.remove(); MENU.btn.setAttribute('aria-expanded','false'); if(focusBack) MENU.btn.focus(); MENU = null }
+function openMenu(btn, items){
+  if(MENU && MENU.btn === btn){ closeMenu(true); return }
+  closeMenu();
+  const m = document.createElement('div'); m.className = 'menu'; m.setAttribute('role','menu');
+  items.forEach(it => {
+    if(it === '-'){ m.append(document.createElement('hr')); return }
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role','menuitem');
+    if(it.danger) b.className = 'danger';
+    b.innerHTML = ICON(it.icon) + esc(it.label);
+    b.addEventListener('click', () => { closeMenu(true); it.run() });
+    m.append(b);
+  });
+  document.body.append(m);
+  const r = btn.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+  m.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px';
+  m.style.top = (r.bottom + h + 8 > innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4) + 'px';
+  btn.setAttribute('aria-expanded','true');
+  MENU = {el: m, btn};
+  m.addEventListener('keydown', e => {
+    const bs = [...m.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+    if(e.key==='ArrowDown'){ e.preventDefault(); bs[(i+1)%bs.length].focus() }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); bs[(i-1+bs.length)%bs.length].focus() }
+    else if(e.key==='Escape'){ e.preventDefault(); closeMenu(true) }
+    else if(e.key==='Tab'){ closeMenu() }
+  });
+  m.querySelector('button')?.focus();
+}
+document.addEventListener('pointerdown', e => { if(MENU && !MENU.el.contains(e.target) && !MENU.btn.contains(e.target)) closeMenu() });
+window.addEventListener('resize', () => closeMenu());
+
+// ---------- 화면 전환 (#주소 유지: #home #library #search #review #meas #onto #kg #ask #collect #exp #stats #viz #settings #wb)
+const ROUTES = {home:'시작', library:'자료함', search:'검색', review:'라벨 검토', meas:'측정값', onto:'개념 사전', kg:'지식그래프',
+  ask:'AI에 묻기', collect:'자료 수집', exp:'내 실험', stats:'통계 분석', viz:'시각화', settings:'설정', wb:'문서 작업대'};
+const ALIAS = {workbench:'wb', concepts:'onto', graph:'kg', start:'home'};
+const LOADERS = {home:()=>loadHome(), library:()=>loadDocs(), review:()=>loadReview(), meas:()=>loadMeas(), onto:()=>loadOnto(), ask:()=>loadReports(), settings:()=>loadSettings()};
+function show(r, {focus=false}={}){
+  r = ALIAS[r] || r; if(!ROUTES[r]) r = 'home';
+  const changed = S.route !== r; S.route = r;
+  const v = r === 'kg' ? 'onto' : r;
+  $$('#sidebar a.ni').forEach(a => (a.dataset.v===r || (r==='wb' && a.dataset.v==='library')) ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'));
+  $$('.view').forEach(s => s.classList.toggle('active', s.id==='v-'+v));
+  document.title = ROUTES[r] + ' · R&D Studio V0.5';
+  if(location.hash !== '#'+r) location.hash = r;
+  drawer(false);
+  if(changed) $('#main').scrollTop = 0;
+  const p = LOADERS[r]?.(); p?.catch?.(e => toast('불러오지 못했습니다: '+e.message, 'bad'));
+  if(r==='onto' || r==='kg') window.ontoTab?.(r==='kg' ? 'kg' : 'list');
+  if(r==='kg') store.set('kg','1');
+  window.ENSURE?.[r]?.();
+  if(focus) $('#v-'+v+' h1')?.setAttribute('tabindex','-1'), $('#v-'+v+' h1')?.focus({preventScroll:true});
+}
+window.addEventListener('hashchange', () => { const r = location.hash.slice(1) || 'home'; if((ALIAS[r]||r) !== S.route) show(r) });
+$('#sidebar').addEventListener('click', e => { const a = e.target.closest('a.ni'); if(!a) return; e.preventDefault(); show(a.dataset.v, {focus:true}) });
+
+// ---------- 왼쪽 메뉴: 넓은 화면은 접기, 좁은 화면은 서랍
+const narrow = () => matchMedia('(max-width:960px)').matches;
+function drawer(open){
+  if(!narrow()){ document.body.classList.remove('sb-open'); return }
+  document.body.classList.toggle('sb-open', open);
+  $('#menuBtn').setAttribute('aria-expanded', String(open));
+  $('#menuBtn').setAttribute('aria-label', open ? '메뉴 닫기' : '메뉴 열기');
+  if(open) $('#sidebar a.ni[aria-current=page], #sidebar a.ni')?.focus();
+}
+function syncMenuBtn(){
+  if(narrow()){ const o = document.body.classList.contains('sb-open'); $('#menuBtn').setAttribute('aria-expanded', String(o)); $('#menuBtn').setAttribute('aria-label', o?'메뉴 닫기':'메뉴 열기') }
+  else { const c = document.body.classList.contains('sb-collapsed'); $('#menuBtn').setAttribute('aria-expanded', String(!c)); $('#menuBtn').setAttribute('aria-label', c?'메뉴 펴기':'메뉴 접기') }
+}
+$('#menuBtn').addEventListener('click', () => {
+  if(narrow()) drawer(!document.body.classList.contains('sb-open'));
+  else { const c = document.body.classList.toggle('sb-collapsed'); store.set('sb', c ? 'collapsed' : 'open'); syncMenuBtn() }
+});
+$('#scrim').addEventListener('click', () => { drawer(false); $('#menuBtn').focus() });
+$('#sidebar').addEventListener('keydown', e => {   // 서랍이 열려 있으면 Tab이 메뉴 안에서만 돈다
+  if(e.key === 'Escape' && document.body.classList.contains('sb-open')){ drawer(false); $('#menuBtn').focus(); return }
+  if(e.key !== 'Tab' || !document.body.classList.contains('sb-open')) return;
+  const f = [...$('#sidebar').querySelectorAll('a,select')].filter(x => x.offsetParent);
+  if(e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f[f.length-1].focus() }
+  else if(!e.shiftKey && document.activeElement === f[f.length-1]){ e.preventDefault(); f[0].focus() }
+});
+matchMedia('(max-width:960px)').addEventListener('change', () => { document.body.classList.remove('sb-open'); syncMenuBtn() });
+if(store.get('sb') === 'collapsed') document.body.classList.add('sb-collapsed');
+syncMenuBtn();
+
+// ---------- 머리줄 검색·도움말·단축키
+function focusQS(){ const i = $('#qsIn'); i.focus(); i.select() }
+$('#qsForm').addEventListener('submit', e => { e.preventDefault(); const q = $('#qsIn').value.trim(); if(!q) return; show('search'); $('#q').value = q; doSearch(); $('#qsIn').blur() });
+function openHelp(sec){ const d = $('#helpDlg'); d.showModal(); if(sec==='review') $('#helpReview').scrollIntoView({block:'nearest'}) }
+$('#helpBtn').addEventListener('click', () => openHelp());
+const typing = t => !!t && (t.isContentEditable || t.tagName==='TEXTAREA' || t.tagName==='SELECT' ||
+  (t.tagName==='INPUT' && !/^(checkbox|radio|button|submit|reset|range|color|file)$/.test(t.type)));
+// 키 처리기는 값을 돌려주지 않는다(false를 돌려주면 입력칸의 키 입력이 막힌다)
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && !e.altKey && (e.key==='k' || e.key==='K')){ e.preventDefault(); focusQS(); return }
+  if(e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+  if(typing(e.target) || document.querySelector('dialog[open]') || MENU) return;
+  if(e.key==='/'){ e.preventDefault(); focusQS(); return }
+  if(e.key==='?'){ e.preventDefault(); openHelp(S.route==='review' ? 'review' : ''); return }
+  if(S.route==='review') rvKey(e);
+});
 
 // ---------- 시작
 async function boot(){
   const h = await api('/api/health');
-  S.settings = h.settings; S.home = h.data_home;
+  S.settings = h.settings; S.home = h.data_home; S.health = h;
   $('#inboxPath').textContent = h.data_home.replace(/[\\/]$/,'') + (h.data_home.includes('\\')?'\\':'/') + 'inbox';
   setPending(h.counts.pending);
-  $('#engDot').className = 'dot ' + (h.claude.path ? 'ok' : 'bad');
+  setEngine(!!h.claude.path);
   await loadProjects();
-  show((location.hash||'#library').slice(1));
+  show(location.hash.slice(1) || 'home');
 }
-function setPending(n){const c=$('#pendingCount');c.hidden=!n;c.textContent=n}
+function setEngine(found){
+  const smoke = store.get('smoke');
+  $('#engDot').className = 'dot ' + (found ? (smoke==='fail' ? 'warn' : 'ok') : 'bad');
+  $('#engTxt').textContent = found ? (smoke==='ok' ? 'Claude Code 연결됨' : smoke==='fail' ? 'Claude Code 점검 필요' : 'Claude Code 준비됨') : 'Claude Code 없음';
+  $('#engPill').title = found ? 'AI 엔진(Claude Code)을 찾았습니다' + (smoke==='ok' ? ' — 실제 호출 점검 통과' : ' — 설정에서 실제 호출을 점검해 보세요') : 'Claude Code를 찾지 못했습니다 — 설치 후 설정에서 확인하세요';
+}
+function setPending(n){
+  const c = $('#pendingCount'); c.hidden = !n; c.textContent = n; c.setAttribute('aria-label', `검토 대기 ${n}건`);
+  $('#pendPill').hidden = !n; $('#pendN').textContent = n;
+}
 async function loadProjects(){
   const ps = await api('/api/projects');
   S.project = S.project || S.settings.default_project;
   const opts = ps.map(p => `<option ${p.name===S.project?'selected':''}>${esc(p.name)}</option>`).join('');
-  $('#proj').innerHTML = opts; $('#setProj').innerHTML = ps.map(p=>`<option ${p.name===S.settings.default_project?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('#proj').innerHTML = opts; $('#projM').innerHTML = opts;
+  $('#setProj').innerHTML = ps.map(p=>`<option ${p.name===S.settings.default_project?'selected':''}>${esc(p.name)}</option>`).join('');
 }
-$('#proj').onchange = e => { S.project = e.target.value; show(location.hash.slice(1)||'library') };
+$('#proj').addEventListener('change', e => { S.project = e.target.value; $('#projM').value = S.project; const r = S.route; S.route = null; show(r || 'home') });
+$('#projM').addEventListener('change', e => { $('#proj').value = e.target.value; $('#proj').dispatchEvent(new Event('change')) });
+async function refreshPending(){ try{ const h = await api('/api/health'); S.health = h; setPending(h.counts.pending) }catch{} }
+
+// ---------- 시작 화면 (체크리스트는 실제 상태로 체크된다)
+async function loadHome(){
+  const get = p => api(p).catch(() => null);
+  const [h, docs, coll, exps, acc, rej] = await Promise.all([get('/api/health'), get('/api/documents'),
+    get('/api/collect/items?status=new&page_size=5'), get('/api/exp/experiments'),
+    get('/api/annotations?status=accepted&limit=1'), get('/api/annotations?status=rejected&limit=1')]);
+  if(!h){ $('#hSteps').innerHTML = `<li>${errHTML('서버 응답 없음')}</li>`; return }
+  S.health = h; S.settings = h.settings; setPending(h.counts.pending); setEngine(!!h.claude.path);
+  const c = h.counts, reviewed = (acc?.length||0) + (rej?.length||0), smoke = store.get('smoke');
+  const steps = [
+    {done: !!h.claude.path, t:'AI 엔진(Claude Code) 연결 점검',
+     d: h.claude.path ? ('이 PC에서 Claude Code를 찾았습니다.' + (smoke==='ok' ? ' 실제 호출도 통과했습니다.' : ' 설정에서 실제 호출까지 점검해 보세요.')) : '이 PC에서 Claude Code를 찾지 못했습니다. README의 설치 2번을 따라 설치한 뒤 다시 확인하세요.',
+     a: `<a class="btn sm" href="#settings">설정에서 점검</a>`},
+    {done: c.document > 0, t:'자료 넣기', d: c.document ? `자료 ${c.document}건이 있습니다.` : '예시 자료(가짜 수치)로 먼저 둘러보거나, 내 파일을 올리세요.',
+     a: `<button class="btn sm${c.document?'':' primary'}" type="button" onclick="addSamples(this)">예시 자료 넣기</button><a class="btn sm" href="#library">파일 올리기</a>`},
+    {done: reviewed > 0, t:'라벨 검토', d: reviewed ? '라벨을 검토한 적이 있습니다.' : `AI·사전이 붙인 라벨을 승인·거절합니다.${c.pending?` 지금 ${c.pending}건이 기다립니다.`:''}`,
+     a: `<a class="btn sm" href="#review">라벨 검토 열기</a>`},
+    {done: store.get('searched')==='1', t:'검색해 보기', d:'“사과박 식이섬유”처럼 찾으면 동의어까지 넓혀 찾습니다.',
+     a: `<button class="btn sm" type="button" onclick="openSearch('사과박 식이섬유')">예시로 검색</button>`},
+    {done: store.get('kg')==='1', t:'지식그래프 보기', d:'개념(점)과 관계(선), 그 개념이 나온 자료를 지도로 봅니다.', a: `<a class="btn sm" href="#kg">지식그래프 열기</a>`},
+  ];
+  const n = steps.filter(s => s.done).length, next = steps.findIndex(s => !s.done);
+  $('#hProg').style.width = (100*n/steps.length) + '%';
+  $('#hProgTxt').textContent = `${n} / ${steps.length} 완료`;
+  $('#hSub').textContent = n === steps.length ? '첫 단계를 모두 마쳤습니다. 아래 숫자와 바로 가기로 이어서 작업하세요.'
+    : '부산물 연구 자료를 이 PC에 모으고, 찾고, AI에게 근거 있는 답을 받는 작업실입니다. 처음이라면 아래 순서대로 해 보세요.';
+  $('#hSteps').innerHTML = steps.map((s, i) => `<li class="step${s.done?' done':''}${i===next?' next':''}">
+    <span class="no" aria-hidden="true">${s.done ? ICON('check') : i+1}</span>
+    <div><b>${s.t}<span class="sr-only">${s.done?' (완료)':' (아직)'}</span></b><span class="d">${s.d}</span></div>
+    <div class="row">${s.a}</div></li>`).join('');
+  const ncoll = coll?.counts?.new ?? 0, nexp = exps?.experiments?.length ?? 0;
+  const tile = (href, icon, k, v, s, hl) => `<a class="stat${hl?' hl':''}" href="${href}"><span class="k">${ICON(icon)}${k}</span><span class="v">${Number(v||0).toLocaleString('ko-KR')}</span><span class="s">${s}</span></a>`;
+  $('#hStats').innerHTML = tile('#library','folder','자료',c.document,'자료함 전체') + tile('#search','doc','청크',c.chunk,'검색 단위 조각')
+    + tile('#review','tag','라벨 대기',c.pending, c.pending?'검토해 주세요':'모두 검토함', c.pending>0) + tile('#meas','table','측정값',c.measurement,'CoA·승인한 추출값')
+    + tile('#collect','globe','수집함 새 항목',ncoll,'검토 전 후보') + tile('#exp','flask','실험',nexp,'내 실험 기록');
+  const TYPE = {paper:'논문', report:'보고서', coa:'CoA', file:'파일'};
+  (docs||[]).forEach(d => S.docs[d.doc_id] = d);
+  $('#hDocs').innerHTML = docs?.length ? docs.slice(0,6).map(d => `<li>${ICON('doc')}<a class="t" href="#" onclick="event.preventDefault();viewDoc('${d.doc_id}')" title="${esc(d.file_name)}">${esc(d.file_name)}</a>
+      <span class="pill">${TYPE[d.source_type]||esc(d.source_type)}</span><span class="m">${esc((d.created_at||'').slice(0,10))}</span></li>`).join('')
+    : `<li style="display:block;border:0">${emptyHTML('folder','아직 자료가 없습니다','파일을 올리거나 예시 자료를 넣어 보세요.',`<button class="btn sm primary" type="button" onclick="addSamples(this)">예시 자료 넣기</button><a class="btn sm" href="#library">파일 올리기</a>`)}</li>`;
+  const items = coll?.items || [];
+  $('#hColl').innerHTML = items.length ? items.map(it => `<li>${ICON('globe')}<a class="t" href="#collect" title="${esc(it.title)}">${esc(it.title)}</a>
+      <span class="m">${esc(it.source||'')}${it.year?' · '+it.year:''}</span></li>`).join('')
+    : `<li style="display:block;border:0">${emptyHTML('globe','수집함에 새 항목이 없습니다','공식 API·크롤러로 논문·보고서·특허를 찾으면 여기에 모입니다.',`<a class="btn sm" href="#collect">자료 찾으러 가기</a>`)}</li>`;
+  const st = h.settings, food = !!st.food_mcp;
+  $('#hSafe').innerHTML = `
+    <div class="it">${ICON('shield')}<b>CoA 전송 규칙 <span class="pill ok">${st.coa_rule==='block'?'보내지 않기':'식별 정보 가림'}</span></b>
+      <span>${st.coa_rule==='block'?'CoA 본문·측정값을 AI에 넘기지 않습니다.':'측정값만 넘기고 로트·공급처·시료번호는 [가림] 처리합니다.'}</span></div>
+    <div class="it">${ICON('chat')}<b>AI 엔진 <span class="pill ${h.claude.path?'ok':'bad'}">${h.claude.path?'Claude Code':'없음'}</span></b>
+      <span>AI에 묻기·AI 라벨을 쓸 때만 질문과 가려진 본문 일부가 Anthropic으로 갑니다.</span></div>
+    <div class="it">${ICON('table')}<b>식품 영양 DB <span class="pill ${food?'warn':''}">${food?'켜짐':'꺼짐'}</span></b>
+      <span>${food?'식품명·성분값이 Food MCP의 Neon DB로 질의됩니다.':'꺼져 있어 식품 DB로 나가는 것이 없습니다.'}</span></div>
+    <div class="it">${ICON('folder')}<b>원본 파일·DB <span class="pill ok">이 PC에만</span></b>
+      <span>화면은 127.0.0.1에서만 열리고, 자료함·DB 파일 자체는 올라가지 않습니다.</span></div>`;
+}
+async function addSamples(btn){
+  const ok = await uiConfirm('예시 자료 넣기', `가짜 수치로 만든 예시 자료 5개(논문 PDF·CoA 엑셀 2개·HWPX 보고서·메모)를 '${S.project}' 프로젝트에 넣습니다.\n이미 넣었다면 건너뜁니다.`, {ok:'넣기'});
+  if(!ok) return;
+  if(btn){ btn.disabled = true; btn.innerHTML = '<span class="spin"></span> 넣는 중…' }
+  try{
+    const r = await api('/api/samples', {method:'POST', body:{project:S.project}});
+    toast(r.files.length ? `예시 자료 ${r.files.length}개를 넣었습니다` : '예시 자료가 이미 있습니다', 'ok');
+  }catch(e){ toast('넣지 못했습니다: '+e.message, 'bad') }
+  refreshPending(); if(S.route==='home') loadHome(); else if(S.route==='library') loadDocs();
+}
+function openOutbound(){
+  $('#dlgT').textContent = '이 PC 밖으로 나가는 것';
+  const st = S.settings || {};
+  $('#dlgB').innerHTML = `<p class="sub" style="margin-top:0">자료함·DB·원본 파일은 이 PC의 데이터 폴더에만 있고 올라가지 않습니다. 아래 기능을 <b>쓸 때만</b> 표에 적은 것이 나갑니다.</p>
+    <div class="tbl"><table><thead><tr><th>기능</th><th>나가는 것</th><th>받는 곳</th></tr></thead><tbody>
+    <tr><td><b>AI에 묻기 · AI 라벨</b></td><td>질문, 도구가 돌려준 본문 일부. CoA 규칙 <span class="pill ok">${st.coa_rule==='block'?'보내지 않기':'식별 정보 가림'}</span>을 따르고, 기밀 자료는 파일명도 <code>기밀자료-xxxxxx</code>로 가립니다.</td><td>Anthropic (Claude Code)</td></tr>
+    <tr><td><b>자료 수집</b></td><td>검색어와 그 출처의 API 키만. 자료함·CoA·실험 데이터는 보내지 않습니다.</td><td>OpenAlex·Crossref 등 공식 API, 허용된 공개 사이트</td></tr>
+    <tr><td><b>식품 영양 DB</b> <span class="pill ${st.food_mcp?'warn':''}">${st.food_mcp?'켜짐':'꺼짐'}</span></td><td>식품명·성분값</td><td>Food MCP의 Neon DB</td></tr>
+    <tr><td><b>분자 구조 가져오기</b></td><td>누를 때만 영문 성분명 하나</td><td>PubChem</td></tr>
+    <tr><td><b>OCR</b></td><td>없음 (처음 한 번 모델 파일만 내려받음)</td><td>—</td></tr>
+    </tbody></table></div>
+    <div class="row" style="margin-top:14px"><a class="btn" href="#viz" onclick="dlg.close()">${ICON('cube')}흐름 그림으로 보기</a><span class="small muted">자세한 설명: README.md의 “AI로 무엇이 나가나”</span></div>`;
+  dlg.showModal();
+}
 
 // ---------- 자료함
 const STG = [['parse','파싱'],['normalize','정규화'],['chunk','청킹'],['label','라벨'],['load','적재']];
 const TYPE = {paper:'논문', report:'보고서', coa:'CoA', file:'파일'};
 async function loadDocs(){
-  const docs = await api('/api/documents' + ($('#allProj').checked ? '' : '?project='+encodeURIComponent(S.project)));
+  let docs;
+  try{ docs = await api('/api/documents' + ($('#allProj').checked ? '' : '?project='+encodeURIComponent(S.project))) }
+  catch(e){ $('#docRows').innerHTML = `<tr><td colspan="8">${errHTML(e)}</td></tr>`; return }
+  docs.forEach(d => S.docs[d.doc_id] = d);
   $('#docSum').textContent = `· ${docs.length}건`;
   $('#docRows').innerHTML = docs.length ? docs.map(d => `<tr>
-    <td><b>${esc(d.file_name)}</b>${d.note?`<div class="note">${esc(d.note)}</div>`:''}<div class="small muted">${esc(d.projects||'')}</div></td>
-    <td>${TYPE[d.source_type]||d.source_type}</td>
-    <td><span class="cf ${d.confidentiality==='기밀'?'s':d.confidentiality==='내부'?'i':''}">${d.confidentiality}</span></td>
-    <td>${STG.map(([k,n])=>{const v=d.parse_status[k];const c=v==='done'||v==='llm'?'done':v==='dict'?'warn':v==='error'?'err':'';
-       return `<span class="stg ${c}" title="${k}: ${v||'대기'}">${n}${v==='dict'?'(사전)':v==='llm'?'(AI)':''}</span>`}).join('')}</td>
-    <td class="num">${d.chunks}</td><td class="num">${d.annotations}</td><td class="num">${d.measurements||''}</td>
-    <td class="row" style="flex-wrap:nowrap"><button class="btn sm" onclick="viewDoc('${d.doc_id}','${esc(d.file_name)}')">보기</button>
-      <button class="btn sm" title="청크 검사·고치기, 라벨 붙이기(사람·사전·AI), 배운 규칙" onclick="openWorkbench('${d.doc_id}')">작업대</button>
-      <button class="btn sm" title="Claude Code로 라벨 제안 (청크 5개씩 묶어 처리)" onclick="labelDoc('${d.doc_id}','${esc(d.file_name)}')">AI 라벨</button>
-      <button class="btn sm bad" onclick="delDoc('${d.doc_id}','${esc(d.file_name)}')">삭제</button></td></tr>`).join('')
-    : `<tr><td colspan="8"><div class="empty">아직 자료가 없습니다. 위에 파일을 끌어다 놓거나, 설정에서 예시 자료를 넣어 보세요.</div></td></tr>`;
+    <td data-l="파일"><div><span class="fname">${esc(d.file_name)}</span>${d.note?`<div class="note">${esc(d.note)}</div>`:''}<div class="small muted">${esc(d.projects||'')}</div></div></td>
+    <td data-l="종류" style="white-space:nowrap">${TYPE[d.source_type]||esc(d.source_type)}</td>
+    <td data-l="등급"><span class="cf ${d.confidentiality==='기밀'?'s':d.confidentiality==='내부'?'i':''}">${esc(d.confidentiality)}</span></td>
+    <td data-l="처리 단계"><div>${STG.map(([k,n])=>{const v=d.parse_status[k];const c=v==='done'||v==='llm'?'done':v==='dict'?'warn':v==='error'?'err':'';
+       return `<span class="stg ${c}" title="${k}: ${v||'대기'}">${n}${v==='dict'?'(사전)':v==='llm'?'(AI)':''}</span>`}).join('')}</div></td>
+    <td class="num" data-l="청크">${d.chunks}</td><td class="num" data-l="라벨">${d.annotations}</td><td class="num" data-l="측정값">${d.measurements||'—'}</td>
+    <td class="act"><div class="row"><button class="btn sm" type="button" aria-label="보기" onclick="viewDoc('${d.doc_id}')">${ICON('eye')}<span class="bt">보기</span></button>
+      <button class="btn sm" type="button" title="청크 검사·고치기, 라벨 붙이기(사람·사전·AI), 배운 규칙" aria-label="작업대" onclick="openWorkbench('${d.doc_id}')">${ICON('wrench')}<span class="bt">작업대</span></button>
+      <button class="btn sm" type="button" title="Claude Code로 라벨 제안 (청크 5개씩 묶어 처리)" aria-label="AI 라벨" onclick="labelDoc('${d.doc_id}')">${ICON('spark')}<span class="bt">AI 라벨</span></button>
+      <button class="btn sm icon" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="${esc(d.file_name)} 더 보기" title="더 보기" onclick="docMenu(this,'${d.doc_id}')">${ICON('more')}</button></div></td></tr>`).join('')
+    : `<tr><td colspan="8">${emptyHTML('folder', $('#allProj').checked ? '아직 자료가 없습니다' : `'${esc(S.project)}' 프로젝트에 자료가 없습니다`,
+        '위 상자에 파일을 끌어다 놓거나, 예시 자료(가짜 수치)로 먼저 둘러보세요.',
+        `<button class="btn sm primary" type="button" onclick="addSamples(this)">예시 자료 넣기</button>${$('#allProj').checked?'':'<button class="btn sm" type="button" onclick="$(\'#allProj\').click()">모든 프로젝트 보기</button>'}`)}</td></tr>`;
   showLatestRun();
 }
+function docMenu(btn, id){
+  const d = S.docs[id] || {file_name:'자료'};
+  openMenu(btn, [
+    {icon:'ext', label:'원본 파일 열기', run:() => window.open(`/api/documents/${id}/file`, '_blank', 'noopener')},
+    {icon:'refresh', label:'다시 처리', run:() => reprocessDoc(id)},
+    '-',
+    {icon:'trash', label:'삭제…', danger:true, run:() => delDoc(id)}]);
+}
 $('#refreshDocs').onclick = loadDocs; $('#allProj').onchange = loadDocs;
-$('#scanInbox').onclick = async () => { const r = await api('/api/inbox/scan',{method:'POST'}); toast(`받은편지함 ${r.results.length}건 처리`); loadDocs() };
+$('#scanInbox').onclick = async () => {
+  try{ const r = await api('/api/inbox/scan',{method:'POST'}); toast(r.results.length ? `받은편지함에서 ${r.results.length}건 처리했습니다` : '받은편지함에 새 파일이 없습니다', 'ok') }
+  catch(e){ toast('확인하지 못했습니다: '+e.message, 'bad') }
+  loadDocs(); refreshPending();
+};
 async function upload(files){
   if(!files.length) return;
   const fd = new FormData(); [...files].forEach(f=>fd.append('files',f)); fd.append('project',S.project); fd.append('confidentiality',$('#upConf').value);
   toast(`${files.length}개 처리 중…`);
   try{
     const r = await api('/api/upload',{method:'POST', body:fd});
-    const msg = r.results.map(x => x.error ? `✗ ${x.file_name}: ${x.error}` : x.duplicate_of ? `- ${x.file_name}: 이미 있음` : `✓ ${x.file_name} (청크 ${x.chunks}${x.measurements?`, 측정값 ${x.measurements}`:''})`).join('\n');
-    toast(msg.split('\n')[0] + (r.results.length>1?` 외 ${r.results.length-1}건`:'')); console.log(msg);
-  }catch(e){toast('실패: '+e.message)}
+    const bad = r.results.filter(x => x.error), dup = r.results.filter(x => x.duplicate_of), ok = r.results.length - bad.length - dup.length;
+    toast([ok?`${ok}개 넣었습니다`:'', dup.length?`${dup.length}개는 이미 있음`:'', bad.length?`${bad.length}개 실패 — ${bad[0].file_name}: ${bad[0].error}`:''].filter(Boolean).join(' · '), bad.length ? 'bad' : 'ok');
+  }catch(e){ toast('올리지 못했습니다: '+e.message+' — 파일 형식(PDF·HWPX·XLSX·TXT)을 확인하세요', 'bad') }
   loadDocs(); refreshPending();
 }
 $('#fileIn').onchange = e => { upload(e.target.files); e.target.value='' };
@@ -380,29 +693,48 @@ const drop = $('#drop');
 ['dragenter','dragover'].forEach(t => drop.addEventListener(t, e => {e.preventDefault(); drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t => drop.addEventListener(t, e => {e.preventDefault(); drop.classList.remove('over')}));
 drop.addEventListener('drop', e => upload(e.dataTransfer.files));
-async function viewDoc(id, name){
-  const cs = await api(`/api/documents/${id}/chunks`);
-  $('#dlgT').textContent = name;
-  $('#dlgB').innerHTML = `<p class="small muted" style="margin-top:0">청크 ${cs.length}개 · <a href="/api/documents/${id}/file" target="_blank">원본 파일 열기</a></p>` +
-    cs.map(c => `<div style="margin-bottom:10px"><div class="small muted">#${c.ord+1} · ${c.chunk_type==='table'?'표':'본문'}${c.page?` · p.${c.page}`:''} · 라벨 ${c.annotations}
-      <button class="btn sm" onclick="openChunk('${c.chunk_id}')">라벨 보기</button>
-      <button class="btn sm" onclick="dlg.close();openWorkbench('${id}','${c.chunk_id}','chunks')">작업대</button></div><div class="chunktext" style="max-height:220px">${esc(c.text)}</div></div>`).join('');
+async function viewDoc(id){
+  const d = S.docs[id] || {};
+  $('#dlgT').textContent = d.file_name || '자료';
+  $('#dlgB').innerHTML = '<div class="skel"><i></i><i></i><i></i></div>';
   dlg.showModal();
+  let cs, jobs = null;
+  try{ [cs, jobs] = await Promise.all([api(`/api/documents/${id}/chunks`), api(`/api/parse/docs/${id}/jobs?limit=3`).catch(() => null)]) }
+  catch(e){ $('#dlgB').innerHTML = errHTML(e); return }
+  const last = jobs?.jobs?.[0];
+  const warn = last && (last.status==='interrupted' || last.status==='error')
+    ? `<div class="callout warn" style="margin-bottom:12px">${ICON('alert')}<p><b>지난 다시 파싱이 ${last.status==='interrupted'?'중단되었습니다':'실패했습니다'}.</b> 작업대의 파싱 탭에서 다시 실행하세요. <button class="btn sm" type="button" onclick="dlg.close();openWorkbench('${id}',null,'parse')">작업대 열기</button></p></div>` : '';
+  $('#dlgB').innerHTML = warn + `<div class="row" style="margin-bottom:12px"><span class="small muted grow">청크 ${cs.length}개</span>
+      <a class="btn sm" href="/api/documents/${id}/file" target="_blank" rel="noopener">${ICON('ext')}원본 파일 열기</a>
+      <button class="btn sm" type="button" onclick="dlg.close();openWorkbench('${id}')">${ICON('wrench')}작업대</button></div>` +
+    (cs.length ? cs.map(c => `<div style="margin-bottom:12px"><div class="row small muted" style="margin-bottom:4px"><span class="grow">#${c.ord+1} · ${c.chunk_type==='table'?'표':'본문'}${c.page?` · p.${c.page}`:''} · 라벨 ${c.annotations}</span>
+      <button class="btn sm" type="button" onclick="openChunk('${c.chunk_id}')">라벨 보기</button>
+      <button class="btn sm" type="button" onclick="dlg.close();openWorkbench('${id}','${c.chunk_id}','chunks')">작업대</button></div><div class="chunktext" style="max-height:220px">${esc(c.text)}</div></div>`).join('')
+     : emptyHTML('doc','청크가 없습니다','글자를 읽지 못한 자료일 수 있습니다. 작업대에서 다른 파서로 다시 파싱해 보세요.'));
 }
-async function delDoc(id, name){
-  if(!confirm(`'${name}'을(를) 지울까요?\n자료함의 복사본과 청크·라벨·측정값이 함께 지워집니다. (원래 넣었던 원본 파일은 그대로)`)) return;
-  await api('/api/documents/'+id+'?remove_file=true',{method:'DELETE'}); toast('지웠습니다'); loadDocs();
+async function reprocessDoc(id){
+  const d = S.docs[id] || {file_name:'자료'};
+  if(!await uiConfirm('다시 처리할까요?', `'${d.file_name}'을(를) 처음부터 다시 읽습니다.\n청크·라벨(검토 결과 포함)·CoA 측정값을 지우고 새로 만듭니다.\n라벨을 지키면서 다시 나누려면 작업대의 ‘다시 파싱’을 쓰세요.`, {ok:'다시 처리', danger:true})) return;
+  try{ await api(`/api/documents/${id}/reprocess`, {method:'POST'}); toast('다시 처리했습니다', 'ok') }catch(e){ toast('다시 처리하지 못했습니다: '+e.message, 'bad') }
+  loadDocs(); refreshPending();
+}
+async function delDoc(id){
+  const d = S.docs[id] || {file_name:'자료'};
+  if(!await uiConfirm('자료를 지울까요?', `'${d.file_name}'\n자료함의 복사본과 청크·라벨·측정값이 함께 지워집니다. 되돌릴 수 없습니다.\n(처음에 넣었던 원래 파일은 그대로 있습니다)`, {ok:'지우기', danger:true})) return;
+  try{ await api('/api/documents/'+id+'?remove_file=true',{method:'DELETE'}); toast('지웠습니다', 'ok') }catch(e){ toast('지우지 못했습니다: '+e.message, 'bad') }
+  loadDocs(); refreshPending();
 }
 // ---------- AI 라벨 실행 (진행률·취소·재시도)
 const RUN_ST = {running:['진행 중',''], cancelling:['취소 중','warn'], done:['완료','ok'], error:['일부 실패','bad'], cancelled:['취소됨','warn'], interrupted:['중단됨','warn']};
 let LBL = {run:null, timer:null, names:{}};
-async function labelDoc(id, name){
-  if(!confirm('Claude Code가 이 자료의 청크를 5개씩 묶어 읽고 라벨을 제안합니다.\n이미 AI 라벨이 있는 청크는 건너뜁니다. 본문이 Anthropic으로 전송됩니다. 계속할까요?')) return;
+async function labelDoc(id){
+  const name = S.docs[id]?.file_name || '';
+  if(!await uiConfirm('AI 라벨을 붙일까요?', `Claude Code가 '${name}'의 청크를 5개씩 묶어 읽고 라벨을 제안합니다.\n이미 AI 라벨이 있는 청크는 건너뜁니다.\n\n본문 일부가 Anthropic으로 전송됩니다(CoA 규칙에 따라 식별 정보는 가림).`, {ok:'시작'})) return;
   try{
     const r = await api('/api/label',{method:'POST', body:{doc_id:id}});
     LBL.names[r.run_id] = name; toast('AI 라벨링 시작 — 묶음마다 진행률이 올라갑니다');
     watchRun(r.run_id);
-  }catch(e){ toast('시작하지 못했습니다: '+e.message) }
+  }catch(e){ toast('시작하지 못했습니다: '+e.message+' — 설정에서 Claude Code 연결을 점검하세요', 'bad') }
 }
 async function watchRun(runId){
   LBL.run = runId; clearTimeout(LBL.timer);
@@ -410,7 +742,7 @@ async function watchRun(runId){
   try{ r = await api('/api/label/runs/'+runId) }catch(e){ $('#lblCard').hidden = true; return }
   renderRun(r);
   if(r.status==='running' || r.status==='cancelling') LBL.timer = setTimeout(() => watchRun(runId), 2000);
-  else { LBL.timer = null; loadDocs().catch(()=>{}); refreshPending() }
+  else { LBL.timer = null; if(S.route==='library') loadDocs().catch(()=>{}); refreshPending() }
 }
 function renderRun(r){
   const c = $('#lblCard'); c.hidden = false;
@@ -434,7 +766,7 @@ function renderRun(r){
 $('#lblCancel').onclick = async () => { const r = await api(`/api/label/runs/${LBL.run}/cancel`,{method:'POST'}); toast(r.message||'취소했습니다'); watchRun(LBL.run) };
 $('#lblResume').onclick = async () => {
   try{ const r = await api(`/api/label/runs/${LBL.run}/resume`,{method:'POST'}); toast(r.ok ? `남은 청크 ${r.remaining}개를 다시 처리합니다` : r.message); watchRun(LBL.run) }
-  catch(e){ toast(e.message) }
+  catch(e){ toast(e.message, 'bad') }
 };
 $('#lblClose').onclick = () => { clearTimeout(LBL.timer); $('#lblCard').hidden = true; LBL.closed = LBL.run };
 async function showLatestRun(){
@@ -442,29 +774,43 @@ async function showLatestRun(){
   try{ const runs = await api('/api/label/runs?limit=1'); const r = runs[0];
     if(r && r.run_id!==LBL.closed && (r.status==='running' || r.error || r.waiting)) watchRun(r.run_id) }catch{}
 }
-async function refreshPending(){ try{ setPending((await api('/api/health')).counts.pending) }catch{} }
 
 // ---------- 검색
 async function doSearch(){
-  const q = $('#q').value.trim(); if(!q) return;
-  const r = await api('/api/search?q='+encodeURIComponent(q)+($('#qAll').checked?'':'&project='+encodeURIComponent(S.project)));
-  $('#qExp').innerHTML = r.expanded.map(g => `<span class="chip k">${esc(g[0])}</span>` + g.slice(1).map(s=>`<span class="chip">${esc(s)}</span>`).join('')).join('<span class="muted small">그리고</span>');
+  const q = $('#q').value.trim();
+  if(!q){ $('#q').focus(); return }
+  store.set('searched','1');
+  $('#qRes').innerHTML = '<div class="card"><div class="skel"><i></i><i></i><i></i></div></div>';
+  let r;
+  try{ r = await api('/api/search?q='+encodeURIComponent(q)+($('#qAll').checked?'':'&project='+encodeURIComponent(S.project))) }
+  catch(e){ $('#qRes').innerHTML = errHTML(e); return }
+  $('#qExp').innerHTML = r.expanded.length ? '<span class="small muted">넓힌 검색어:</span>' + r.expanded.map(g => `<span class="chip k">${esc(g[0])}</span>` + g.slice(1).map(s=>`<span class="chip">${esc(s)}</span>`).join('')).join('<span class="muted small">그리고</span>') : '';
   const terms = r.expanded.flat().sort((a,b)=>b.length-a.length);
-  $('#qRes').innerHTML = r.results.length ? r.results.map(h => `<div class="hit" onclick="openChunk('${h.chunk_id}')">
-    <div class="meta"><b>${esc(h.file_name)}</b>${h.page?`<span>p.${h.page}</span>`:''}<span>${h.chunk_type==='table'?'표':'본문'}</span>
-    <span class="cf ${h.confidentiality==='기밀'?'s':''}">${h.confidentiality}</span><span class="grow"></span><span class="mono">점수 ${h.score}</span></div>
-    <div>${highlight(h.snippet, terms)}</div></div>`).join('') : '<div class="empty">찾은 자료가 없습니다. 모든 프로젝트로 넓혀 보세요.</div>';
+  $('#qRes').innerHTML = r.results.length ? `<p class="small muted" style="margin:0">${r.results.length}건 — 누르면 오른쪽에 원문과 라벨이 열립니다.</p>` + r.results.map(h => `<button type="button" class="hit" data-chunk="${h.chunk_id}" onclick="openChunk('${h.chunk_id}')">
+    <span class="meta"><b>${esc(h.file_name)}</b>${h.page?`<span>p.${h.page}</span>`:''}<span>${h.chunk_type==='table'?'표':'본문'}</span>
+    <span class="cf ${h.confidentiality==='기밀'?'s':''}">${esc(h.confidentiality)}</span><span class="grow"></span><span class="mono">점수 ${h.score}</span></span>
+    <span>${highlight(h.snippet, terms)}</span></button>`).join('')
+    : emptyHTML('search','찾은 자료가 없습니다', $('#qAll').checked ? '다른 낱말이나 더 짧은 검색어로 찾아 보세요.' : '지금은 이 프로젝트 안에서만 찾았습니다.',
+        $('#qAll').checked ? '' : `<button class="btn sm" type="button" onclick="$('#qAll').checked=true;doSearch()">모든 프로젝트에서 찾기</button>`);
+}
+function searchEmpty(){
+  $('#qRes').innerHTML = emptyHTML('search','무엇을 찾을까요?','검색어를 넣으면 동의어까지 넓혀서 찾습니다.',
+    ['사과박 식이섬유','굴 패각 소성','커피박'].map(x=>`<button class="btn sm" type="button" onclick="openSearch('${x}')">${x}</button>`).join(''));
 }
 function highlight(text, terms){
   let out = esc(text);
   terms.filter(t=>t.length>=2).forEach(t => { const re = new RegExp(esc(t).replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'); out = out.replace(re, m=>`<mark>${m}</mark>`) });
   return out;
 }
-$('#qBtn').onclick = doSearch; $('#q').onkeydown = e => { if(e.key==='Enter') doSearch() };  // false를 돌려주면 키 입력이 막히므로 값을 돌려주지 않는다
+$('#qForm').addEventListener('submit', e => { e.preventDefault(); doSearch() });
+window.openSearch = (q, all) => { show('search'); $('#q').value = q; if(all) $('#qAll').checked = true; doSearch() };
 async function openChunk(id){
-  const c = await api('/api/chunks/'+id);
+  let c;
+  try{ c = await api('/api/chunks/'+id) }catch(e){ toast('원문을 열지 못했습니다: '+e.message, 'bad'); return }
   if(dlg.open) dlg.close();
   show('search');
+  if(!$('#qRes .hit')) $('#qRes').innerHTML = `<div class="callout info">${ICON('info')}<p>출처 원문을 열었습니다. 위에서 검색하면 다른 자료도 찾을 수 있습니다.</p></div>`;
+  $$('#qRes .hit').forEach(b => b.dataset.chunk===id ? b.setAttribute('aria-current','true') : b.removeAttribute('aria-current'));
   $('#chunkCard').hidden = false;
   S.lastChunk = c; $('#chWb').onclick = () => openWorkbench(c.doc_id, c.chunk_id, 'labels');
   $('#chTitle').textContent = c.file_name; $('#chMeta').textContent = `${c.heading||''}${c.page?' · p.'+c.page:''} · 라벨 ${c.annotations.length}`;
@@ -474,25 +820,31 @@ async function openChunk(id){
     html += esc(c.text.slice(pos,a.span_start)) + `<span class="ann ${a.label_type} ${a.status}" title="${esc(a.label_type)} → ${esc(a.concept||a.normalized_value||'')} (${a.method}, ${a.status}, ${a.confidence??''})">${esc(c.text.slice(a.span_start,a.span_end))}</span>`;
     pos = a.span_end; }
   $('#chText').innerHTML = html + esc(c.text.slice(pos));
+  if(narrow()) $('#chunkCard').scrollIntoView({block:'start'});
 }
 
 // ---------- 라벨 검토
 let RV = {ids:[], idx:-1, decided:{}, history:[], status:'pending'};
 async function loadReview(){
   const st = $('#rvStatus').value;
-  const rows = await api(`/api/annotations?status=${st}&project=${encodeURIComponent(S.project)}`);
-  RV = {ids: rows.map(a=>a.ann_id), idx: rows.length ? 0 : -1, decided:{}, history:[], status: st};
+  $('#rvRows').innerHTML = skelRow(6);
+  let rows;
+  try{ rows = await api(`/api/annotations?status=${st}&project=${encodeURIComponent(S.project)}`) }
+  catch(e){ $('#rvRows').innerHTML = `<tr><td colspan="6">${errHTML(e)}</td></tr>`; return }
+  RV = {ids: rows.map(a=>a.ann_id), idx: rows.length ? 0 : -1, decided:{}, history:[], status: st, rows: Object.fromEntries(rows.map(a=>[a.ann_id,a]))};
   $('#rvRows').innerHTML = rows.length ? rows.map((a,i) => {let v=''; try{const o=JSON.parse(a.normalized_value||'null'); if(o) v=`${o.target||''} ${o.value} ${o.unit||''} ${o.basis?'('+o.basis+')':''}`}catch{}
-    return `<tr id="rv-${a.ann_id}" data-id="${a.ann_id}" onclick="rvFocus(${i}, false)"><td class="small">…${esc(a.context.before)}<mark>${esc(a.context.hit)}</mark>${esc(a.context.after)}…</td>
-    <td><span class="pill ${a.label_type==='VALUE'?'warn':''}">${a.label_type}</span><div class="small muted">${a.method}${a.engine?' · '+a.engine:''}</div></td>
-    <td>${esc(a.concept||'')}${v?`<div class="mono small">${esc(v)}</div>`:''}</td><td class="num">${a.confidence??''}</td>
-    <td class="small"><a href="#" onclick="openChunk('${a.chunk_id}');return false">${esc(a.file_name)}</a>
-      <div><a href="#" title="문서 작업대에서 이 청크 열기" onclick="event.stopPropagation();openWorkbench('${a.doc_id}','${a.chunk_id}','labels');return false">작업대</a></div></td>
-    <td class="row rvact" style="flex-wrap:nowrap">${st==='pending'||st==='auto'?rvButtons(a.ann_id):''}</td></tr>`}).join('')
-    : '<tr><td colspan="6"><div class="empty">검토할 라벨이 없습니다. 자료함에서 “AI 라벨”을 실행하면 수치 라벨이 여기로 옵니다.</div></td></tr>';
+    return `<tr id="rv-${a.ann_id}" data-id="${a.ann_id}" onclick="rvFocus(${i}, false)"><td class="small" data-l="문맥"><div>…${esc(a.context.before)}<mark>${esc(a.context.hit)}</mark>${esc(a.context.after)}…</div></td>
+    <td data-l="라벨"><div><span class="pill ${a.label_type==='VALUE'?'warn':''}">${esc(a.label_type)}</span><div class="small muted">${a.method==='dict'?'사전':a.method==='llm'?'AI':esc(a.method)}${a.engine?' · '+esc(a.engine):''}</div></div></td>
+    <td data-l="개념·값"><div>${esc(a.concept||'')}${v?`<div class="mono small">${esc(v)}</div>`:''}</div></td><td class="num" data-l="신뢰도">${a.confidence??''}</td>
+    <td class="small" data-l="출처"><div><a href="#" onclick="event.preventDefault();event.stopPropagation();openChunk('${a.chunk_id}')">${esc(a.file_name)}</a>
+      <div><a href="#" title="문서 작업대에서 이 청크 열기" onclick="event.preventDefault();event.stopPropagation();openWorkbench('${a.doc_id}','${a.chunk_id}','labels')">작업대에서 열기</a></div></div></td>
+    <td class="act rvact">${st==='pending'||st==='auto'?rvButtons(a.ann_id):''}</td></tr>`}).join('')
+    : `<tr><td colspan="6">${emptyHTML('tag', st==='pending' ? '검토할 라벨이 없습니다' : '이 상태의 라벨이 없습니다',
+        st==='pending' ? '자료함에서 “AI 라벨”을 실행하면 수치 라벨과 애매한 라벨이 여기로 옵니다.' : '위의 “보기”에서 다른 상태를 골라 보세요.',
+        st==='pending' ? `<a class="btn sm primary" href="#library">자료함으로</a><button class="btn sm" type="button" onclick="$('#rvStatus').value='auto';loadReview()">자동 확정 라벨 보기</button>` : '')}</td></tr>`;
   rvFocus(RV.idx, false);
 }
-const rvButtons = id => `<button class="btn sm ok" onclick="event.stopPropagation();rv('${id}','accepted')">승인</button><button class="btn sm bad" onclick="event.stopPropagation();rv('${id}','rejected')">거절</button>`;
+const rvButtons = id => `<div class="row"><button class="btn sm ok" type="button" onclick="event.stopPropagation();rv('${id}','accepted')">${ICON('check')}승인</button><button class="btn sm bad" type="button" onclick="event.stopPropagation();rv('${id}','rejected')">${ICON('x')}거절</button></div>`;
 function rvFocus(i, scroll=true){
   $$('#rvRows tr.rvf').forEach(t=>{t.classList.toggle('rvf', false); t.removeAttribute('aria-current')});
   if(!RV.ids.length) { RV.idx = -1; return }
@@ -507,56 +859,57 @@ function rvNextOpen(from){
   return from;
 }
 $('#rvStatus').onchange = loadReview;
+$('#rvLearn').checked = store.get('rvLearn') === '1';
+$('#rvLearn').onchange = e => store.set('rvLearn', e.target.checked ? '1' : '0');
 async function rv(id, status){
   if(RV.status!=='pending' && RV.status!=='auto') return;
+  const learn = status==='rejected' && $('#rvLearn').checked && RV.rows?.[id]?.method==='dict';
   let r;
-  try{ r = await api('/api/annotations/'+id,{method:'POST', body:{status}}) }catch(e){ toast('실패: '+e.message); return }
-  RV.history.push({id, prev: RV.status}); RV.decided[id] = status;
+  try{ r = await api('/api/annotations/'+id,{method:'POST', body:{status, learn}}) }catch(e){ toast('저장하지 못했습니다: '+e.message, 'bad'); return }
+  RV.history.push({id, prev: RV.status, learned: !!r.negative_example}); RV.decided[id] = status;
   const tr = $('#rv-'+id);
   if(tr){ tr.classList.add('decided'); tr.querySelector('.rvact').innerHTML = `<span class="pill ${status==='accepted'?'ok':'bad'}">${status==='accepted'?'승인함':'거절함'}</span>` }
   refreshPending();
-  toast((status==='accepted' ? (r.measurement_id?'승인 — 측정값 표에 올렸습니다':'승인했습니다') : '거절했습니다') + ' · U로 되돌리기');
+  toast((status==='accepted' ? (r.measurement_id?'승인 — 측정값 표에 올렸습니다':'승인했습니다') : r.negative_example ? '거절 — 다음부터 같은 표기는 건너뜁니다' : '거절했습니다') + ' · U로 되돌리기', 'ok');
   const i = RV.ids.indexOf(id); rvFocus(rvNextOpen(i));
 }
 async function rvUndo(){
   const h = RV.history.pop(); if(!h){ toast('되돌릴 결정이 없습니다'); return }
-  try{ await api('/api/annotations/'+h.id,{method:'POST', body:{status:h.prev}}) }catch(e){ RV.history.push(h); toast('되돌리지 못했습니다: '+e.message); return }
+  try{ await api('/api/annotations/'+h.id,{method:'POST', body:{status:h.prev, learn:h.learned}}) }catch(e){ RV.history.push(h); toast('되돌리지 못했습니다: '+e.message, 'bad'); return }
   delete RV.decided[h.id];
   const tr = $('#rv-'+h.id);
   if(tr){ tr.classList.toggle('decided', false); tr.querySelector('.rvact').innerHTML = rvButtons(h.id) }
-  refreshPending(); toast('되돌렸습니다 — 다시 검토 대기입니다'); rvFocus(RV.ids.indexOf(h.id));
+  refreshPending(); toast(`되돌렸습니다 — 다시 ${h.prev==='auto'?'자동 확정':'검토 대기'} 상태입니다` + (h.learned ? ' (배운 것도 껐습니다)' : '')); rvFocus(RV.ids.indexOf(h.id));
 }
-function kbHelp(on){ const k=$('#kbHelp'); k.hidden = on===undefined ? !k.hidden : !on }
-document.addEventListener('keydown', e => {
-  if(!$('#v-review').classList.contains('active') || dlg.open) return;
-  if(e.ctrlKey || e.metaKey || e.altKey) return;
-  const t = e.target;
-  if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-  const k = e.key;
-  if(k==='?'){ kbHelp(); e.preventDefault(); return }
-  if(k==='Escape'){ kbHelp(false); return }
-  const id = RV.ids[RV.idx];
+function rvKey(e){
+  const k = e.key, id = RV.ids[RV.idx];
   if(k==='j' || k==='J' || k==='ArrowDown'){ rvFocus(RV.idx+1); e.preventDefault() }
   else if(k==='k' || k==='K' || k==='ArrowUp'){ rvFocus(RV.idx-1); e.preventDefault() }
   else if((k==='a' || k==='A') && id && !RV.decided[id]){ rv(id,'accepted'); e.preventDefault() }
   else if((k==='r' || k==='R') && id && !RV.decided[id]){ rv(id,'rejected'); e.preventDefault() }
   else if(k==='u' || k==='U'){ rvUndo(); e.preventDefault() }
-});
+}
 
 // ---------- 측정값
 let MROWS=[];
 async function loadMeas(){
   const p = new URLSearchParams({byproduct:$('#mBp').value, target:$('#mTg').value, project:$('#mAll').checked?'':S.project});
-  MROWS = await api('/api/measurements?'+p);
+  $('#mRows').innerHTML = skelRow(10);
+  try{ MROWS = await api('/api/measurements?'+p) }catch(e){ $('#mRows').innerHTML = `<tr><td colspan="10">${errHTML(e)}</td></tr>`; return }
   const ENT = {coa:'CoA', extracted:'추출(승인)', manual:'직접'};
-  $('#mRows').innerHTML = MROWS.length ? MROWS.map(m => `<tr><td>${esc(m.byproduct||'—')}</td><td>${esc(m.target_text)}${m.target&&m.target!==m.target_text?`<div class="small muted">${esc(m.target)}</div>`:''}</td>
-    <td class="num">${esc(m.value ?? m.value_text)}</td><td>${esc(m.unit_text||'')}</td><td>${esc(m.basis||'')}</td><td>${esc(m.pretreatment||'')}</td>
-    <td class="small">${esc(m.method_text||'')}</td><td class="small">${esc(m.sample||'')}${m.lot_no?`<div class="muted">${esc(m.lot_no)} · ${esc(m.supplier||'')}</div>`:''}</td>
-    <td><span class="pill ${m.entry==='coa'?'bad':'ok'}">${ENT[m.entry]||m.entry}</span></td><td class="small">${esc(m.file_name||'')}</td></tr>`).join('')
-    : '<tr><td colspan="10"><div class="empty">측정값이 없습니다. CoA 엑셀을 넣거나, 라벨 검토에서 수치를 승인하세요.</div></td></tr>';
+  const src = m => m.chunk_id ? `<button class="btn sm" type="button" title="이 값을 승인한 라벨의 청크를 작업대에서 엽니다" onclick="openWorkbench('${m.doc_id}','${m.chunk_id}','labels')">${ICON('wrench')}근거 청크</button>`
+    : m.doc_id ? `<button class="btn sm" type="button" title="자료를 작업대에서 엽니다" onclick="openWorkbench('${m.doc_id}')">${ICON('doc')}${m.entry==='coa'?'CoA 열기':'자료 열기'}</button>` : '';
+  $('#mRows').innerHTML = MROWS.length ? MROWS.map(m => `<tr><td data-l="부산물">${esc(m.byproduct||'—')}</td><td data-l="항목"><div>${esc(m.target_text)}${m.target&&m.target!==m.target_text?`<div class="small muted">${esc(m.target)}</div>`:''}</div></td>
+    <td class="num" data-l="값">${esc(m.value ?? m.value_text)}</td><td data-l="단위">${esc(m.unit_text||'')}</td><td data-l="기준">${esc(m.basis||'')}</td><td data-l="전처리">${esc(m.pretreatment||'')}</td>
+    <td class="small" data-l="시험법">${esc(m.method_text||'')}</td><td class="small" data-l="시료"><div>${esc(m.sample||'')}${m.lot_no?`<div class="muted">${esc(m.lot_no)} · ${esc(m.supplier||'')}</div>`:''}</div></td>
+    <td data-l="입력"><span class="pill ${m.entry==='coa'?'bad':'ok'}">${ENT[m.entry]||esc(m.entry)}</span></td>
+    <td class="small" data-l="근거"><div class="stack" style="gap:4px;justify-items:start">${src(m)}<span class="muted" style="overflow-wrap:anywhere">${esc(m.file_name||'')}</span></div></td></tr>`).join('')
+    : `<tr><td colspan="10">${emptyHTML('table','측정값이 없습니다','CoA 엑셀을 자료함에 넣거나, 라벨 검토에서 수치 라벨을 승인하면 여기에 쌓입니다.',
+        `<a class="btn sm" href="#library">자료함으로</a><a class="btn sm" href="#review">라벨 검토로</a>`)}</td></tr>`;
 }
-$('#mBtn').onclick = loadMeas; $('#mAll').onchange = loadMeas;
+$('#mForm').addEventListener('submit', e => { e.preventDefault(); loadMeas() }); $('#mAll').onchange = loadMeas;
 $('#mCsv').onclick = () => {
+  if(!MROWS.length){ toast('저장할 측정값이 없습니다. 먼저 조회하세요.'); return }
   const cols = ['byproduct','target_text','value','value_text','unit_text','basis','pretreatment','method_text','sample','lot_no','supplier','entry','file_name'];
   const csv = '\ufeff' + [cols.join(',')].concat(MROWS.map(r => cols.map(c => `"${String(r[c]??'').replace(/"/g,'""')}"`).join(','))).join('\r\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = '측정값.csv'; a.click();
@@ -564,10 +917,11 @@ $('#mCsv').onclick = () => {
 
 // ---------- 개념
 async function loadOnto(){
+  if(S.route==='kg') return;
   const tree = await api('/api/concepts/tree');
-  const li = n => `<li><button class="${n.children.length&&!n.children[0].children.length?'':''}" onclick="cFind('${esc(n.label)}')">${esc(n.label)}</button>${n.children.length?`<ul>${n.children.map(li).join('')}</ul>`:''}</li>`;
+  const li = n => `<li><button type="button" onclick="cFind(this.textContent)">${esc(n.label)}</button>${n.children.length?`<ul>${n.children.map(li).join('')}</ul>`:''}</li>`;
   $('#tree').innerHTML = '<ul>' + tree.map(s => `<li class="sec">${esc(s.label)}<ul style="font-weight:400">${s.children.map(li).join('')||'<li class="muted small">(비어 있음)</li>'}</ul></li>`).join('') + '</ul>';
-  if(!$('#cScheme').options.length || $('#cScheme').options.length===1){
+  if($('#cScheme').options.length===1){
     ['부산물','분류','원물','공정','성분','물성','단위','시험법','용도'].forEach(s=>$('#cScheme').insertAdjacentHTML('beforeend',`<option>${s}</option>`));
   }
   loadConcepts();
@@ -579,50 +933,118 @@ async function loadConcepts(){
   $('#cRows').innerHTML = rows.map(c => `<tr><td><b>${esc(c.pref_label_ko)}</b>${c.pref_label_en?`<div class="small muted">${esc(c.pref_label_en)}</div>`:''}</td>
     <td style="white-space:nowrap"><span class="pill">${esc(c.scheme)}</span> <span class="pill ${c.origin}">${c.origin==='seed'?'시드':'내 확장'}</span>${c.status!=='active'?' <span class="pill warn">제안</span>':''}</td>
     <td class="small">${esc(c.alts||'')}</td><td class="num">${c.uses}</td>
-    <td>${c.status==='proposed'?`<button class="btn sm ok" onclick="approve('${c.concept_id}')">승인</button>`:''}</td></tr>`).join('') || '<tr><td colspan="5"><div class="empty">없음</div></td></tr>';
+    <td>${c.status==='proposed'?`<button class="btn sm ok" type="button" onclick="approve('${c.concept_id}')">승인</button>`:''}</td></tr>`).join('')
+    || `<tr><td colspan="5">${emptyHTML('book','찾은 개념이 없습니다','다른 표기로 찾거나, 없는 개념이면 “개념 추가”로 내 확장에 넣으세요.')}</td></tr>`;
 }
 let cT; $('#cQ').oninput = () => {clearTimeout(cT); cT=setTimeout(loadConcepts,250)};
 $('#cScheme').onchange = loadConcepts; $('#cOrigin').onchange = loadConcepts;
-async function approve(id){ await api(`/api/concepts/${id}/approve`,{method:'POST'}); toast('승인 — 검색·라벨링에 바로 쓰입니다'); loadConcepts() }
-$('#cAdd').onclick = () => {
-  $('#dlgT').textContent = '개념 추가 (내 확장)';
-  $('#dlgB').innerHTML = `<div class="kv" style="align-items:center"><b>표준명</b><input class="inp" id="naL" placeholder="예: 사과 씨">
-    <b>체계</b><select class="inp" id="naS">${['부산물','원물','공정','성분','물성','단위','시험법','용도'].map(s=>`<option>${s}</option>`).join('')}</select>
-    <b>동의어</b><input class="inp" id="naA" placeholder="쉼표로 구분 (예: apple seed, 사과씨)">
-    <b>상위 개념</b><input class="inp" id="naB" placeholder="선택 (예: 과실 착즙박)"><b>정의</b><input class="inp" id="naD"></div>
-    <div class="row" style="margin-top:12px"><span class="grow small muted">내 확장은 ontology/mine.ttl에 쌓이고 표준 시드는 바뀌지 않습니다.</span><button class="btn primary" id="naGo">추가</button></div>`;
-  dlg.showModal();
-  $('#naGo').onclick = async () => {
-    const r = await api('/api/concepts',{method:'POST', body:{label:$('#naL').value, scheme:$('#naS').value, alt_labels:$('#naA').value.split(',').map(s=>s.trim()).filter(Boolean), broader:$('#naB').value||null, definition:$('#naD').value||null}});
-    if(r.error||r.exists){toast(r.error||r.note);return} dlg.close(); toast('추가했습니다'); $('#cOrigin').value='mine'; loadConcepts();
-  };
+async function approve(id){ await api(`/api/concepts/${id}/approve`,{method:'POST'}); toast('승인 — 검색·라벨링에 바로 쓰입니다', 'ok'); loadConcepts() }
+$('#cAdd').onclick = async () => {
+  const ok = await uiDialog({title:'개념 추가 (내 확장)', ok:'추가', focus:'#naL', html:`<div class="stack" style="gap:12px">
+    <label class="field"><span>표준명</span><input class="inp" id="naL" placeholder="예: 사과 씨" required></label>
+    <label class="field"><span>체계</span><select class="inp" id="naS">${['부산물','원물','공정','성분','물성','단위','시험법','용도'].map(s=>`<option>${s}</option>`).join('')}</select></label>
+    <label class="field"><span>동의어</span><input class="inp" id="naA" placeholder="예: apple seed, 사과씨"><span class="help">쉼표로 구분합니다.</span></label>
+    <label class="field"><span>상위 개념 (선택)</span><input class="inp" id="naB" placeholder="예: 과실 착즙박"></label>
+    <label class="field"><span>정의 (선택)</span><input class="inp" id="naD"></label>
+    <p class="small muted" style="margin:0">내 확장은 ontology/mine.ttl에 쌓이고 표준 시드는 바뀌지 않습니다.</p></div>`,
+    validate: () => !!$('#naL').value.trim()});
+  if(!ok) return;
+  try{
+    const r = await api('/api/concepts',{method:'POST', body:{label:$('#naL').value.trim(), scheme:$('#naS').value, alt_labels:$('#naA').value.split(',').map(s=>s.trim()).filter(Boolean), broader:$('#naB').value||null, definition:$('#naD').value||null}});
+    if(r.error||r.exists){ toast(r.error||r.note, 'bad'); return }
+    toast('추가했습니다', 'ok'); $('#cOrigin').value='mine'; loadConcepts();
+  }catch(e){ toast('추가하지 못했습니다: '+e.message, 'bad') }
 };
 
-// ---------- AI에 묻기
-$('#askBtn').onclick = async () => {
-  const q = $('#askQ').value.trim(); if(!q) return;
+// ---------- AI에 묻기 (답의 출처를 눌러 원문을 연다)
+function mdLite(src){
+  const lines = esc(src).split(/\r?\n/), out = []; let list = null;
+  const inline = s => s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
+  const close = () => { if(list){ out.push(`</${list}>`); list = null } };
+  let para = [];
+  const flush = () => { if(para.length){ out.push(`<p>${para.map(inline).join('<br>')}</p>`); para = [] } };
+  for(const l of lines){
+    const ul = l.match(/^\s*[-*•]\s+(.*)$/), ol = l.match(/^\s*\d+[.)]\s+(.*)$/), hd = l.match(/^\s*#{1,4}\s+(.*)$/);
+    if(ul || ol){ flush(); const t = ul ? 'ul' : 'ol'; if(list !== t){ close(); out.push(`<${t}>`); list = t } out.push(`<li>${inline((ul||ol)[1])}</li>`); continue }
+    close();
+    if(hd){ flush(); out.push(`<h4>${inline(hd[1])}</h4>`); continue }
+    if(!l.trim()){ flush(); continue }
+    para.push(l);
+  }
+  flush(); close();
+  return out.join('');
+}
+// 답 본문(HTML로 바꾼 뒤)의 출처 표시를 버튼으로: chunk_id(32자) · (파일명 p.쪽) · [n](리포트 근거 번호)
+function linkCites(html, reportCites){
+  const cites = [], add = c => { const k = c.chunk || (c.file + '|' + (c.page||'')); let i = cites.findIndex(x => x.key===k); if(i<0){ cites.push({...c, key:k}); i = cites.length-1 } return i+1 };
+  html = html.replace(/\(([^()<>]*?([^()<>\s,;]+\.(?:pdf|hwpx|hwp|xlsx|xlsm|txt|md|csv))(?:[^()<>]*?p\.?\s*(\d+))?[^()<>]*)\)/gi,
+    (m, inner, file, page) => { const n = add({file: file.replace(/&amp;/g,'&'), page}); return `<button type="button" class="cite" data-n="${n}" title="출처 열기: ${inner}">${inner}</button>` });
+  html = html.replace(/\b([0-9a-f]{32})\b/g, (m, id) => { const n = add({chunk:id}); return `<button type="button" class="cite" data-n="${n}" title="원문 청크 열기">[${n}]</button>` });
+  if(reportCites?.length) html = html.replace(/\[(\d{1,3})\]/g, (m, d) => { const c = reportCites[+d-1]; if(!c) return m;
+    const n = add(c.chunk_id ? {chunk:c.chunk_id, label:c.claim_text} : {label:c.claim_text}); return `<button type="button" class="cite" data-n="${n}" title="${esc(c.claim_text||'')}">[${d}]</button>` });
+  return {html, cites};
+}
+function citeList(cites){
+  if(!cites.length) return '';
+  return `<h4 style="margin:14px 0 4px;font-size:13px">출처 ${cites.length}곳 <span class="small muted" style="font-weight:400">— 누르면 원문을 엽니다</span></h4><ol class="cites">${cites.map((c,i) =>
+    `<li><a href="#" data-n="${i+1}" class="citelink">${c.chunk && !c.file ? (c.label ? esc(c.label).slice(0,90) : '원문 청크 '+c.chunk.slice(0,8)) : esc(c.file)+(c.page?` p.${c.page}`:'')}</a></li>`).join('')}</ol>`;
+}
+let DOCS_ALL = null;
+async function openCite(c){
+  if(c.chunk) return openChunk(c.chunk);
+  if(!c.file) return;
+  DOCS_ALL = DOCS_ALL || await api('/api/documents').catch(() => []);
+  const alias = c.file.match(/^기밀자료-([0-9a-f]{6})/);
+  const d = DOCS_ALL.find(x => alias ? x.doc_id.startsWith(alias[1]) : x.file_name === c.file) || DOCS_ALL.find(x => x.file_name.startsWith(c.file.replace(/\.[^.]+$/,'')));
+  if(!d){ DOCS_ALL = null; toast(`자료함에서 '${c.file}'을(를) 찾지 못했습니다. 검색으로 찾아 봅니다.`); openSearch(c.file.replace(/\.[^.]+$/,''), true); return }
+  if(c.page){ const cs = await api(`/api/documents/${d.doc_id}/chunks`).catch(() => []); const hit = cs.find(x => String(x.page)===String(c.page)); if(hit) return openChunk(hit.chunk_id) }
+  openWorkbench(d.doc_id);
+}
+function wireCites(root, cites){
+  root.querySelectorAll('[data-n]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); openCite(cites[+b.dataset.n-1]) }));
+}
+async function ask(){
+  const q = $('#askQ').value.trim();
+  if(!q){ $('#askQ').focus(); toast('질문을 먼저 적어 주세요'); return }
   const role = $('#askRole').value;
-  $('#askBtn').disabled = true; $('#askState').textContent = 'Claude Code가 자료를 찾는 중…'; $('#askOut').hidden = true;
+  $('#askBtn').disabled = true; $('#askOut').hidden = true;
+  const state = t => $('#askState').innerHTML = `<span class="spin"></span>${esc(t)}`;
+  state('Claude Code가 자료를 찾는 중…');
   const t0 = Date.now();
   try{
     const job = await waitJob(await api('/api/ask',{method:'POST', body:{prompt:q, project:S.project, role, write:role==='report_writer'}}),
-      () => $('#askState').textContent = `Claude Code가 자료를 찾는 중… ${Math.round((Date.now()-t0)/1000)}초`);
+      () => state(`Claude Code가 자료를 찾는 중… ${Math.round((Date.now()-t0)/1000)}초 (길면 몇 분 걸립니다)`));
     const r = job.result||{};
     $('#askOut').hidden = false;
-    $('#askAns').textContent = r.ok ? r.result : ('실패: ' + (r.error || job.error || '알 수 없음'));
-    $('#askMeta').textContent = r.ok ? `${Math.round((r.duration_ms||0)/1000)}초 · ${r.num_turns||'?'}턴 · 세션 ${r.session_id||''}` : '설정 → 연결 점검으로 Claude Code 상태를 확인하세요.';
+    if(r.ok){
+      const {html, cites} = linkCites(mdLite(r.result||''));
+      $('#askAns').innerHTML = html || '<p class="muted">(빈 답)</p>'; $('#askCites').innerHTML = citeList(cites);
+      wireCites($('#askAns'), cites); wireCites($('#askCites'), cites);
+      $('#askMeta').textContent = `${Math.round((r.duration_ms||0)/1000)}초 · ${r.num_turns||'?'}턴`;
+    } else {
+      $('#askAns').innerHTML = errHTML(r.error || job.error || '알 수 없는 오류', '설정 → 연결 점검으로 Claude Code 상태를 확인하세요. 시간이 모자랐다면 설정에서 AI 제한 시간을 늘리세요.');
+      $('#askCites').innerHTML = ''; $('#askMeta').textContent = '';
+    }
     if(role==='report_writer') loadReports();
-  } finally { $('#askBtn').disabled = false; $('#askState').textContent = '' }
-};
+  }catch(e){ toast('묻지 못했습니다: '+e.message, 'bad') }
+  finally { $('#askBtn').disabled = false; $('#askState').textContent = '' }
+}
+$('#askForm').addEventListener('submit', e => { e.preventDefault(); ask() });
+$('#askQ').addEventListener('keydown', e => { if(e.key==='Enter' && (e.ctrlKey || e.metaKey)){ e.preventDefault(); ask() } });
 async function loadReports(){
-  const rs = await api('/api/reports');
-  $('#rpRows').innerHTML = rs.length ? rs.map(r=>`<tr class="click" onclick="openReport('${r.report_id}')"><td><b>${esc(r.title)}</b></td><td class="num">${r.citations}</td><td><span class="pill">${r.status==='draft'?'초안':r.status}</span></td><td class="small muted">${esc(r.created_at)}</td></tr>`).join('')
-    : '<tr><td colspan="4"><div class="empty">아직 초안이 없습니다. “리포트 작성자”로 물어보세요.</div></td></tr>';
+  let rs;
+  try{ rs = await api('/api/reports') }catch(e){ $('#rpRows').innerHTML = `<tr><td colspan="4">${errHTML(e)}</td></tr>`; return }
+  $('#rpRows').innerHTML = rs.length ? rs.map(r=>`<tr class="click" tabindex="0" onclick="openReport('${r.report_id}')" onkeydown="if(event.key==='Enter')openReport('${r.report_id}')"><td><b>${esc(r.title)}</b></td><td class="num">${r.citations}</td><td><span class="pill">${r.status==='draft'?'초안':esc(r.status)}</span></td><td class="small muted">${esc(r.created_at)}</td></tr>`).join('')
+    : `<tr><td colspan="4">${emptyHTML('doc','아직 초안이 없습니다','역할을 “리포트 작성자”로 골라 물으면 근거 번호가 달린 초안이 여기에 저장됩니다.')}</td></tr>`;
 }
 async function openReport(id){
-  const r = await api('/api/reports/'+id);
+  let r;
+  try{ r = await api('/api/reports/'+id) }catch(e){ toast('열지 못했습니다: '+e.message, 'bad'); return }
   $('#dlgT').textContent = r.title;
-  $('#dlgB').innerHTML = `<div class="answer">${esc(r.body_md)}</div><h4>근거</h4><ol class="small">${r.citations.map(c=>`<li>${esc(c.claim_text)} ${c.chunk_id?`<a href="#" onclick="openChunk('${c.chunk_id}');return false">원문</a>`:'(측정값)'}</li>`).join('')}</ol>`;
+  const {html, cites} = linkCites(mdLite(r.body_md||''), r.citations);
+  $('#dlgB').innerHTML = `<div class="answer">${html}</div><h4 style="margin:16px 0 6px">근거 ${r.citations.length}개</h4><ol class="cites">${r.citations.map((c,i)=>`<li>${esc(c.claim_text)} ${c.chunk_id?`<a href="#" data-c="${i}">원문 보기</a>`:'<span class="muted">(측정값)</span>'}</li>`).join('')}</ol>`;
+  wireCites($('#dlgB .answer'), cites);
+  $$('#dlgB [data-c]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); openChunk(r.citations[+a.dataset.c].chunk_id) }));
   dlg.showModal();
 }
 
@@ -634,12 +1056,13 @@ async function loadSettings(){
   const sep = S.home.includes('\\') ? '\\' : '/';
   $('#paths').innerHTML = [['데이터 폴더',''],['받은편지함','inbox'],['자료함','library'],['DB','db'+sep+'rd.sqlite'],['온톨로지','ontology'],['MCP 설정','config'+sep+'mcp.json'],['에이전트 지침','agents']]
     .map(([k,p]) => `<b>${k}</b><code>${esc(S.home + (p?sep+p:''))}</code>`).join('');
-  const e = await api('/api/engines/check');
+  let e;
+  try{ e = await api('/api/engines/check') }catch(err){ $('#engInfo').innerHTML = `<b>상태</b><span>${errHTML(err)}</span>`; return }
   const c = e.claude.cli;
   $('#engInfo').innerHTML = `<b>Claude Code</b><span>${c.installed?`<span class="pill ok">설치됨</span> <span class="mono small">${esc(c.version||'')}</span>`:`<span class="pill bad">찾지 못함</span> <span class="small">${esc(c.message||'')}</span>`}</span>
     ${c.path?`<b>경로</b><code>${esc(c.path)}</code>`:''}<b>MCP 설정</b><code>${esc(e.claude.mcp_config)}</code>
-    <b>Codex</b><span>${e.codex.cli.installed?`<span class="pill">설치됨</span> <span class="small muted">2단계에서 연결</span>`:'<span class="small muted">없음 (보조 엔진이라 없어도 됨)</span>'}</span>`;
-  $('#engDot').className = 'dot ' + (c.installed?'ok':'bad');
+    <b>Codex</b><span>${e.codex.cli.installed?`<span class="pill">설치됨</span> <span class="small muted">보조 엔진</span>`:'<span class="small muted">없음 (보조 엔진이라 없어도 됨)</span>'}</span>`;
+  setEngine(!!c.installed);
   renderFood(e.food||{});
 }
 function renderFood(f){
@@ -652,28 +1075,33 @@ function renderFood(f){
     <b>서버 파일</b><span>${yn(f.script_exists,'있음','없음')} <span class="mono small">mcp/food-db-server.mjs</span></span>
     <b>.env.local</b><span>${yn(f.env_local_exists,'있음','없음')} <span class="small muted">DATABASE_URL — 내용은 이 앱이 읽지 않습니다</span></span>`;
 }
-$$('input[name=coa]').forEach(r => r.onchange = async () => { await api('/api/settings',{method:'POST', body:{coa_rule:r.value}}); toast('CoA 규칙을 바꿨습니다') });
+$$('input[name=coa]').forEach(r => r.onchange = async () => { try{ S.settings = await api('/api/settings',{method:'POST', body:{coa_rule:r.value}}); toast('CoA 규칙을 바꿨습니다', 'ok') }catch(e){ toast(e.message, 'bad') } });
 $('#engCheck').onclick = loadSettings;
 $('#engSmoke').onclick = async () => {
-  $('#smokeOut').textContent = 'Claude Code에 도구 호출을 시켜 보는 중… (최대 3분)';
-  const job = await waitJob(await api('/api/engines/check?smoke=true'));
-  const r = job.result||{}, s = r.smoke||{};
-  $('#smokeOut').innerHTML = s.passed ? `<span class="pill ok">통과</span> 도구 호출 확인 — 답: “${esc(s.answer)}” (${Math.round((s.duration_ms||0)/1000)}초)`
-    : `<span class="pill bad">실패</span> ${esc(s.answer||r.cli?.message||job.error||'')}<br>${esc(r.hint||'')}`;
+  const b = $('#engSmoke'); b.disabled = true;
+  $('#smokeOut').innerHTML = '<span class="spin"></span> Claude Code에 도구 호출을 시켜 보는 중… (최대 3분)';
+  try{
+    const job = await waitJob(await api('/api/engines/check?smoke=true'));
+    const r = job.result||{}, s = r.smoke||{};
+    store.set('smoke', s.passed ? 'ok' : 'fail'); setEngine(!!r.cli?.installed || !!S.health?.claude?.path);
+    $('#smokeOut').innerHTML = s.passed ? `<span class="pill ok">통과</span> 도구 호출 확인 — 답: “${esc(s.answer)}” (${Math.round((s.duration_ms||0)/1000)}초)`
+      : `<span class="pill bad">실패</span> ${esc(s.answer||r.cli?.message||job.error||'')}<br>${esc(r.hint||'')}`;
+  }catch(e){ $('#smokeOut').innerHTML = errHTML(e) }
+  finally{ b.disabled = false }
 };
 $('#setSave').onclick = async () => {
-  S.settings = await api('/api/settings',{method:'POST', body:{default_project:$('#setProj').value, watch_inbox:$('#setWatch').checked, claude_timeout_sec:+$('#setTimeout').value}});
-  toast('저장했습니다');
+  try{ S.settings = await api('/api/settings',{method:'POST', body:{default_project:$('#setProj').value, watch_inbox:$('#setWatch').checked, claude_timeout_sec:+$('#setTimeout').value}}); toast('저장했습니다', 'ok') }
+  catch(e){ toast('저장하지 못했습니다: '+e.message, 'bad') }
 };
 $('#foodSave').onclick = async () => {
   try {
     S.settings = await api('/api/settings',{method:'POST', body:{food_mcp:$('#foodOn').checked, food_mcp_dir:$('#foodDir').value.trim()}});
     const e = await api('/api/engines/check'); renderFood(e.food||{});
-    toast(e.food?.active ? '식품 DB를 켰습니다. 다음 AI 실행부터 붙습니다' : '저장했습니다');
-  } catch(err) { toast(err.message) }
+    toast(e.food?.active ? '식품 DB를 켰습니다. 다음 AI 실행부터 붙습니다' : '저장했습니다', 'ok');
+  } catch(err) { toast(err.message, 'bad') }
 };
 $('#foodCheck').onclick = async () => {
-  $('#foodOut').textContent = 'Food MCP 서버를 띄워 도구 목록을 받는 중… (최대 30초)';
+  $('#foodOut').innerHTML = '<span class="spin"></span> Food MCP 서버를 띄워 도구 목록을 받는 중… (최대 30초)';
   const job = await waitJob(await api('/api/engines/food/check',{method:'POST'}));
   const r = job.result||{};
   $('#foodOut').innerHTML = r.ok
@@ -681,15 +1109,18 @@ $('#foodCheck').onclick = async () => {
     : `<span class="pill bad">실패</span> ${esc(r.error||job.error||'')}`;
 };
 $('#newProj').onclick = async () => {
-  const name = prompt('새 프로젝트 이름'); if(!name) return;
-  await api('/api/projects',{method:'POST', body:{name}}); S.project = name; await loadProjects(); toast(`'${name}' 프로젝트를 만들었습니다`);
+  const name = await uiPrompt('새 프로젝트', {label:'프로젝트 이름', placeholder:'예: 감귤박 펙틴', help:'자료·측정값을 묶는 이름입니다. 나중에 머리줄에서 바꿀 수 있습니다.', ok:'만들기'});
+  if(!name) return;
+  try{ await api('/api/projects',{method:'POST', body:{name}}); S.project = name; await loadProjects(); toast(`'${name}' 프로젝트를 만들었습니다`, 'ok') }
+  catch(e){ toast('만들지 못했습니다: '+e.message, 'bad') }
 };
 
-boot().catch(e => toast('서버에 연결하지 못했습니다: '+e.message));
-setInterval(() => { if($('#v-library').classList.contains('active')) loadDocs().catch(()=>{}) }, 8000);
+searchEmpty();
+boot().catch(e => { toast('서버에 연결하지 못했습니다: '+e.message+' — start.bat 창이 켜져 있는지 확인하세요', 'bad'); show(location.hash.slice(1) || 'home') });
+setInterval(() => { if(S.route==='library' && !document.hidden && !MENU && !document.querySelector('dialog[open]')) loadDocs().catch(()=>{}) }, 8000);
 </script>
 <script type="module">
-// 시각화 작업 공간은 처음 열 때 붙인다(3D 라이브러리를 미리 읽지 않도록)
+// 모듈 화면(시각화·수집·실험·분석·작업대·지식그래프)은 처음 열 때 붙인다(무거운 라이브러리를 미리 읽지 않도록)
 import {mountViz, openStructure} from '/static/viz/viz.js';
 let viz = null;
 const ensureViz = () => viz ||= mountViz(document.getElementById('vizRoot'), {api, initial: {tab: 'flow', project: S.project}, toast});
@@ -698,34 +1129,48 @@ window.openStructure = term => { show('viz'); ensureViz(); openStructure(term); 
 window.addEventListener('byorbit:open-structure', () => {
   if (!document.querySelector('#v-viz').classList.contains('active')) { show('viz'); ensureViz(); }
 });
-document.querySelector('#nav a[data-v=viz]').addEventListener('click', ensureViz);
-if (location.hash === '#viz') ensureViz();
 
-// 수집·실험 탭도 처음 열 때 붙인다
-let collect = null, exp = null;
+let collect = null, exp = null, stats = null, wb = null, kg = null;
 const ensureCollect = () => collect ||= import('/static/collect/collect.js').then(m =>
   m.mountCollect(document.getElementById('collectRoot'), {api, toast, project: () => S.project}));
+const ensureStats = () => stats ||= import('/static/stats/stats.js').then(m =>
+  m.mountStats(document.getElementById('statsRoot'), {api, toast, project: S.project}));
 const ensureExp = () => exp ||= import('/static/exp/exp.js').then(m =>
   m.mountExperiment(document.getElementById('expRoot'), {api, toast, project: S.project,
     openDrying: method => { show('viz'); ensureViz().openDrying(method) },
     openStats: id => { show('stats'); ensureStats().then(st => st.open(id)) }}));
-let stats = null;
-const ensureStats = () => stats ||= import('/static/stats/stats.js').then(m =>
-  m.mountStats(document.getElementById('statsRoot'), {api, toast, project: S.project}));
-document.querySelector('#nav a[data-v=stats]').addEventListener('click', ensureStats);
-if (location.hash === '#stats') ensureStats();
-document.querySelector('#nav a[data-v=collect]').addEventListener('click', ensureCollect);
-document.querySelector('#nav a[data-v=exp]').addEventListener('click', ensureExp);
-if (location.hash === '#collect') ensureCollect();
-if (location.hash === '#exp') ensureExp();
 document.getElementById('proj').addEventListener('change', e => viz?.setProject(e.target.value));
 
-// 문서 작업대: 자료함·검색·라벨 검토에서 연다. 처음 열 때 붙인다
-let wb = null;
+// 문서 작업대: 자료함·검색·라벨 검토·측정값에서 연다
 const ensureWb = () => wb ||= import('/static/doc/workbench.js').then(m =>
   m.mountWorkbench(document.getElementById('wbRoot'), {api, toast, onClose: () => show('library')}));
 window.openWorkbench = (docId, chunkId, tab) => { show('wb'); return ensureWb().then(w => w.open(docId, {chunkId, tab})) };
-if (location.hash === '#wb') ensureWb();   // 새로고침: 자료를 고르라는 안내가 보인다
+
+// 개념 사전(#onto) · 지식그래프(#kg) 탭
+const ensureKG = () => kg ||= import('/static/kg/kg.js').then(m =>
+  m.mountKG(document.getElementById('ontoKG'), {api, toast, openSearch: q => window.openSearch(q, true), openWorkbench: window.openWorkbench}));
+function ontoTab(which){
+  const g = which === 'kg';
+  const tk = document.getElementById('ontoTabKG'), tl = document.getElementById('ontoTabList');
+  tk.setAttribute('aria-selected', String(g)); tl.setAttribute('aria-selected', String(!g));
+  tk.tabIndex = g ? 0 : -1; tl.tabIndex = g ? -1 : 0;
+  document.getElementById('ontoKG').hidden = !g;
+  document.getElementById('ontoList').hidden = g;
+  document.getElementById('ontoActs').hidden = g;
+  if (g) ensureKG().then(k => k.resize());
+}
+window.ontoTab = ontoTab;
+document.getElementById('ontoTabKG').addEventListener('click', () => show('kg'));
+document.getElementById('ontoTabList').addEventListener('click', () => show('onto'));
+document.querySelector('.ontotabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const kgOn = document.getElementById('ontoTabKG').getAttribute('aria-selected') === 'true';
+  show(kgOn ? 'onto' : 'kg'); document.getElementById(kgOn ? 'ontoTabList' : 'ontoTabKG').focus();
+});
+
+window.ENSURE = {viz: ensureViz, collect: ensureCollect, exp: ensureExp, stats: ensureStats, wb: ensureWb};
+// 이 모듈이 boot()보다 늦게 실행됐으면 지금 화면을 붙인다
+if (S.route) { window.ENSURE[S.route]?.(); if (S.route === 'kg' || S.route === 'onto') ontoTab(S.route === 'kg' ? 'kg' : 'list') }
 </script>
 </body>
 </html>

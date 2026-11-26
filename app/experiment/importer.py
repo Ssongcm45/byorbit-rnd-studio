@@ -103,6 +103,8 @@ COND_RULES: list[tuple[str, str, list[str]]] = [
     ("sieve", "mesh_um", ["체눈", "메시", "mesh", "체크기"]),
     ("extract", "ethanol_pct", ["에탄올", "ethanol", "etoh", "주정"]),
     ("extract", "ratio_ml_g", ["용매비", "고액비", "ratio"]),
+    ("extract", "solvent", ["용매종류", "추출용매", "solventtype", "solvent"]),
+    ("extract", "acid", ["산종류", "산의종류", "사용산", "추출산", "acidtype", "acidused"]),
     ("extract", "temp_c", ["추출온도"]),
     ("extract", "time_min", ["추출시간"]),
     ("store", "package", ["포장", "package"]),
@@ -115,6 +117,8 @@ COND_RULES: list[tuple[str, str, list[str]]] = [
     ("dry", "outlet_c", ["출구"]),
     ("dry", "residence_s", ["체류"]),
 ]
+EXACT_COND = {"산": ("extract", "acid"), "acid": ("extract", "acid"), "용매": ("extract", "solvent"),
+              "solvent": ("extract", "solvent"), "산종류": ("extract", "acid"), "용매종류": ("extract", "solvent")}
 GENERIC_COND = [("dry", "temp_c", ["온도", "temp", "℃"]), ("dry", "time_h", ["시간", "time"]), ("dry", "rh", ["습도", "rh"])]
 VALUE_STEP_WORDS = [("store", ["저장후", "보관후"]), ("extract", ["추출"]), ("sieve", ["체분리후", "분말"]),
                     ("wash", ["세척후"]), ("press", ["압착후", "탈수후"]), ("mill", ["분쇄후"]), ("dry", ["건조후", "건조물", "건조"]),
@@ -174,7 +178,12 @@ def detect_column(header, steps: list[dict]) -> dict:
     for role, words in ROLE_WORDS.items():
         if hk in [U.key(w) for w in words] or raw_k in words:
             return {**col, "role": role, "unit": None}
-    # 3) 조건(구체적인 것)
+    # 3) 조건(구체적인 것). '산'·'용매'처럼 짧은 이름은 열 이름 전체가 같을 때만
+    exact = EXACT_COND.get(hk) or EXACT_COND.get(raw_k)
+    if exact:
+        st = _first(steps, exact[0])
+        if st:
+            return {**col, "role": "condition", "step_key": st["key"], "key": exact[1], "unit": None}
     for type_, pk, words in COND_RULES:
         if any(w in hk for w in words):
             st = _first(steps, type_)
@@ -221,6 +230,8 @@ def _select_value(spec: dict, raw) -> str:
     s = str(raw).strip()
     if s in spec["options"]:
         return s
+    if spec.get("free"):  # 산·용매 종류: 목록 이름·별칭(HCl, citric …) 또는 직접 입력
+        return S.canon_choice(spec, s)
     if spec["key"] == "method":
         m = drying.canonical(s) or coa.drying_method(s)
         if m in spec["options"]:

@@ -9,7 +9,7 @@ exit /b 1
 
 :venv_ok
 echo.
-echo === ByOrbit R^&D Studio - Docling 파서 설치 (선택) ===
+echo === R^&D Studio V0.5 - Docling 파서 설치 (선택) ===
 echo 레이아웃 모델로 2단 논문의 읽기 순서, 제목 단계, 병합 셀 표를 복원하는 로컬 PDF 파서입니다.
 echo 문서 파일은 이 PC 밖으로 나가지 않습니다. 인터넷으로 받는 것은 패키지와 모델 파일뿐입니다.
 echo.

@@ -547,7 +547,7 @@ def fetch_pubchem(name_en: str | None = None, term: str | None = None, urlopen=N
     if existing:
         return {**existing, "already": True, "message": f"'{existing['ko']}'은(는) 이미 로컬에 있습니다. PubChem에 묻지 않았습니다."}
     url = PUBCHEM.format(urllib.parse.quote(name, safe=""), _PROPS)
-    req = urllib.request.Request(url, headers={"User-Agent": "ByOrbit-RD-Studio", "Accept": "application/json"})
+    req = urllib.request.Request(url, headers={"User-Agent": "RD-Studio/0.5 (local research tool)", "Accept": "application/json"})
     opener = urlopen or urllib.request.urlopen
     try:
         with opener(req, timeout=10) as resp:

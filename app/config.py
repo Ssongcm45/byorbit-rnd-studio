@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 
 APP_ROOT = Path(__file__).resolve().parent.parent  # 저장소 루트
-APP_VERSION = "0.3.0-m3"
+APP_VERSION = "0.5.0"
 
 DEFAULT_SETTINGS = {
     "default_project": "기본 프로젝트",

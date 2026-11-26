@@ -713,12 +713,8 @@ def add_concept(label: str, scheme: str, alt_labels: list[str] | None = None) ->
     with db.tx() as t:
         t.execute("UPDATE concept SET status='active' WHERE concept_id=?", (cid,))
         db.log_change(t, "concept", cid, {"status": "proposed"}, {"status": "active", "via": "workbench"})
-    try:
-        with open(config.path("ontology", "mine.ttl"), "a", encoding="utf-8") as f:
-            f.write("\n" + db.concept_ttl(cid))
-    except OSError:
-        pass
     thesaurus.invalidate()
+    thesaurus._sync_mine_ttl()   # mine.ttl을 DB에서 다시 만든다(덧붙이지 않음)
     return {"ok": True, "concept_id": cid, "pref_label": label, "exists": False}
 
 
@@ -790,6 +786,7 @@ def remove_synonym(label_id: str) -> dict:
         t.execute("DELETE FROM concept_label WHERE label_id=?", (label_id,))
         db.log_change(t, "concept_label", label_id, {"label": r["label"], "concept_id": r["concept_id"]}, None)
     thesaurus.invalidate()
+    thesaurus._sync_mine_ttl()   # 지운 동의어가 mine.ttl에서도 빠진다
     return {"ok": True}
 
 

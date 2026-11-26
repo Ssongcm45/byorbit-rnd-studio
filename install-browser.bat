@@ -9,7 +9,7 @@ exit /b 1
 
 :venv_ok
 echo.
-echo === ByOrbit R^&D Studio - 크롤러 브라우저 방식(Playwright) 설치 ===
+echo === R^&D Studio V0.5 - 크롤러 브라우저 방식(Playwright) 설치 ===
 echo 자바스크립트로 그리는 자료 목록을 이 PC의 헤드리스 Chrome으로 읽습니다.
 echo 브라우저는 크롤러만 씁니다(http/https 주소만, 이미지·글꼴·영상은 받지 않음). AI에게 브라우저를 도구로 주지 않습니다.
 echo.

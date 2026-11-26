@@ -2,8 +2,10 @@
 
 출처 세 가지:
 - 예시(demo): 사과박 펙틴 산 추출 수율 — **가짜(모의) 데이터**. 고정 시드로 늘 같은 값.
-- 내 실험(experiment): 런마다 조건(단계별 값; 런에 비워 둔 칸은 흐름 값으로 채움) + 내가 잰 값 + 비고의 '이름=값' 꼬리표
-  (예: 비고에 '산=구연산; 반복=2' → 범주 변수 acid). 실험의 조건 칸에는 '산 종류'가 없어서 꼬리표로 받는다.
+- 내 실험(experiment): 런마다 조건(단계별 값; 런에 비워 둔 칸은 흐름 값으로 채움) + 내가 잰 값 + 비고의 '이름=값' 꼬리표.
+  범주 조건(추출 단계의 산 종류·용매 종류, 건조 방식 등)은 범주 변수가 된다(acid, solvent, method).
+  예전 방식인 비고 꼬리표('산=구연산; 반복=2')도 그대로 읽는다 — 같은 이름의 조건이 있으면 그 런의 조건 칸이 비었을 때
+  꼬리표 값을 쓴다(런 조건 > 런 비고 꼬리표 > 흐름 값).
 - 파일(upload): CSV·XLSX(내 실험 가져오기와 같은 읽기 규칙 — UTF-8·CP949, 머리글 줄 찾기, ND·'< 0.01').
 
 변수 이름은 R·Stata에서 바로 쓰도록 ASCII 소문자 snake_case(32자 이하). 한국어 이름·단위·수준은 코드북에 둔다.
@@ -66,6 +68,20 @@ KNOWN_LEVELS = {  # 산 이름 → ASCII 코드(R·Stata 수준 이름), 한국�
     "초산": ("acetic", "초산", "Acetic acid"), "아세트산": ("acetic", "아세트산", "Acetic acid"), "acetic": ("acetic", "아세트산", "Acetic acid"),
     "젖산": ("lactic", "젖산", "Lactic acid"), "lactic": ("lactic", "젖산", "Lactic acid"),
     "사과산": ("malic", "사과산", "Malic acid"), "malic": ("malic", "사과산", "Malic acid"),
+    "없음": ("none", "없음", "None"), "none": ("none", "없음", "None"),
+    # 용매 종류
+    "물": ("water", "물", "Water"), "water": ("water", "물", "Water"),
+    "에탄올": ("ethanol", "에탄올", "Ethanol"), "ethanol": ("ethanol", "에탄올", "Ethanol"),
+    "에탄올수용액": ("aq_ethanol", "에탄올 수용액", "Aqueous ethanol"), "aqethanol": ("aq_ethanol", "에탄올 수용액", "Aqueous ethanol"),
+    "메탄올": ("methanol", "메탄올", "Methanol"), "methanol": ("methanol", "메탄올", "Methanol"),
+    "아세톤수용액": ("aq_acetone", "아세톤 수용액", "Aqueous acetone"), "aqacetone": ("aq_acetone", "아세톤 수용액", "Aqueous acetone"),
+    "산수용액": ("aq_acid", "산 수용액", "Acidified water"), "aqacid": ("aq_acid", "산 수용액", "Acidified water"),
+    # 건조 방식
+    "열풍건조": ("hot_air", "열풍건조", "Hot-air drying"), "hotair": ("hot_air", "열풍건조", "Hot-air drying"),
+    "동결건조": ("freeze", "동결건조", "Freeze drying"), "freeze": ("freeze", "동결건조", "Freeze drying"),
+    "진공건조": ("vacuum", "진공건조", "Vacuum drying"), "vacuum": ("vacuum", "진공건조", "Vacuum drying"),
+    "분무건조": ("spray", "분무건조", "Spray drying"), "spray": ("spray", "분무건조", "Spray drying"),
+    "자연건조": ("sun", "자연건조", "Sun/air drying"), "sun": ("sun", "자연건조", "Sun/air drying"),
 }
 KNOWN_NAMES = [  # 한국어 열 이름 조각 → (변수 이름, 영어 이름, 기본 단위). 위에서부터 확인.
     (["산종류", "산의종류", "사용산", "산", "acid", "acidtype"], "acid", "Acid type", ""),
@@ -78,6 +94,7 @@ KNOWN_NAMES = [  # 한국어 열 이름 조각 → (변수 이름, 영어 이름
     (["런", "run", "시료", "시료명", "이름", "name", "id", "번호", "no"], "run", "Run", ""),
     (["ph"], "ph", "pH", ""),
     (["고액비", "용매비", "ratio"], "ratio_ml_g", "Liquid-to-solid ratio", "mL/g"),
+    (["용매종류", "용매", "solvent", "solventtype"], "solvent", "Solvent", ""),
     (["농도", "conc"], "conc", "Concentration", ""),
 ]
 
@@ -210,6 +227,33 @@ def demo(levels: int = 2) -> Dataset:
 
 # ---------------------------------------------------------------- 내 실험
 
+# 영어 이름(표·그림·해석의 English 출력용): 단계 종류 + 조건 키, 실측 대상 키
+STEP_EN = {"feed": "Raw material", "wash": "Washing", "press": "Pressing", "mill": "Milling", "dry": "Drying",
+           "sieve": "Sieving", "extract": "Extraction", "store": "Storage"}
+PARAM_EN = {"temp_c": "temperature", "time_min": "time", "time_h": "time", "ethanol_pct": "ethanol concentration",
+            "ratio_ml_g": "liquid-to-solid ratio", "moisture_pct": "moisture", "tpc_mg_g": "TPC", "tdf_g_100g": "TDF",
+            "mass_kg": "mass", "target_moisture_pct": "moisture after pressing", "particle_mm": "particle size", "mesh_um": "mesh size",
+            "yield_pct": "set yield", "air_velocity_ms": "air velocity", "thickness_mm": "layer thickness", "pressure_pa": "pressure",
+            "rh": "relative humidity", "days": "storage time", "outlet_c": "outlet temperature", "target_moisture": "target moisture",
+            "method": "method", "package": "packaging", "acid": "acid type", "solvent": "solvent"}
+TARGET_EN = {"moisture": "Moisture", "mass": "Mass", "dm_yield": "Dry-matter yield", "tpc": "TPC", "tpc_ret": "TPC retention",
+             "tdf": "TDF", "time_target": "Time to target moisture", "energy": "Specific energy", "energy_total": "Drying energy",
+             "sieve_yield": "Sieve yield", "tpc_extract_yield": "TPC extraction yield", "extract_tpc": "Extract TPC",
+             "extract_solids": "Extract solids yield", "product_yield": "Yield"}
+
+
+def _cond_en(step_type: str | None, key: str, spec: dict | None) -> str:
+    if spec and spec.get("label_en"):
+        return spec["label_en"]
+    p = PARAM_EN.get(key)
+    if not p:
+        return f"{step_type or ''} {key}".strip()
+    if key in ("acid", "solvent"):
+        return p[:1].upper() + p[1:]
+    s = STEP_EN.get(step_type or "", "")
+    return f"{s} {p}" if s else p[:1].upper() + p[1:]
+
+
 TAG_RE = re.compile(r"^\s*([^=:]{1,20}?)\s*[=:]\s*(.+?)\s*$")
 
 
@@ -269,7 +313,28 @@ def from_experiment(exp_id: str, censored: str = "exclude") -> Dataset:
             if k not in tags:
                 tags.append(k)
 
+    # 3') 같은 이름의 범주 조건이 있는 꼬리표(예: 조건 acid + 비고 '산=')는 따로 열을 만들지 않고 빈 조건 칸의 대신 값으로 쓴다
+    sel_specs = {}
+    for sk, pk in conds:
+        st = smap.get(sk)
+        spec = next((s for s in S.specs_for(st["type"], st["params"]) if s["key"] == pk), None) if st else None
+        if spec and spec.get("type") == "select":
+            sel_specs.setdefault(pk.lower(), (sk, pk))
+    # 런 조건에는 없고 꼬리표로만 준 범주(예: 비고 '산=')도, 흐름에 같은 이름의 범주 조건 칸이 있으면 그 조건 열로 읽는다
+    for st in steps:
+        for spec in S.specs_for(st["type"], st["params"]):
+            if spec.get("free") and spec["key"] not in sel_specs and any(guess_name(t, "tag")[0] == spec["key"] for t in tags):
+                conds.append((st["key"], spec["key"]))
+                sel_specs[spec["key"]] = (st["key"], spec["key"])
+    conds.sort(key=lambda x: order.get(x[0], 99))
+    tag_for: dict[tuple, str] = {}
+    for t in list(tags):
+        g = guess_name(t, "tag")[0]
+        if g in sel_specs and sel_specs[g] not in tag_for:
+            tag_for[sel_specs[g]] = t
+            tags.remove(t)
     raw_names, cb, cols, missing, warn = [], [], {}, {}, []
+    from_tag = 0
     filled = 0
     for sk, pk in conds:
         st = smap.get(sk)
@@ -303,9 +368,15 @@ def from_experiment(exp_id: str, censored: str = "exclude") -> Dataset:
         if kind == "cond":
             spec = b
             is_sel = bool(spec and spec.get("type") == "select")
-            col, miss = [], {}
+            col, miss, lv = [], {}, []
+            tag = tag_for.get((sk, a))
             for i, r in enumerate(runs):
                 v = (r["conditions"].get(sk) or {}).get(a)
+                if v in (None, "") and tag:
+                    v = note_tags(r["note"]).get(tag)
+                    if v not in (None, ""):
+                        v = S.canon_choice(spec, v) if spec and spec.get("free") else v
+                        from_tag += 1
                 if v in (None, "") and st:
                     v = store.merged_params(st, r).get(a, spec.get("default") if spec else None)
                     if v not in (None, ""):
@@ -313,16 +384,22 @@ def from_experiment(exp_id: str, censored: str = "exclude") -> Dataset:
                 if v in (None, ""):
                     miss[i] = "빈칸"
                     col.append(None)
+                elif is_sel:
+                    code, ko, en_l = level_info(v)
+                    col.append(code)
+                    if code not in [x["value"] for x in lv]:
+                        lv.append({"value": code, "label_ko": ko, "label_en": en_l})
                 else:
-                    col.append(str(v) if is_sel else float(v))
+                    col.append(float(v))
             cols[name] = col
             if miss:
                 missing[name] = miss
             entry = {"name": name, "label_ko": _joinlab(st["label"] if st else sk, spec["label"] if spec else a),
-                     "label_en": f"{st['type'] if st else sk} {a}", "unit": (spec or {}).get("unit", ""),
-                     "type": "categorical" if is_sel else "continuous", "source": f"조건 [{sk}] {a}"}
+                     "label_en": _cond_en(st["type"] if st else None, a, spec), "unit": (spec or {}).get("unit", ""),
+                     "type": "categorical" if is_sel else "continuous",
+                     "source": f"조건 [{sk}] {a}" + (f" (빈 칸은 비고 꼬리표 '{tag}=')" if tag else "")}
             if is_sel:
-                entry["levels"] = [{"value": x, "label_ko": x, "label_en": x} for x in sorted({c for c in col if c})]
+                entry["levels"] = lv
             cb.append(entry)
         elif kind == "val":
             tgt, basis = a, b
@@ -355,7 +432,7 @@ def from_experiment(exp_id: str, censored: str = "exclude") -> Dataset:
             cols[name] = col
             if miss:
                 missing[name] = miss
-            cb.append({"name": name, "label_ko": _joinlab(st["label"] if st else "", tgt), "label_en": tk or slug(tgt, name),
+            cb.append({"name": name, "label_ko": _joinlab(st["label"] if st else "", tgt), "label_en": TARGET_EN.get(tk) or slug(tgt, name),
                        "unit": unit, "type": "continuous", "source": f"실측 [{sk}] {tgt}" + (f" ({basis})" if basis else "")})
         else:
             raw = [note_tags(r["note"]).get(a) for r in runs]
@@ -385,8 +462,11 @@ def from_experiment(exp_id: str, censored: str = "exclude") -> Dataset:
             df[v["name"]] = pd.to_numeric(df[v["name"]], errors="coerce").astype(float)
     if filled:
         warn.append(f"런에 비워 둔 조건 {filled}칸은 흐름에 넣은 값(또는 단계 기본값)으로 채웠습니다 — 런마다 실제 조건을 넣으면 더 정확합니다.")
+    if from_tag:
+        warn.append(f"조건 칸이 빈 {from_tag}칸은 런 비고 꼬리표(예: '산=구연산') 값으로 채웠습니다 — 실험 데이터 탭의 조건 칸(예: 추출 · 산 종류)에 넣으면 꼬리표 없이 읽습니다.")
     if not any(v["type"] == "categorical" for v in cb):
-        warn.append("범주 변수(예: 산 종류)가 없습니다. 런 비고에 '산=구연산'처럼 '이름=값'을 적으면 범주 변수로 읽습니다.")
+        warn.append("범주 변수(예: 산 종류)가 없습니다. 실험 데이터 탭에서 '열 추가 → 추출 · 산 종류'로 런마다 산을 넣으세요"
+                    " (예전 방식: 런 비고에 '산=구연산'처럼 '이름=값').")
     if exp["confidentiality"] == "기밀":
         warn.append("기밀 실험입니다 — 내려받은 표·그림·데이터 파일은 이 PC 밖으로 보낼 때 등급에 맞게 다루세요(앱은 밖으로 보내지 않습니다).")
     return Dataset(df=df, codebook=cb, source={"kind": "experiment", "exp_id": exp_id}, title_ko=exp["name"], title_en=exp["name"],

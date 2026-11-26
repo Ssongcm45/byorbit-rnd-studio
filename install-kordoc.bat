@@ -11,7 +11,7 @@ exit /b 1
 
 :node_ok
 echo.
-echo === ByOrbit R^&D Studio - kordoc(한글 문서 파서) 설치 ===
+echo === R^&D Studio V0.5 - kordoc(한글 문서 파서) 설치 ===
 echo 구 형식 HWP(5.x), HWPX, PDF를 이 PC에서 읽는 Node 패키지 kordoc(MIT)을 설치합니다.
 echo 문서 파일은 PC 밖으로 나가지 않습니다. 설치 위치: tools\node  (약 100MB, 인터넷으로 npm 패키지를 받습니다)
 echo.

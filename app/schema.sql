@@ -1,4 +1,4 @@
--- ByOrbit R&D Studio 개인용 — SQLite 스키마 (30 테이블 + 전문검색)
+-- R&D Studio V0.5 — SQLite 스키마 (30 테이블 + 전문검색)
 -- 테이블·컬럼 이름은 팀판과 같게 둔다. ID는 모두 UUID(32자리 hex) 문자열.
 PRAGMA foreign_keys = ON;
 

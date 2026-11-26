@@ -46,6 +46,18 @@ def _group_label(r, lang):
     return r.labels.var(r.spec["group"], lang, unit=False) if r.spec.get("group") else ""
 
 
+def _xvar(sp: dict) -> str | None:
+    """그림 1(a)의 가로축: 고른 값(spec.xvar) → 이름이 temp로 시작하는 연속 변수 → 첫 연속 변수."""
+    cont = sp.get("continuous") or []
+    if sp.get("xvar") in cont:
+        return sp["xvar"]
+    return next((c for c in cont if c.startswith("temp")), cont[0] if cont else None)
+
+
+def _extra_terms(sp: dict) -> list[str]:
+    return [f"{a}:{b}" for a, b in sp.get("interactions") or []] + [f"{c}^2" for c in sp.get("quadratic") or []]
+
+
 def _pct_unit(unit: str, lang: str) -> str:
     if unit == "%":
         return "%p" if lang == "ko" else " percentage points"
@@ -80,7 +92,8 @@ def table1_model(r, lang: str = "ko", zero: str | None = None, minus: str = F.MI
             v = _coef_view(r, row)
             d = F.dec_for(v["SE"])
             term = row["term"]
-            if "[" in term:
+            is_cat = "[" in term and ":" not in term  # 범주 주효과(가변수) — 곱항은 일반 행
+            if is_cat:
                 var = term.split("[", 1)[0]
                 first = term == reg["terms"][var][0]
                 if first:
@@ -89,7 +102,7 @@ def table1_model(r, lang: str = "ko", zero: str | None = None, minus: str = F.MI
             cells = [_u(L.term(term, lang), lang), F.n(v["B"], d, minus), F.n(v["SE"], d, minus),
                      F.bounded(v["beta"], 2, lead, minus) if v.get("beta") is not None else "—",
                      F.n(v["t"], 2, minus), F.p_val(v["p"], lead), F.ci(v["ci"][0], v["ci"][1], d, minus)]
-            rows.append({"kind": "indent" if "[" in term else "row", "cells": cells})
+            rows.append({"kind": "indent" if is_cat else "row", "cells": cells})
         fit = reg["fit"]
         unit_y = L.unit(sp["outcome"])
         foot = [f"R² = {F.bounded(fit['r2'], 2, lead, minus)}", f"{'수정 R²' if ko else 'adjusted R²'} = {F.bounded(fit['adj_r2'], 2, lead, minus)}",
@@ -97,12 +110,16 @@ def table1_model(r, lang: str = "ko", zero: str | None = None, minus: str = F.MI
                 f"n = {fit['n']}", f"RMSE = {F.n(fit['rmse'], 2, minus)}{(' ' + unit_y) if unit_y else ''}"]
         foot_txt = ", ".join(foot) + "."
         for name, t in multi.items():
-            if name in cats and len(reg["terms"][name]) > 1:
+            if (name in cats or ":" in name) and len(reg["terms"][name]) > 1:
                 tt = t["robust"] if hc3 else t
-                foot_txt += (f" {L.var(name, lang, unit=False)} {'전체' if ko else 'overall'}: F({F.df_str(t['df1'])}, {F.df_str(t['df2'])}) = "
+                foot_txt += (f" {L.termname(name, lang)} {'전체' if ko else 'overall'}: F({F.df_str(t['df1'])}, {F.df_str(t['df2'])}) = "
                              f"{F.n(tt['F'], 2, minus)}, {F.p_txt(tt['p'], lead)}.")
         model = ("모형: OLS" if ko else "Model: OLS") + ("; SE = HC3 " + ("강건 표준오차(이분산)" if ko else "heteroscedasticity-consistent") if hc3 else
                                                          ("; SE = 일반(OLS) 표준오차" if ko else "; conventional SEs"))
+        if _extra_terms(sp):
+            model += ("; 곱항(×)·2차항(²)은 연속 변수를 표본 평균으로 중심화해 만들었다 — 주효과 B는 다른 연속 변수의 평균·범주의 기준 수준에서의 값"
+                      if ko else "; product (×) and quadratic (²) terms use mean-centred continuous variables, so main-effect B is evaluated at the mean "
+                                 "of the other continuous predictors and at the reference level")
         panels.append({"key": "A", "title": ("A. 다중 선형 회귀" if ko else "Panel A. Multiple linear regression") + f" — {y}{(' (' + unit_y + ')') if unit_y else ''}",
                        "header": ["변수" if ko else "Predictor", "B", "SE", "β", "t", "p", "95% CI"],
                        "rows": rows, "foot": foot_txt + " " + model + "."})
@@ -566,7 +583,44 @@ def interpretation(r, lang: str = "ko", zero: str | None = None) -> list[str]:
             s2 = ("Based on HC3 robust standard errors, " + s2 if hc3 else _cap(s2)) + "."
     else:
         s2 = ("연속 설명 변수(온도·시간 등)는 모형에 넣지 않았다." if ko else "No continuous predictors were included in the model.")
+    extra = _extra_clause(r, lang, lead) if reg else ""
+    if extra:
+        s2 = s2[:-1] + "; " + extra + "."
     return [s1, s2, _sentence3(r, lang, lead)]
+
+
+def _extra_clause(r, lang: str, lead: bool) -> str:
+    """교호작용·2차항 결과(해석 둘째 문장 끝에 붙임 — 문장 수는 그대로). 1자유도 항은 B·CI·p, 여러 자유도 항은 F·p."""
+    L, reg, sp = r.labels, r.core["regression"], r.spec
+    ko = lang == "ko"
+    a = sp["alpha"]
+    hc3 = r.out["primary_se"] == "HC3"
+    tests = {t["term"]: t for t in reg["term_tests"]}
+    bits = []
+    for term in _extra_terms(sp):
+        t = tests.get(term)
+        if not t:
+            continue
+        cols = reg["terms"].get(term) or []
+        if len(cols) == 1:
+            row = _coef_view(r, next(x for x in reg["coef"] if x["term"] == cols[0]))
+            d = F.dec_for(row["SE"])
+            st, p = f"B = {F.n(row['B'], d)}, 95% CI {F.ci(row['ci'][0], row['ci'][1], d)}, {F.p_txt(row['p'], lead)}", row["p"]
+        else:
+            tt = t["robust"] if hc3 else t
+            st, p = f"F({F.df_str(t['df1'])}, {F.df_str(t['df2'])}) = {F.n(tt['F'], 2)}, {F.p_txt(tt['p'], lead)}", tt["p"]
+        sig = p is not None and p < a
+        name = L.termname(term, lang)
+        kind = ("교호작용" if ko else "interaction") if ":" in term else ("2차항" if ko else "quadratic term")
+        if ko:
+            bits.append(f"{name} {kind} {'유의함' if sig else '유의하지 않음'}({st})")
+        else:
+            bits.append(f"the {name.lower()} {kind} was {'significant' if sig else 'not significant'} ({st})")
+    if not bits:
+        return ""
+    if ko:
+        return "추가 항: " + ", ".join(bits) + " — 곱항·2차항이 있으므로 주효과 B는 다른 변수의 평균(범주는 기준 수준)에서의 기울기다"
+    return _join_en(bits) + "; with these terms, main-effect B is the slope at the mean of the other predictors (reference level for categories)"
 
 
 def _sentence3(r, lang, lead) -> str:
@@ -737,7 +791,7 @@ def _save(fig, fmt_: str) -> bytes:
     from matplotlib.backends.backend_agg import FigureCanvasAgg
     FigureCanvasAgg(fig)
     buf = io.BytesIO()
-    meta = {"png": {"Software": "ByOrbit R&D Studio"}, "pdf": {"Creator": "ByOrbit R&D Studio"}, "svg": {"Creator": "ByOrbit R&D Studio"}}[fmt_]
+    meta = {"png": {"Software": "R&D Studio V0.5"}, "pdf": {"Creator": "R&D Studio V0.5"}, "svg": {"Creator": "R&D Studio V0.5"}}[fmt_]
     fig.savefig(buf, format=fmt_, dpi=300, bbox_inches="tight", pad_inches=0.03, metadata=meta)
     return buf.getvalue()
 
@@ -760,7 +814,7 @@ def figure1(r, lang: str = "ko", width: str = "double", fmt_: str = "png", zero:
     L, reg, grp, sp = r.labels, r.core["regression"], r.core["groups"], r.spec
     lead = _lead(r, lang, zero)
     d = r.ds.df.loc[r.core["used_index"]].copy()
-    xvar = next((c for c in sp["continuous"] if c.startswith("temp")), sp["continuous"][0] if sp["continuous"] else None)
+    xvar = _xvar(sp)
     g = sp["group"]
     levels = grp["levels"] if grp else ([c for c in r.core["levels"].values()][0] if r.core["levels"] else [])
     gvar = g or (sp["categorical"][0]["name"] if sp["categorical"] else None)
@@ -791,7 +845,10 @@ def figure1(r, lang: str = "ko", width: str = "double", fmt_: str = "png", zero:
             in_model = gvar in [c["name"] for c in sp["categorical"]]
             means = {c: float(d[c].astype(float).mean()) for c in sp["continuous"]}
             xs = np.linspace(np.nanmin(x), np.nanmax(x), 50)
-            coefs = {c["term"]: c["B"] for c in reg["coef"]}
+            from . import core as C
+            import pandas as pd
+            bvec = np.array([c["B"] for c in reg["coef"]], dtype=float)
+            cat_lv = [(cc["name"], r.core["levels"][cc["name"]]) for cc in sp["categorical"]]
             for i, lv in enumerate(lvls):
                 m = (d[gvar].astype(str) == lv).to_numpy() if lv is not None else np.ones(len(d), bool)
                 off = (i - (len(lvls) - 1) / 2) * span * 0.018
@@ -799,14 +856,13 @@ def figure1(r, lang: str = "ko", width: str = "double", fmt_: str = "png", zero:
                 col = PALETTE[i % len(PALETTE)]
                 ax.scatter(x[m] + off, y[m], s=13, marker=MARKERS[i % len(MARKERS)], facecolor=col, edgecolor="white", linewidth=0.4,
                            alpha=0.9, label=lab, zorder=3)
-                # 모형 예측선: 다른 연속 변수는 평균, 범주는 이 수준
-                pred = np.full_like(xs, coefs["(Intercept)"])
-                for c in sp["continuous"]:
-                    pred = pred + coefs[c] * (xs if c == xvar else means[c])
+                # 모형 예측선: 다른 연속 변수는 평균, 범주는 이 수준(다른 범주는 기준) — 적합 때와 같은 설계 행렬·중심화
+                nd = {c: (xs if c == xvar else np.full_like(xs, means[c])) for c in sp["continuous"]}
                 for cc in sp["categorical"]:
-                    want = lv if (cc["name"] == gvar and lv is not None) else cc["reference"]
-                    if f"{cc['name']}[{want}]" in coefs:
-                        pred = pred + coefs[f"{cc['name']}[{want}]"]
+                    nd[cc["name"]] = [str(lv) if (cc["name"] == gvar and lv is not None) else str(cc["reference"])] * len(xs)
+                Xn, _t = C.design(pd.DataFrame(nd), sp["continuous"], cat_lv, reg.get("interactions") or [], reg.get("quadratic") or [],
+                                  reg.get("centers") or {})
+                pred = Xn[reg["columns"]].to_numpy() @ bvec
                 if in_model or lv is None:
                     ax.plot(xs, pred, color=col, lw=1.2, zorder=2)
             ax.set_xlabel(_u(L.var(xvar, lang), lang))
@@ -881,9 +937,10 @@ def caption(r, lang: str = "ko", zero: str | None = None) -> str:
     lead = _lead(r, lang, zero)
     ko = lang == "ko"
     y = L.var(sp["outcome"], lang, unit=False)
-    xvar = next((c for c in sp["continuous"] if c.startswith("temp")), sp["continuous"][0] if sp["continuous"] else None)
+    xvar = _xvar(sp)
     g = sp["group"]
     parts = []
+    xt = bool(_extra_terms(sp))
     tag = iter(["(a)", "(b)"])
     if reg and xvar:
         xl = L.var(xvar, lang, unit=False)
@@ -892,11 +949,12 @@ def caption(r, lang: str = "ko", zero: str | None = None) -> str:
         at = ", ".join(f"{L.var(c, lang, unit=False)} {F.n(float(d[c].mean()), 1)} {L.unit(c)}".strip() for c in others)
         at_en = _join_en([f"{L.var(c, lang, unit=False).lower()} ({F.n(float(d[c].mean()), 1)} {L.unit(c)})".replace(" )", ")") for c in others])
         if ko:
-            parts.append(f"{next(tag)} {xl}에 따른 {y}" + (f"({_group_label(r, 'ko')}별)" if g else "") + ". 점은 런 하나씩(겹치지 않게 수준별로 조금 옮김), 선은 OLS 모형 예측값"
-                         + (f"({at} 평균에서)" if at else "") + ".")
+            parts.append(f"{next(tag)} {xl}에 따른 {y}" + (f"({_group_label(r, 'ko')}별)" if g else "") + ". 점은 런 하나씩(겹치지 않게 수준별로 조금 옮김), 선은 OLS 모형"
+                         + ("(교호작용·2차항 포함)" if xt else "") + " 예측값" + (f"({at} 평균에서)" if at else "") + ".")
         else:
             parts.append(f"{next(tag)} {y} versus {xl.lower()}" + (f" by {_group_label(r, 'en').lower()}" if g else "")
                          + "; points are individual runs (offset horizontally by group for visibility) and lines are OLS model predictions"
+                         + (" (including interaction/quadratic terms)" if xt else "")
                          + (f" at the mean {at_en}" if at else "") + ".")
     if grp:
         if grp["kind"] == "t":
@@ -978,7 +1036,7 @@ def diagnostics(r, lang: str = "ko", fmt_: str = "png") -> bytes:
         c.set_ylabel("Cook's D")
         _panel_tag(c, "(c)")
         dd = ax[1, 1]
-        xvar = next((cc for cc in sp["continuous"] if cc.startswith("temp")), sp["continuous"][0] if sp["continuous"] else None)
+        xvar = _xvar(sp)
         if xvar:
             xv = r.ds.df.loc[r.core["used_index"], xvar].astype(float).to_numpy()
             dd.scatter(xv, resid, s=10, color=PALETTE[0], alpha=0.8, linewidth=0)
@@ -1015,8 +1073,9 @@ STATUS_TXT = {"ko": {"pass": "통과", "warn": "주의", "fail": "실패", "info
 def assumption_rows(r, lang: str):
     ko = lang == "ko"
     for c in r.out["assumptions"]:
-        yield [c["name_ko"] if ko else c["name_en"], c["test"], c["stat"], c["threshold"], STATUS_TXT[lang][c["status"]],
-               c["text_ko"] if ko else c["text_en"]]
+        yield [c["name_ko"] if ko else c["name_en"], c["test"] if ko else c.get("test_en", c["test"]),
+               c["stat"] if ko else c.get("stat_en", c["stat"]), c["threshold"] if ko else c.get("threshold_en", c["threshold"]),
+               STATUS_TXT[lang][c["status"]], c["text_ko"] if ko else c["text_en"]]
 
 
 def assumptions_html(r, lang: str = "ko", standalone: bool = True) -> str:
@@ -1041,7 +1100,7 @@ def assumptions_html(r, lang: str = "ko", standalone: bool = True) -> str:
             import base64
             img = ('<p><img alt="diagnostics" style="max-width:100%;height:auto" src="data:image/png;base64,'
                    + base64.b64encode(diagnostics(r, lang, "png")).decode() + '"></p>'
-                   + f'<p class="note" style="font-family:inherit">{"보조 그림 S1. (a) 잔차-적합값(등분산), (b) 정규 Q–Q(정규성), (c) Cook의 거리(영향점), (d) 잔차-온도(선형성)." if ko else "Supplementary Figure S1. (a) Residuals vs fitted, (b) normal Q–Q, (c) Cook distance, (d) residuals vs temperature."}</p>')
+                   + f'<p class="note" style="font-family:inherit">{"보조 그림 S1. (a) 잔차-적합값(등분산), (b) 정규 Q–Q(정규성), (c) Cook의 거리(영향점), (d) 잔차-연속 변수(선형성)." if ko else "Supplementary Figure S1. (a) Residuals vs fitted, (b) normal Q–Q, (c) Cook distance, (d) residuals vs a continuous predictor."}</p>')
         return _page(title, f"<style>{css}body{{background:#fff;margin:24px}}</style>" + body.replace("</figure>", img + "</figure>", 1), lang)
     return f"<style>{css}</style>" + body
 
