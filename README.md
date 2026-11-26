@@ -1,5 +1,7 @@
 # R&D Studio V0.5
 
+> **처음이라면** → [빠른 사용 설명서 (docs/QUICKSTART.md, 4쪽 PDF: docs/QUICKSTART.pdf)](docs/QUICKSTART.md) · 자세한 안내서: `guidebook/final/guidebook.pdf`
+
 농·임·수산 부산물 연구 자료(논문·보고서·CoA)를 **내 PC에서** 모으고, 찾고, Claude Code에게 근거 있는 답을 받는 로컬 웹앱입니다.
 
 - 자료·DB·온톨로지는 모두 이 PC의 데이터 폴더(기본 `C:\Users\<이름>\ByOrbit-RD`)에만 저장됩니다.
