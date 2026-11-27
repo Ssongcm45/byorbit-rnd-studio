@@ -524,5 +524,5 @@ def test_wizard_ui_and_home_link():
 def test_readme_new_pc_section():
     s = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "## 다른 PC에 설치하고 Claude Code와 연결하기" in s
-    assert "git clone https://github.com/<계정>/byorbit-rnd-studio.git" in s
+    assert "git clone https://github.com/Ssongcm45/byorbit-rnd-studio.git" in s
     assert "setup-claude" in s and "gh auth login" in s
