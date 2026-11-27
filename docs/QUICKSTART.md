@@ -13,7 +13,7 @@
 |---|---|
 | ① | **Python 3.11 이상** 설치 — `winget install Python.Python.3.12` (설치 때 "Add to PATH" 체크) |
 | ② | **Claude Code** 설치 후 로그인 — PowerShell에서 `irm https://claude.ai/install.ps1 \| iex` → 터미널에서 `claude` 한 번 실행해 로그인 |
-| ③ | 이 프로젝트 받기 — `git clone <저장소 주소>` 또는 ZIP을 받아 풀기 (비공개 저장소라 접근 권한 필요) |
+| ③ | 이 프로젝트 받기 — `git clone https://github.com/Ssongcm45/byorbit-rnd-studio.git` 또는 GitHub에서 ZIP을 받아 풀기 (공개 저장소라 로그인 불필요) |
 | ④ | 폴더의 **`install.bat`** 더블클릭 — 끝에 "내 Claude Code 대화창에도 자료 도구를 등록할까요? (Y/n)"가 나오면 Enter |
 | ⑤ | **`start.bat`** 더블클릭 → 브라우저에 `http://127.0.0.1:8765`가 열림 (끝낼 때는 검은 창에서 Ctrl+C) |
 

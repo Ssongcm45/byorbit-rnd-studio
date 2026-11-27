@@ -22,13 +22,13 @@
 
 새 PC에서는 GitHub에서 받아 설치하고, **그 PC에 설치·로그인된 Claude Code**와 연결합니다. 자료·API 키·로그인은 PC마다 따로이며 자동 동기화는 없습니다.
 
-1. **받기** — 저장소는 비공개이므로 저장소 접근 권한이 있는 GitHub 계정이 필요합니다.
-   - Git이 있으면: 먼저 `gh auth login`(GitHub CLI) 또는 GitHub Desktop으로 로그인한 뒤
+1. **받기** — 공개 저장소이므로 GitHub 계정이나 로그인 없이 받을 수 있습니다.
+   - Git이 있으면:
      ```
-     git clone https://github.com/<계정>/byorbit-rnd-studio.git
+     git clone https://github.com/Ssongcm45/byorbit-rnd-studio.git
      ```
-     (`<계정>`은 저장소 주인의 GitHub 이름. 권한이 없으면 저장소 주인에게 초대를 받으세요.)
-   - Git이 없으면: 권한 있는 계정으로 GitHub 저장소 화면 → Code → Download ZIP으로 받거나, 권한 있는 사람에게 ZIP을 받아 풀어 둡니다.
+     (고친 내용을 저장소에 올리려면 쓰기 권한이 있는 계정으로 `gh auth login`(GitHub CLI) 또는 GitHub Desktop 로그인이 필요합니다.)
+   - Git이 없으면: https://github.com/Ssongcm45/byorbit-rnd-studio → Code → Download ZIP으로 받아 풀어 둡니다.
 2. **Python 3.11 이상**과 **Claude Code**를 설치합니다(위 "설치" 1·2번). Claude Code는 새 PC에서 `claude`를 한 번 실행해 **그 PC에서** 로그인합니다.
 3. **`install.bat`** 더블클릭 — 가상환경·패키지·데이터 폴더를 만든 뒤 마지막 [5/5]에서 이 PC의 Claude Code를 찾아(공식 설치·npm 설치·WinGet·`BYORBIT_CLAUDE` 지정) 버전과 로그인 상태를 보여 줍니다. 돈이 드는 호출은 하지 않습니다.
    - 설치·로그인이 되어 있으면 "내 Claude Code 대화창에도 자료 도구를 등록할까요? (Y/n)"를 묻습니다. Enter(=예)를 누르면 등록합니다(아래 "Claude Code에서 직접 쓰기").
